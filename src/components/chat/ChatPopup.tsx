@@ -16,11 +16,9 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
   const { user } = useAuth();
   const isSignedIn = !!user;
 
-  const fullName = user?.user_metadata?.first_name 
-    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
-    : user?.email || 'Anonymous';
+  const fullName = user?.display_name || user?.email || 'Anonymous';
   
-  const avatarUrl = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.first_name || user?.email || 'U')}&background=random`;
+  const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.display_name || user?.email || 'U')}&background=random`;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);

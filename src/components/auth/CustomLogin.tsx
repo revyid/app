@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import {
   Mail,
@@ -11,10 +11,16 @@ import {
   Github,
   X,
   User,
-  KeyRound,
 } from 'lucide-react';
 import { authenticateWithPasskey, isWebAuthnSupported } from '@/lib/webauthn';
-import { supabase } from '@/lib/supabase';
+import {
+  register as authRegister,
+  login as authLogin,
+  oauthLogin,
+  passkeyLogin,
+  getStoredToken,
+} from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   bottomSheetContent,
   modalBackdrop,
@@ -103,7 +109,7 @@ interface CustomLoginProps {
   onClose: () => void;
 }
 
-type AuthMode = 'login' | 'signup' | 'verify-email' | 'passkey-setup';
+type AuthMode = 'login' | 'signup' | 'passkey-setup';
 
 export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -118,6 +124,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
   const controls = useAnimation();
   const formRef = useRef<HTMLFormElement>(null);
+  const { refreshUser, user } = useAuth();
 
   const resetForm = () => {
     setEmail('');
@@ -135,7 +142,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   };
 
   // ==========================================
-  // LOGIN (Supabase Email/Password)
+  // LOGIN (Custom Auth)
   // ==========================================
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,17 +150,18 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const result = await authLogin(email, password);
 
-      if (error) throw error;
-      
-      onClose();
-      resetForm();
+      if (result.error) {
+        setError(result.error);
+        controls.start('shake');
+      } else {
+        await refreshUser();
+        onClose();
+        resetForm();
+      }
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials');
+      setError(err.message || 'Login failed');
       controls.start('shake');
     } finally {
       setIsLoading(false);
@@ -161,7 +169,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   };
 
   // ==========================================
-  // SIGN UP (Supabase)
+  // SIGN UP (Custom Auth)
   // ==========================================
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,30 +177,21 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     setError('');
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          },
-        },
-      });
+      const displayName = [firstName, lastName].filter(Boolean).join(' ') || null;
+      const result = await authRegister(email, password, displayName || undefined);
 
-      if (error) throw error;
-
-      if (data.session) {
-        // Auto-login (email confirmation disabled in Supabase)
+      if (result.error) {
+        setError(result.error);
+        controls.start('shake');
+      } else {
+        await refreshUser();
+        // Account created + logged in → offer passkey setup
         if (isWebAuthnSupported()) {
           setMode('passkey-setup');
         } else {
           onClose();
           resetForm();
         }
-      } else {
-        // Email confirmation is enabled in Supabase settings
-        setMode('verify-email');
       }
     } catch (err: any) {
       setError(err.message || 'Sign up failed');
@@ -203,34 +202,167 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   };
 
   // ==========================================
-  // SOCIAL LOGIN (Supabase OAuth)
+  // GOOGLE OAUTH (Popup-based, no redirect!)
   // ==========================================
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
+  const handleGoogleLogin = useCallback(async () => {
     setIsLoading(true);
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          // IMPORTANT: Use origin + pathname, NOT href!
-          // href includes the # hash fragment, causing Supabase to create
-          // a double-hash ##access_token=... that the SDK can't parse.
-          redirectTo: window.location.origin + window.location.pathname,
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        setError('Google Client ID not configured.');
+        controls.start('shake');
+        setIsLoading(false);
+        return;
+      }
+
+      // Load Google Identity Services if not already loaded
+      if (!(window as any).google?.accounts?.id) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://accounts.google.com/gsi/client';
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
+          document.head.appendChild(script);
+        });
+      }
+
+      // Use One Tap / popup to get ID token
+      const google = (window as any).google;
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response: any) => {
+          try {
+            // Decode the ID token (JWT) to get user info
+            const parts = response.credential.split('.');
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+
+            const result = await oauthLogin(
+              payload.email,
+              payload.name || payload.email.split('@')[0],
+              payload.picture || '',
+              'google',
+              payload.sub
+            );
+
+            if (result.error) {
+              setError(result.error);
+              controls.start('shake');
+            } else {
+              await refreshUser();
+              onClose();
+              resetForm();
+            }
+          } catch (err: any) {
+            setError(err.message || 'Google login failed');
+            controls.start('shake');
+          } finally {
+            setIsLoading(false);
+          }
         },
+        auto_select: false,
       });
 
-      if (error) throw error;
+      // Show the popup
+      google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // Fallback: use the button flow by rendering into a hidden div
+          const btn = document.createElement('div');
+          btn.id = '_gsi_btn';
+          btn.style.display = 'none';
+          document.body.appendChild(btn);
+          google.accounts.id.renderButton(btn, { type: 'icon', size: 'large' });
+          (btn.querySelector('[role="button"]') as HTMLElement)?.click();
+          setTimeout(() => btn.remove(), 100);
+        }
+      });
     } catch (err: any) {
-      console.error('Social login error:', err);
-      setError(err.message || 'Social login failed');
+      setError(err.message || 'Google login failed');
       controls.start('shake');
       setIsLoading(false);
     }
+  }, [controls, refreshUser, onClose]);
+
+  // ==========================================
+  // GITHUB OAUTH (Popup window)
+  // ==========================================
+  const handleGithubLogin = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+      if (!clientId) {
+        setError('GitHub Client ID not configured in .env');
+        controls.start('shake');
+        setIsLoading(false);
+        return;
+      }
+
+      // Open GitHub OAuth popup
+      const redirectUri = window.location.origin + '/auth/github/callback';
+      const scope = 'read:user user:email';
+      const state = crypto.randomUUID();
+      localStorage.setItem('github_oauth_state', state);
+
+      const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+
+      const popup = window.open(url, 'github-auth', 'width=500,height=700,left=100,top=100');
+
+      // Listen for the callback message
+      const handleMessage = async (event: MessageEvent) => {
+        if (event.data?.type === 'github-auth-callback') {
+          window.removeEventListener('message', handleMessage);
+          popup?.close();
+
+          const { email: ghEmail, name, avatar_url, id: providerId } = event.data.user;
+
+          const result = await oauthLogin(
+            ghEmail,
+            name || ghEmail.split('@')[0],
+            avatar_url || '',
+            'github',
+            String(providerId)
+          );
+
+          if (result.error) {
+            setError(result.error);
+            controls.start('shake');
+          } else {
+            await refreshUser();
+            onClose();
+            resetForm();
+          }
+          setIsLoading(false);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Timeout
+      setTimeout(() => {
+        window.removeEventListener('message', handleMessage);
+        if (isLoading) setIsLoading(false);
+      }, 120000);
+    } catch (err: any) {
+      setError(err.message || 'GitHub login failed');
+      controls.start('shake');
+      setIsLoading(false);
+    }
+  }, [controls, refreshUser, onClose, isLoading]);
+
+  // ==========================================
+  // SOCIAL LOGIN DISPATCHER
+  // ==========================================
+  const handleSocialLogin = (provider: 'google' | 'github') => {
+    if (provider === 'google') handleGoogleLogin();
+    else handleGithubLogin();
   };
 
   // ==========================================
-  // BIOMETRIC / PASSKEY LOGIN (Custom WebAuthn -> Supabase)
+  // BIOMETRIC / PASSKEY LOGIN (Custom Auth)
   // ==========================================
   const handleBiometricLogin = async () => {
     setIsLoading(true);
@@ -246,67 +378,22 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       const result = await authenticateWithPasskey();
 
       if (result.success && result.credential) {
-        const refreshToken = result.credential.supabaseRefreshToken;
+        // Call the RPC function directly — no refresh tokens needed!
+        const sessionToken = result.credential.supabaseRefreshToken; // repurposed field
+        const loginResult = await passkeyLogin(
+          result.credential.credentialId,
+          sessionToken || ''
+        );
 
-        if (refreshToken) {
-          // Bypass Supabase SDK — call the Auth REST API directly.
-          // The SDK's refreshSession() has internal state issues that cause
-          // silent failures. Direct fetch is 100% reliable.
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-          const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-
-          if (res.ok) {
-            const tokens = await res.json();
-
-            // Feed the fresh tokens back into the Supabase client
-            const { error: setErr } = await supabase.auth.setSession({
-              access_token: tokens.access_token,
-              refresh_token: tokens.refresh_token,
-            });
-
-            if (!setErr) {
-              // Verify passkey still exists in DB (not revoked)
-              const { data: dbPasskey, error: dbError } = await supabase
-                .from('user_passkeys')
-                .select('id')
-                .eq('credential_id', result.credential.credentialId)
-                .single();
-
-              if (dbError || !dbPasskey) {
-                await supabase.auth.signOut({ scope: 'local' });
-                const { removePasskey } = await import('@/lib/webauthn');
-                removePasskey(result.credential.credentialId);
-                setError('This passkey has been revoked.');
-                controls.start('shake');
-                setIsLoading(false);
-                return;
-              }
-
-              onClose();
-              resetForm();
-              return;
-            }
-          } else {
-            const errBody = await res.json().catch(() => ({}));
-            console.warn('Passkey token exchange failed:', res.status, errBody);
-          }
+        if (loginResult.error) {
+          setError(loginResult.error);
+          controls.start('shake');
+        } else {
+          await refreshUser();
+          onClose();
+          resetForm();
+          return;
         }
-
-        // Fallback: biometric verified but token exchange failed
-        if (result.credential.userEmail) {
-          setEmail(result.credential.userEmail);
-        }
-        setError('Passkey verified, but session expired. Please enter your password.');
       } else {
         setError(result.error || 'Passkey authentication failed.');
         controls.start('shake');
@@ -328,18 +415,17 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     setError('');
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
+      const token = getStoredToken();
       
-      if (!user || !session?.refresh_token) {
+      if (!token || !user) {
         throw new Error('No active session. Please log in first.');
       }
 
       const userEmail = user.email || email;
-      const userName = user.user_metadata?.first_name || email;
+      const userName = user.display_name || email;
       
       const { registerPasskey } = await import('@/lib/webauthn');
-      const result = await registerPasskey(user.id, userEmail, userName, session.refresh_token);
+      const result = await registerPasskey(user.id, userEmail, userName, token);
       
       if (result.success) {
         onClose();
@@ -569,36 +655,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     </form>
   );
 
-  const renderVerifyEmailForm = () => (
-    <div className="space-y-6 text-center py-4">
-      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Mail className="w-8 h-8 text-primary" />
-      </div>
-      
-      <h3 className="text-title-md font-bold text-foreground">Check your email</h3>
-      
-      <p className="text-body-md text-muted-foreground">
-        We've sent a confirmation link to <span className="font-semibold text-foreground">{email}</span>. 
-        Please click the link in that email to activate your account.
-      </p>
-
-      <div className="pt-4">
-        <button
-          type="button"
-          onClick={() => switchMode('login')}
-          className="w-full py-4 text-center text-body-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors"
-        >
-          ← Back to Login
-        </button>
-      </div>
-    </div>
-  );
-
   const getHeaderText = () => {
     switch (mode) {
       case 'login': return { title: 'Welcome Back', subtitle: 'Sign in to continue your journey' };
       case 'signup': return { title: 'Create Account', subtitle: 'Join us and get started' };
-      case 'verify-email': return { title: 'Email Sent', subtitle: 'Awaiting confirmation' };
       case 'passkey-setup': return { title: 'Enable Passkey', subtitle: 'Login securely without a password' };
     }
   };
@@ -674,9 +734,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                     transition={SPRING_BOUNCY}
                     className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-container mb-4"
                   >
-                    {mode === 'verify-email' ? (
-                      <KeyRound className="w-8 h-8 text-primary" />
-                    ) : mode === 'passkey-setup' ? (
+                    {mode === 'passkey-setup' ? (
                       <Fingerprint className="w-8 h-8 text-primary" />
                     ) : (
                       <Sparkles className="w-8 h-8 text-primary" />
@@ -742,8 +800,6 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                   >
                     {mode === 'login' && renderLoginForm()}
                     {mode === 'signup' && renderSignUpForm()}
-                    {mode === 'verify-email' && renderVerifyEmailForm()}
-                    
                     {mode === 'passkey-setup' && (
                       <div className="space-y-3">
                         {error && (

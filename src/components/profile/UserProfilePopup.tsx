@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { getStoredToken, updateProfile, getUserSessions } from '@/lib/auth';
 import {
   X,
   LogOut,
@@ -27,15 +28,12 @@ interface UserProfilePopupProps {
 }
 
 export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
-  const { user, session, signOut } = useAuth();
+  const { user, signOut, refreshUser } = useAuth();
 
-  const metadata = user?.user_metadata || {};
-  const initialFirstName = metadata.first_name || '';
-  const initialLastName = metadata.last_name || '';
+  const initialName = user?.display_name || '';
 
   const [isEditingName, setIsEditingName] = useState(false);
-  const [editFirstName, setEditFirstName] = useState(initialFirstName);
-  const [editLastName, setEditLastName] = useState(initialLastName);
+  const [editName, setEditName] = useState(initialName);
   const [isSaving, setIsSaving] = useState(false);
   const [showTheme, setShowTheme] = useState(true);
   const [passkeyStatus, setPasskeyStatus] = useState('');
@@ -59,14 +57,8 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
     setIsFetchingDevices(true);
     const fetchDevices = async () => {
       try {
-        const { data, error } = await supabase
-          .from('user_devices')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .order('last_active_at', { ascending: false });
-        if (error) throw error;
-        setDbDevices(data || []);
+        const sessions = await getUserSessions();
+        setDbDevices(sessions || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -92,16 +84,9 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
       .channel('profile-devices-rt')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'user_devices', filter: `user_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'app_sessions', filter: `user_id=eq.${user.id}` },
         () => {
-          // Re-fetch active devices on any change
-          supabase
-            .from('user_devices')
-            .select('*')
-            .eq('user_id', user!.id)
-            .eq('is_active', true)
-            .order('last_active_at', { ascending: false })
-            .then(({ data }) => setDbDevices(data || []));
+          getUserSessions().then(s => setDbDevices(s || []));
         }
       )
       .subscribe();
@@ -114,34 +99,28 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
 
   if (!user) return null;
 
-  const joinDate = new Date(user.created_at).toLocaleDateString('en-US', {
+  const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
-  });
+  }) : '';
 
-  // Generate a fallback avatar if none exists
-  const avatarUrl = metadata.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(initialFirstName || user.email || 'U')}&background=random`;
-  const fullName = [metadata.first_name, metadata.last_name].filter(Boolean).join(' ') || user.email || 'Anonymous';
+  const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`;
+  const fullName = user.display_name || user.email || 'Anonymous';
 
   // ==========================================
   // Profile Editing
   // ==========================================
   const startEditName = () => {
-    setEditFirstName(metadata.first_name || '');
-    setEditLastName(metadata.last_name || '');
+    setEditName(user.display_name || '');
     setIsEditingName(true);
   };
 
   const saveName = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          first_name: editFirstName,
-          last_name: editLastName,
-        }
-      });
-      if (error) throw error;
+      const result = await updateProfile(editName || undefined);
+      if (result.error) throw new Error(result.error);
+      await refreshUser();
       setIsEditingName(false);
     } catch (err) {
       console.error('Error updating name:', err);
@@ -154,8 +133,8 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
   // Passkey Registration
   // ==========================================
   const registerNewPasskey = async () => {
-    // Need refresh token to ensure seamless login later
-    if (!session?.refresh_token) {
+    const token = getStoredToken();
+    if (!token) {
       setPasskeyStatus('Session expired. Please log in again.');
       setTimeout(() => setPasskeyStatus(''), 4000);
       return;
@@ -173,7 +152,7 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
         user.id,
         user.email || '',
         fullName,
-        session.refresh_token
+        token
       );
 
       if (result.success) {
@@ -208,12 +187,12 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
     } catch (err) {
       console.error('Failed to revoke device', err);
       // refetch on error
-      const { data } = await supabase.from('user_devices').select('*').eq('user_id', user.id).eq('is_active', true);
-      setDbDevices(data || []);
+      const sessions = await getUserSessions();
+      setDbDevices(sessions || []);
     }
   };
 
-  const provider = user.app_metadata?.provider || 'Email / Password';
+  const provider = user.provider || 'email';
 
   return (
     <AnimatePresence>
@@ -273,20 +252,12 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
                   <div className="flex-1">
                     {isEditingName ? (
                       <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <input
-                            value={editFirstName}
-                            onChange={(e) => setEditFirstName(e.target.value)}
-                            placeholder="First name"
-                            className="flex-1 px-3 py-1.5 text-body-md bg-surface-variant border border-outline/30 rounded-lg text-foreground outline-none focus:border-primary"
-                          />
-                          <input
-                            value={editLastName}
-                            onChange={(e) => setEditLastName(e.target.value)}
-                            placeholder="Last name"
-                            className="flex-1 px-3 py-1.5 text-body-md bg-surface-variant border border-outline/30 rounded-lg text-foreground outline-none focus:border-primary"
-                          />
-                        </div>
+                        <input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="Display name"
+                          className="px-3 py-1.5 text-body-md bg-surface-variant border border-outline/30 rounded-lg text-foreground outline-none focus:border-primary"
+                        />
                         <div className="flex gap-2">
                           <motion.button
                             onClick={saveName}

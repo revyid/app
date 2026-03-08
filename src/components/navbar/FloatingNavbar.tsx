@@ -203,8 +203,8 @@ export function FloatingNavbar({
           >
             {isSignedIn && user ? (
               <img 
-                src={user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.user_metadata?.first_name || user.email || 'U')}&background=random`} 
-                alt={user.user_metadata?.first_name || 'User'}
+                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`} 
+                alt={user.display_name || 'User'}
                 className="w-full h-full object-cover"
               />
             ) : (

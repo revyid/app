@@ -169,13 +169,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Merge builtin profiles with any user-added profiles from localStorage
   const [profiles, setProfiles] = useState<ThemeColorProfile[]>(() => {
+    // Clear stale profiles from old system that used different IDs
+    const storedProfileId = localStorage.getItem('colorProfileId');
+    if (storedProfileId === 'default') {
+      localStorage.setItem('colorProfileId', builtinProfiles[0]?.id || 'material-theme');
+    }
+    
     try {
       const stored = localStorage.getItem('themeProfiles');
       if (stored) {
         const userProfiles = JSON.parse(stored) as ThemeColorProfile[];
         // Merge: builtins first, then user additions that don't conflict
         const builtinIds = new Set(builtinProfiles.map(p => p.id));
-        const extras = userProfiles.filter(p => !builtinIds.has(p.id));
+        // Also filter out old 'default' profile from localStorage
+        const extras = userProfiles.filter(p => !builtinIds.has(p.id) && p.id !== 'default');
         return [...builtinProfiles, ...extras];
       }
     } catch { /* ignore */ }

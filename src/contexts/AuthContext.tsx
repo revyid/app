@@ -1,7 +1,14 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
-import { getDeviceInfo, updateStoredRefreshToken } from '@/lib/webauthn';
+import { getDeviceInfo } from '@/lib/webauthn';
+import {
+  validateSession,
+  logout as authLogout,
+  updateSessionDevice,
+  getStoredToken,
+  clearToken,
+  type AppUser,
+} from '@/lib/auth';
 
 // ─── Persistent Device ID ───────────────────────────────────────────
 function getDeviceId(): string {
@@ -24,51 +31,58 @@ const DEVICE_ID = typeof window !== 'undefined' ? getDeviceId() : 'unknown';
 
 // ─── Context Type ───────────────────────────────────────────────────
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AppUser | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   isLoading: true,
   signOut: async () => {},
+  refreshUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 // ─── Provider ───────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Use a ref for "is signing out" to prevent re-entrant signOut calls
   const signingOut = useRef(false);
-  // Track the current user id in a ref so callbacks always have the latest
-  const userRef = useRef<User | null>(null);
 
-  // Keep userRef in sync
-  useEffect(() => { userRef.current = user; }, [user]);
+  // Validate session on mount and refresh user data
+  const refreshUser = useCallback(async () => {
+    const token = getStoredToken();
+    if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
 
-  // ─── Sign Out (stable reference via useCallback) ────────────────
+    const result = await validateSession(token);
+    if (result.user) {
+      setUser(result.user);
+
+      // Update device info for this session
+      const { browser_name, device_name } = getDeviceInfo();
+      updateSessionDevice(DEVICE_ID, device_name, browser_name);
+    } else {
+      // Session invalid — clear it
+      clearToken();
+      setUser(null);
+    }
+    setIsLoading(false);
+  }, []);
+
+  // Sign out
   const signOut = useCallback(async () => {
-    if (signingOut.current) return; // Prevent double-signout loops
+    if (signingOut.current) return;
     signingOut.current = true;
     try {
-      // Mark device inactive (use ref for latest user)
-      if (userRef.current) {
-        await supabase.from('user_devices')
-          .update({ is_active: false })
-          .eq('device_id', DEVICE_ID);
-      }
-      // CRITICAL: Use scope 'local' — NOT the default 'global'!
-      // 'global' revokes ALL refresh tokens on the server, which kills
-      // the refresh token stored in passkeys. With 'local', we only
-      // clear this browser's session, keeping passkey tokens alive.
-      await supabase.auth.signOut({ scope: 'local' });
+      await authLogout();
+      setUser(null);
     } catch (err) {
       console.error('Error signing out:', err);
     } finally {
@@ -76,102 +90,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ─── Device Tracking (completely separate from auth state) ──────
+  // On mount: validate stored session
   useEffect(() => {
-    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+    refreshUser();
+  }, [refreshUser]);
 
-    // Called whenever Supabase fires an auth event
-    const onAuthChange = async (_event: string, currentSession: Session | null) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
+  // Listen for remote session revocation via realtime
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!user || !token) return;
 
-      if (currentSession?.user) {
-        // Always upsert with is_active = true on any auth event.
-        // This re-activates a previously revoked device on re-login.
-        const { browser_name, device_name } = getDeviceInfo();
-        await supabase.from('user_devices').upsert(
-          {
-            device_id: DEVICE_ID,
-            user_id: currentSession.user.id,
-            device_name,
-            browser_name,
-            is_active: true,
-            last_active_at: new Date().toISOString(),
-          },
-          { onConflict: 'device_id' }
-        );
-
-        // Keep passkey refresh tokens up-to-date.
-        // Supabase rotates tokens on every refresh — if we don't sync,
-        // the passkey login will fail with a stale token and ask for password.
-        if (currentSession.refresh_token) {
-          updateStoredRefreshToken(currentSession.user.id, currentSession.refresh_token);
+    // Listen for changes to app_sessions where our token matches
+    const channel = supabase
+      .channel(`session-revoke-${DEVICE_ID}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'app_sessions',
+          filter: `token=eq.${token}`,
+        },
+        (payload) => {
+          if (payload.new?.is_active === false) {
+            console.warn('[Auth] Session revoked remotely → signing out');
+            clearToken();
+            setUser(null);
+          }
         }
-
-        // Start listening for remote revocation (only once)
-        if (!realtimeChannel) {
-          realtimeChannel = supabase
-            .channel(`device-revoke-${DEVICE_ID}`)
-            .on(
-              'postgres_changes',
-              {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'user_devices',
-                filter: `device_id=eq.${DEVICE_ID}`,
-              },
-              (payload) => {
-                if (payload.new?.is_active === false) {
-                  console.warn('[Auth] Device revoked remotely → signing out');
-                  signOut();
-                }
-              }
-            )
-            .subscribe();
-        }
-      } else {
-        // Logged out → tear down realtime
-        if (realtimeChannel) {
-          supabase.removeChannel(realtimeChannel);
-          realtimeChannel = null;
-        }
-      }
-    };
-
-    // 0. Fix malformed double-hash from previous OAuth redirects
-    //    e.g. /##access_token=... → /#access_token=...
-    if (window.location.hash.startsWith('##')) {
-      const fixed = window.location.hash.substring(1); // Remove the extra #
-      window.history.replaceState(null, '', window.location.pathname + fixed);
-      // Force Supabase to re-detect the fixed hash by reloading the client
-    }
-
-    // 1. Hydrate from existing session
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      onAuthChange('INITIAL_SESSION', s);
-    });
-
-    // 2. Listen for future auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, s) => {
-        onAuthChange(event, s);
-
-        // Clean the URL after Supabase processes the OAuth hash fragment
-        if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
-          window.history.replaceState(null, '', window.location.pathname);
-        }
-      }
-    );
+      )
+      .subscribe();
 
     return () => {
-      subscription.unsubscribe();
-      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      supabase.removeChannel(channel);
     };
-  }, [signOut]);
+  }, [user]);
+
+  // Listen for storage changes (multi-tab sync)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'app_session_token') {
+        if (!e.newValue) {
+          setUser(null);
+        } else {
+          refreshUser();
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [refreshUser]);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

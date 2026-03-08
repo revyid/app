@@ -42,9 +42,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }
   const isSignedIn = !!user;
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fullName = user?.user_metadata?.first_name 
-    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
-    : user?.email || 'Anonymous';
+  const fullName = user?.display_name || user?.email || 'Anonymous';
 
   // Command items
   const commands: CommandItem[] = useMemo(() => [
