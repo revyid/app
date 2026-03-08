@@ -53,6 +53,23 @@ function saveCredentials(credentials: StoredCredential[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(credentials));
 }
 
+/**
+ * Update the stored refresh token for all passkeys belonging to a user.
+ * This MUST be called on every session change (TOKEN_REFRESHED, SIGNED_IN)
+ * because Supabase rotates refresh tokens — the old one becomes invalid.
+ */
+export function updateStoredRefreshToken(userId: string, newRefreshToken: string): void {
+  const creds = getStoredCredentials();
+  let changed = false;
+  for (const cred of creds) {
+    if (cred.userId === userId && cred.supabaseRefreshToken !== newRefreshToken) {
+      cred.supabaseRefreshToken = newRefreshToken;
+      changed = true;
+    }
+  }
+  if (changed) saveCredentials(creds);
+}
+
 // Utility: parse basic device info from user-agent
 export function getDeviceInfo() {
   const ua = navigator.userAgent;

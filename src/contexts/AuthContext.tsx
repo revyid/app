@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
-import { getDeviceInfo } from '@/lib/webauthn';
+import { getDeviceInfo, updateStoredRefreshToken } from '@/lib/webauthn';
 
 // ─── Persistent Device ID ───────────────────────────────────────────
 function getDeviceId(): string {
@@ -97,6 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
           { onConflict: 'device_id' }
         );
+
+        // Keep passkey refresh tokens up-to-date.
+        // Supabase rotates tokens on every refresh — if we don't sync,
+        // the passkey login will fail with a stale token and ask for password.
+        if (currentSession.refresh_token) {
+          updateStoredRefreshToken(currentSession.user.id, currentSession.refresh_token);
+        }
 
         // Start listening for remote revocation (only once)
         if (!realtimeChannel) {
