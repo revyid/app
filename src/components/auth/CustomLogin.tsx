@@ -238,7 +238,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
     try {
       if (!isWebAuthnSupported()) {
-        setError('Passkeys require a secure context (HTTPS) or localhost. Please check your URL.');
+        setError('Passkeys require a secure context (HTTPS) or localhost.');
         controls.start('shake');
         return;
       }
@@ -249,44 +249,64 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         const refreshToken = result.credential.supabaseRefreshToken;
 
         if (refreshToken) {
-          // Use refreshSession — designed specifically for exchanging a refresh token
-          const { data, error } = await supabase.auth.refreshSession({
-            refresh_token: refreshToken,
+          // Bypass Supabase SDK — call the Auth REST API directly.
+          // The SDK's refreshSession() has internal state issues that cause
+          // silent failures. Direct fetch is 100% reliable.
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+          const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ refresh_token: refreshToken }),
           });
 
-          if (!error && data.session) {
-            // Verify passkey still exists in database (has not been revoked)
-            const { data: dbPasskey, error: dbError } = await supabase
-              .from('user_passkeys')
-              .select('id')
-              .eq('credential_id', result.credential.credentialId)
-              .single();
+          if (res.ok) {
+            const tokens = await res.json();
 
-            if (dbError || !dbPasskey) {
-               await supabase.auth.signOut();
-               const { removePasskey } = await import('@/lib/webauthn');
-               removePasskey(result.credential.credentialId);
-               
-               setError('This passkey has been revoked from another device.');
-               controls.start('shake');
-               setIsLoading(false);
-               return;
+            // Feed the fresh tokens back into the Supabase client
+            const { error: setErr } = await supabase.auth.setSession({
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+            });
+
+            if (!setErr) {
+              // Verify passkey still exists in DB (not revoked)
+              const { data: dbPasskey, error: dbError } = await supabase
+                .from('user_passkeys')
+                .select('id')
+                .eq('credential_id', result.credential.credentialId)
+                .single();
+
+              if (dbError || !dbPasskey) {
+                await supabase.auth.signOut({ scope: 'local' });
+                const { removePasskey } = await import('@/lib/webauthn');
+                removePasskey(result.credential.credentialId);
+                setError('This passkey has been revoked.');
+                controls.start('shake');
+                setIsLoading(false);
+                return;
+              }
+
+              onClose();
+              resetForm();
+              return;
             }
-
-            onClose();
-            resetForm();
-            return;
+          } else {
+            const errBody = await res.json().catch(() => ({}));
+            console.warn('Passkey token exchange failed:', res.status, errBody);
           }
-
-          // Token was stale/revoked — fall through to fallback
-          console.warn('Passkey refresh token failed:', error?.message);
         }
-        
-        // Fallback: biometric verified but no valid session could be established
+
+        // Fallback: biometric verified but token exchange failed
         if (result.credential.userEmail) {
           setEmail(result.credential.userEmail);
         }
-        setError('Passkey verified, but session expired. Please enter your password to sign in.');
+        setError('Passkey verified, but session expired. Please enter your password.');
       } else {
         setError(result.error || 'Passkey authentication failed.');
         controls.start('shake');

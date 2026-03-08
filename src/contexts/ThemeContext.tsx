@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import defaultThemeData from '@/themes/material-theme.json';
+
+// ==========================================
+// Auto-discover all theme files from src/themes/
+// Vite's import.meta.glob resolves at build time — no manual imports needed.
+// Just drop a new .json file in src/themes/ and it appears automatically.
+// ==========================================
+const themeModules = import.meta.glob('@/themes/*.json', { eager: true }) as Record<string, { default: any }>;
 
 // ==========================================
 // HEX → HSL Utility
@@ -98,7 +104,6 @@ interface ThemeContextType {
   effectiveTheme: EffectiveTheme;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
-  // Color profile management
   colorProfileId: string;
   setColorProfile: (id: string) => void;
   availableProfiles: ThemeColorProfile[];
@@ -107,19 +112,46 @@ interface ThemeContextType {
 }
 
 // ==========================================
-// Default Profile from material-theme.json
+// Auto-build profiles from discovered themes
 // ==========================================
 
-const defaultProfile: ThemeColorProfile = {
-  id: 'default',
-  name: 'Blue Calm',
-  description: defaultThemeData.description || 'Default Material You theme',
-  seed: defaultThemeData.seed,
-  schemes: {
-    light: defaultThemeData.schemes.light,
-    dark: defaultThemeData.schemes.dark,
-  },
-  palettes: defaultThemeData.palettes,
+function buildProfilesFromGlob(): ThemeColorProfile[] {
+  const profiles: ThemeColorProfile[] = [];
+
+  for (const [path, mod] of Object.entries(themeModules)) {
+    const data = (mod as any).default || mod;
+    // Derive a stable ID from the filename: /src/themes/material-theme.json → material-theme
+    const filename = path.split('/').pop()?.replace('.json', '') || 'unknown';
+
+    profiles.push({
+      id: filename,
+      name: data.name || filename.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+      description: data.description || '',
+      seed: data.seed || '#000000',
+      schemes: {
+        light: data.schemes?.light || {},
+        dark: data.schemes?.dark || {},
+      },
+      palettes: data.palettes,
+    });
+  }
+
+  // Sort: put the default theme first
+  profiles.sort((a, b) => {
+    if (a.id === 'material-theme') return -1;
+    if (b.id === 'material-theme') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return profiles;
+}
+
+const builtinProfiles = buildProfilesFromGlob();
+const defaultProfile = builtinProfiles[0] || {
+  id: 'fallback',
+  name: 'Default',
+  seed: '#6750A4',
+  schemes: { light: {}, dark: {} },
 };
 
 // ==========================================
@@ -135,21 +167,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('light');
 
+  // Merge builtin profiles with any user-added profiles from localStorage
   const [profiles, setProfiles] = useState<ThemeColorProfile[]>(() => {
     try {
       const stored = localStorage.getItem('themeProfiles');
       if (stored) {
-        const parsed = JSON.parse(stored) as ThemeColorProfile[];
-        // Ensure default profile is always present
-        const hasDefault = parsed.some(p => p.id === 'default');
-        return hasDefault ? parsed : [defaultProfile, ...parsed];
+        const userProfiles = JSON.parse(stored) as ThemeColorProfile[];
+        // Merge: builtins first, then user additions that don't conflict
+        const builtinIds = new Set(builtinProfiles.map(p => p.id));
+        const extras = userProfiles.filter(p => !builtinIds.has(p.id));
+        return [...builtinProfiles, ...extras];
       }
     } catch { /* ignore */ }
-    return [defaultProfile];
+    return builtinProfiles;
   });
 
   const [colorProfileId, setColorProfileIdState] = useState<string>(() => {
-    return localStorage.getItem('colorProfileId') || 'default';
+    return localStorage.getItem('colorProfileId') || defaultProfile.id;
   });
 
   const currentProfile = profiles.find(p => p.id === colorProfileId) || defaultProfile;
@@ -197,9 +231,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme, currentProfile, applyColors]);
 
-  // Persist profiles to localStorage
+  // Persist user-added profiles (not builtins) to localStorage
   useEffect(() => {
-    localStorage.setItem('themeProfiles', JSON.stringify(profiles));
+    const builtinIds = new Set(builtinProfiles.map(p => p.id));
+    const userOnly = profiles.filter(p => !builtinIds.has(p.id));
+    localStorage.setItem('themeProfiles', JSON.stringify(userOnly));
   }, [profiles]);
 
   const setColorProfile = useCallback((id: string) => {
@@ -211,7 +247,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setProfiles(prev => {
       const existing = prev.findIndex(p => p.id === profile.id);
       if (existing >= 0) {
-        // Update existing profile
         const updated = [...prev];
         updated[existing] = profile;
         return updated;
