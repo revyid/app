@@ -64,7 +64,6 @@ function App() {
           <FloatingNavbar 
             onChatClick={() => setIsChatOpen(true)}
             onCommandPaletteClick={() => setIsCommandPaletteOpen(true)}
-            onLoginClick={() => setIsLoginOpen(true)}
             onProfileClick={() => setIsProfileOpen(true)}
           />
 

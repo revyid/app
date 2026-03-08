@@ -17,7 +17,6 @@ import { IconButton } from '@/components/ui/button';
 interface FloatingNavbarProps {
   onChatClick: () => void;
   onCommandPaletteClick: () => void;
-  onLoginClick: () => void;
   onProfileClick: () => void;
   unreadCount?: number;
 }
@@ -31,7 +30,6 @@ const navItems = [
 export function FloatingNavbar({ 
   onChatClick, 
   onCommandPaletteClick, 
-  onLoginClick,
   onProfileClick,
   unreadCount = 0 
 }: FloatingNavbarProps) {
