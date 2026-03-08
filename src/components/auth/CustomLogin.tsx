@@ -246,14 +246,15 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       const result = await authenticateWithPasskey();
 
       if (result.success && result.credential) {
-        if (result.credential.supabaseRefreshToken) {
-          // Exchange refresh token for a full session
-          const { error } = await supabase.auth.setSession({
-            access_token: '',
-            refresh_token: result.credential.supabaseRefreshToken,
+        const refreshToken = result.credential.supabaseRefreshToken;
+
+        if (refreshToken) {
+          // Use refreshSession — designed specifically for exchanging a refresh token
+          const { data, error } = await supabase.auth.refreshSession({
+            refresh_token: refreshToken,
           });
 
-          if (!error) {
+          if (!error && data.session) {
             // Verify passkey still exists in database (has not been revoked)
             const { data: dbPasskey, error: dbError } = await supabase
               .from('user_passkeys')
@@ -276,26 +277,16 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
             resetForm();
             return;
           }
+
+          // Token was stale/revoked — fall through to fallback
+          console.warn('Passkey refresh token failed:', error?.message);
         }
         
-        // Fallback: Passkey verified but no refresh token available
-        // (e.g., after logout cleared localStorage, or DB-only lookup)
-        // Try to find the user's email from the user_passkeys join
+        // Fallback: biometric verified but no valid session could be established
         if (result.credential.userEmail) {
           setEmail(result.credential.userEmail);
-        } else if (result.credential.userId) {
-          // Look up the user's email from the database
-          const { data: userData } = await supabase
-            .from('user_passkeys')
-            .select('user_id')
-            .eq('credential_id', result.credential.credentialId)
-            .single();
-          if (userData) {
-            // We have the user_id but need the email from auth — can't query auth.users directly
-            // Just prompt them to type their email
-          }
         }
-        setError('Passkey verified! Please enter your password to complete sign in.');
+        setError('Passkey verified, but session expired. Please enter your password to sign in.');
       } else {
         setError(result.error || 'Passkey authentication failed.');
         controls.start('shake');
