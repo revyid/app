@@ -1,0 +1,23 @@
+import { motion } from 'framer-motion';
+import { SectionLabel } from '@/components/shared/SectionLabel';
+import { languages } from '@/data/portfolio-data';
+import { itemVariants } from '@/lib/animations';
+
+export function LanguagesSection() {
+  return (
+    <motion.div variants={itemVariants} className="mb-6">
+      <SectionLabel text="Languages" />
+      <div className="space-y-2">
+        {languages.map((language) => (
+          <div 
+            key={language.name}
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300"
+          >
+            <span className="text-lg">{language.flag}</span>
+            <span>{language.name}</span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}

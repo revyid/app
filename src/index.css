@@ -1,0 +1,577 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   MATERIAL YOU v4 COLOR SYSTEM (High Contrast)
+   Pixel OS / Gopix Dynamic Color Tokens
+   ============================================ */
+
+@layer base {
+  :root {
+    /* Primary - Vibrant Lime Green (Gopix accent, high contrast) */
+    --primary: 82 90% 48%;
+    --primary-foreground: 0 0% 5%;
+    --primary-container: 82 75% 88%;
+    --primary-container-foreground: 82 100% 12%;
+    
+    /* Secondary - Deep Blue */
+    --secondary: 220 55% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-container: 220 40% 92%;
+    --secondary-container-foreground: 220 60% 18%;
+    
+    /* Tertiary - Vivid Magenta (Gopix accent) */
+    --tertiary: 300 80% 58%;
+    --tertiary-foreground: 0 0% 100%;
+    --tertiary-container: 300 55% 92%;
+    --tertiary-container-foreground: 300 85% 22%;
+    
+    /* Surface & Background - Clean, minimal */
+    --surface: 240 5% 97%;
+    --surface-variant: 220 15% 93%;
+    --surface-variant-foreground: 220 15% 30%;
+    --surface-tint: 82 90% 48%;
+    --surface-dim: 220 10% 90%;
+    --surface-bright: 0 0% 100%;
+    --surface-container-lowest: 0 0% 100%;
+    --surface-container-low: 240 5% 96%;
+    --surface-container: 240 5% 94%;
+    --surface-container-high: 240 5% 91%;
+    --surface-container-highest: 240 5% 88%;
+    
+    --background: 240 5% 97%;
+    --foreground: 240 10% 8%;
+    
+    /* Error */
+    --error: 0 80% 50%;
+    --error-foreground: 0 0% 100%;
+    --error-container: 0 75% 92%;
+    --error-container-foreground: 0 85% 22%;
+    
+    /* Success */
+    --success: 145 70% 40%;
+    --success-foreground: 0 0% 100%;
+    --success-container: 145 55% 92%;
+    --success-container-foreground: 145 75% 18%;
+    
+    /* Warning */
+    --warning: 38 95% 50%;
+    --warning-foreground: 0 0% 5%;
+    --warning-container: 38 85% 92%;
+    --warning-container-foreground: 38 95% 18%;
+    
+    /* Neutral */
+    --neutral: 220 10% 40%;
+    --neutral-foreground: 0 0% 100%;
+    --neutral-variant: 220 10% 87%;
+    --neutral-variant-foreground: 220 15% 25%;
+    
+    /* Outline - sharper delineation */
+    --outline: 220 10% 70%;
+    --outline-variant: 220 10% 88%;
+    
+    /* Shadcn compatibility */
+    --border: 220 10% 70%;
+    --input: 220 15% 93%;
+    --ring: 82 90% 48%;
+    --radius: 1rem;
+    
+    /* Card */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 8%;
+    
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 8%;
+    
+    /* Muted */
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 40%;
+    
+    /* Accent */
+    --accent: 300 80% 58%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Destructive */
+    --destructive: 0 80% 50%;
+    --destructive-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    /* Primary - Vibrant Lime Green */
+    --primary: 82 85% 55%;
+    --primary-foreground: 0 0% 5%;
+    --primary-container: 82 35% 20%;
+    --primary-container-foreground: 82 75% 88%;
+    
+    /* Secondary - Blue */
+    --secondary: 220 45% 68%;
+    --secondary-foreground: 0 0% 5%;
+    --secondary-container: 220 30% 20%;
+    --secondary-container-foreground: 220 40% 92%;
+    
+    /* Tertiary - Magenta */
+    --tertiary: 300 75% 72%;
+    --tertiary-foreground: 0 0% 5%;
+    --tertiary-container: 300 30% 20%;
+    --tertiary-container-foreground: 300 55% 92%;
+    
+    /* Surface & Background - Deep, rich darks */
+    --surface: 240 8% 7%;
+    --surface-variant: 240 6% 14%;
+    --surface-variant-foreground: 220 10% 72%;
+    --surface-tint: 82 85% 55%;
+    --surface-dim: 240 8% 5%;
+    --surface-bright: 240 6% 18%;
+    --surface-container-lowest: 240 8% 3%;
+    --surface-container-low: 240 8% 8%;
+    --surface-container: 240 7% 11%;
+    --surface-container-high: 240 6% 14%;
+    --surface-container-highest: 240 5% 17%;
+    
+    --background: 240 8% 5%;
+    --foreground: 0 0% 96%;
+    
+    /* Error */
+    --error: 0 75% 68%;
+    --error-foreground: 0 0% 5%;
+    --error-container: 0 30% 20%;
+    --error-container-foreground: 0 75% 92%;
+    
+    /* Success */
+    --success: 145 65% 58%;
+    --success-foreground: 0 0% 5%;
+    --success-container: 145 25% 18%;
+    --success-container-foreground: 145 55% 92%;
+    
+    /* Warning */
+    --warning: 38 92% 62%;
+    --warning-foreground: 0 0% 5%;
+    --warning-container: 38 25% 18%;
+    --warning-container-foreground: 38 85% 92%;
+    
+    /* Neutral */
+    --neutral: 220 10% 62%;
+    --neutral-foreground: 0 0% 5%;
+    --neutral-variant: 240 5% 22%;
+    --neutral-variant-foreground: 220 10% 78%;
+    
+    /* Outline */
+    --outline: 240 5% 28%;
+    --outline-variant: 240 5% 18%;
+    
+    /* Shadcn compatibility */
+    --border: 240 5% 18%;
+    --input: 240 6% 14%;
+    --ring: 82 85% 55%;
+    
+    /* Card */
+    --card: 240 7% 11%;
+    --card-foreground: 0 0% 96%;
+    
+    /* Popover */
+    --popover: 240 7% 11%;
+    --popover-foreground: 0 0% 96%;
+    
+    /* Muted */
+    --muted: 240 6% 14%;
+    --muted-foreground: 220 10% 62%;
+    
+    /* Accent */
+    --accent: 300 75% 72%;
+    --accent-foreground: 0 0% 5%;
+    
+    /* Destructive */
+    --destructive: 0 75% 68%;
+    --destructive-foreground: 0 0% 5%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: clip;
+  }
+}
+
+/* ============================================
+   SQUIRCLE (Superellipse) SHAPES
+   Custom clip-path based Pixel OS squircles
+   ============================================ */
+
+@layer utilities {
+  /* Squircle shapes using superellipse approximation */
+  .squircle-sm {
+    clip-path: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' rx='12' ry='12'/%3E%3C/svg%3E");
+    border-radius: 12px;
+    -webkit-mask-image: paint(squircle);
+  }
+
+  .squircle-md {
+    border-radius: 20px;
+    /* Superellipse approximation via layered radii */
+    --squircle-radius: 20px;
+  }
+
+  .squircle-lg {
+    border-radius: 28px;
+    --squircle-radius: 28px;
+  }
+
+  .squircle-xl {
+    border-radius: 36px;
+    --squircle-radius: 36px;
+  }
+
+  /* Smooth superellipse mask - CSS approach */
+  .squircle-sm,
+  .squircle-md,
+  .squircle-lg,
+  .squircle-xl {
+    /* Use a continuous curvature border-radius that mimics iOS/Pixel superellipse */
+    mask-image: radial-gradient(white, white);
+    -webkit-mask-image: radial-gradient(white, white);
+    outline: none;
+  }
+
+  /* True squircle for cards that need the Pixel OS feel */
+  .squircle-card {
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .squircle-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    mask-image: radial-gradient(white, white);
+    -webkit-mask-image: radial-gradient(white, white);
+  }
+}
+
+/* ============================================
+   EDGE-TO-EDGE & FLUID SURFACES
+   ============================================ */
+
+@layer utilities {
+  .edge-to-edge {
+    margin-left: calc(-1 * var(--container-padding, 1rem));
+    margin-right: calc(-1 * var(--container-padding, 1rem));
+    width: calc(100% + 2 * var(--container-padding, 1rem));
+  }
+
+  .edge-to-edge-full {
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+  }
+
+  .fluid-surface {
+    @apply squircle-card;
+    @apply bg-surface;
+    transition: transform 0.1s, box-shadow 0.2s;
+    will-change: transform;
+  }
+
+  .fluid-surface-elevated {
+    @apply fluid-surface;
+    box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.08), 0px 4px 12px 2px rgba(0,0,0,0.04);
+  }
+}
+
+@layer utilities {
+  /* Frosted Glass */
+  .glass {
+    @apply bg-white/80 dark:bg-black/60 backdrop-blur-[20px];
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-[20px];
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  
+  .glass-frosted {
+    @apply bg-white/10 dark:bg-black/30 backdrop-blur-[40px];
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* M3 Elevation Utilities */
+  .elevation-0 { box-shadow: none; }
+  .elevation-1 { box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 1px 3px 1px rgba(0,0,0,0.15); }
+  .elevation-2 { box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15); }
+  .elevation-3 { box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.3), 0px 4px 8px 3px rgba(0,0,0,0.15); }
+  .elevation-4 { box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.3), 0px 6px 10px 4px rgba(0,0,0,0.15); }
+  .elevation-5 { box-shadow: 0px 4px 4px 0px rgba(0,0,0,0.3), 0px 8px 12px 6px rgba(0,0,0,0.15); }
+
+  
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--tertiary)));
+  }
+  
+  /* Line Clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Custom Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--outline));
+    border-radius: 99px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--neutral));
+  }
+  
+  /* Hide Scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
+
+
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+  20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up-fade {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   COMPONENT STYLES
+   ============================================ */
+
+/* M3 Button Styles — with squircle rounding */
+.btn-filled {
+  @apply px-6 py-3 font-medium;
+  border-radius: 24px;
+  @apply bg-primary text-primary-foreground;
+  @apply active:scale-95;
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.btn-filled:hover {
+  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15);
+}
+
+.btn-outlined {
+  @apply px-6 py-3 font-medium;
+  border-radius: 24px;
+  @apply border-2 border-outline bg-transparent text-foreground;
+  @apply active:scale-95;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-outlined:hover {
+  @apply bg-surface-variant;
+}
+
+.btn-tonal {
+  @apply px-6 py-3 font-medium;
+  border-radius: 24px;
+  @apply bg-secondary-container text-secondary-container-foreground;
+  @apply active:scale-95;
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.btn-tonal:hover {
+  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 1px 3px 1px rgba(0,0,0,0.15);
+}
+
+.btn-elevated {
+  @apply px-6 py-3 font-medium;
+  border-radius: 24px;
+  @apply bg-surface text-foreground elevation-1;
+  @apply active:scale-95;
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.btn-elevated:hover {
+  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15);
+}
+
+/* M3 Card Styles — squircle */
+.card-filled {
+  @apply squircle-card bg-surface p-6;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.card-filled:hover {
+  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15);
+}
+
+.card-outlined {
+  @apply squircle-card border border-outline bg-surface p-6;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card-outlined:hover {
+  border-color: hsl(var(--primary));
+  box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 1px 3px 1px rgba(0,0,0,0.15);
+}
+
+.card-elevated {
+  @apply squircle-card bg-surface p-6 elevation-1;
+  transition: box-shadow 0.2s;
+}
+
+.card-elevated:hover {
+  box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.3), 0px 4px 8px 3px rgba(0,0,0,0.15);
+}
+
+/* M3 Input Styles */
+.input-outlined {
+  @apply px-4 py-3 bg-transparent;
+  border-radius: 16px;
+  border: 2px solid hsl(var(--outline));
+  @apply text-foreground placeholder:text-muted-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/20;
+  transition: border-color 0.2s;
+}
+
+.input-outlined:focus {
+  border-color: hsl(var(--primary));
+}
+
+.input-filled {
+  @apply px-4 py-3 bg-surface-variant border-0;
+  border-radius: 16px;
+  @apply text-foreground placeholder:text-muted-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/20;
+  transition: background-color 0.2s;
+}
+
+.input-filled:focus {
+  @apply bg-surface;
+}
+
+/* Floating Label Input */
+.floating-label-input {
+  @apply relative;
+}
+
+.floating-label-input input {
+  @apply px-4 py-3 pt-6 bg-transparent w-full;
+  border-radius: 16px;
+  border: 2px solid hsl(var(--outline));
+  @apply text-foreground placeholder:opacity-0;
+  transition: border-color 0.2s;
+}
+
+.floating-label-input input:focus {
+  border-color: hsl(var(--primary));
+  outline: none;
+}
+
+.floating-label-input label {
+  @apply absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground;
+  @apply pointer-events-none;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.floating-label-input input:focus + label,
+.floating-label-input input:not(:placeholder-shown) + label {
+  @apply top-2.5 text-xs;
+  color: hsl(var(--primary));
+  transform: translateY(0);
+}
+
+/* Bottom Sheet Handle */
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 99px;
+  @apply bg-outline mx-auto mb-4;
+}
+
+/* Focus Ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary/30 text-foreground;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
