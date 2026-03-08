@@ -64,7 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .update({ is_active: false })
           .eq('device_id', DEVICE_ID);
       }
-      await supabase.auth.signOut();
+      // CRITICAL: Use scope 'local' — NOT the default 'global'!
+      // 'global' revokes ALL refresh tokens on the server, which kills
+      // the refresh token stored in passkeys. With 'local', we only
+      // clear this browser's session, keeping passkey tokens alive.
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (err) {
       console.error('Error signing out:', err);
     } finally {

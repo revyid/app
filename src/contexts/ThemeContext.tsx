@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import defaultThemeData from '../../material-theme.json';
+import defaultThemeData from '@/themes/material-theme.json';
 
 // ==========================================
 // HEX → HSL Utility
