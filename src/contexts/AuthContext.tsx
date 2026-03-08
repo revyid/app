@@ -1,26 +1,28 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { getDeviceInfo } from '@/lib/webauthn';
 
-// Helper to get or create a persistent device ID for this browser
-function getDeviceId() {
+// ─── Persistent Device ID ───────────────────────────────────────────
+function getDeviceId(): string {
   if (typeof window === 'undefined') return 'unknown';
-  let deviceId = localStorage.getItem('resumx_device_id');
-  if (!deviceId) {
-    if (window.crypto && window.crypto.randomUUID) {
-       deviceId = window.crypto.randomUUID();
+  let id = localStorage.getItem('resumx_device_id');
+  if (!id) {
+    if (window.crypto?.randomUUID) {
+      id = window.crypto.randomUUID();
     } else {
-       // Fallback for non-secure contexts (HTTP on mobile LAN)
-       deviceId = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c: any) =>
-          (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-       );
+      id = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c: any) =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
     }
-    localStorage.setItem('resumx_device_id', deviceId);
+    localStorage.setItem('resumx_device_id', id);
   }
-  return deviceId;
+  return id;
 }
 
+const DEVICE_ID = typeof window !== 'undefined' ? getDeviceId() : 'unknown';
+
+// ─── Context Type ───────────────────────────────────────────────────
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -37,46 +39,80 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+// ─── Provider ───────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    let deviceSubscription: ReturnType<typeof supabase.channel> | null = null;
-    const deviceId = getDeviceId();
+  // Use a ref for "is signing out" to prevent re-entrant signOut calls
+  const signingOut = useRef(false);
+  // Track the current user id in a ref so callbacks always have the latest
+  const userRef = useRef<User | null>(null);
 
-    const handleSessionChange = async (currentSession: Session | null) => {
+  // Keep userRef in sync
+  useEffect(() => { userRef.current = user; }, [user]);
+
+  // ─── Sign Out (stable reference via useCallback) ────────────────
+  const signOut = useCallback(async () => {
+    if (signingOut.current) return; // Prevent double-signout loops
+    signingOut.current = true;
+    try {
+      // Mark device inactive (use ref for latest user)
+      if (userRef.current) {
+        await supabase.from('user_devices')
+          .update({ is_active: false })
+          .eq('device_id', DEVICE_ID);
+      }
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error signing out:', err);
+    } finally {
+      signingOut.current = false;
+    }
+  }, []);
+
+  // ─── Device Tracking (completely separate from auth state) ──────
+  useEffect(() => {
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    // Called whenever Supabase fires an auth event
+    const onAuthChange = async (_event: string, currentSession: Session | null) => {
       setSession(currentSession);
-      setUser(currentSession?.user || null);
+      setUser(currentSession?.user ?? null);
       setIsLoading(false);
 
       if (currentSession?.user) {
-        // FIRST: Upsert device info — this re-activates the device if it was revoked.
-        // This ensures that a user who logs in again after being force-logged-out
-        // will have their device record set back to is_active=true.
+        // Always upsert with is_active = true on any auth event.
+        // This re-activates a previously revoked device on re-login.
         const { browser_name, device_name } = getDeviceInfo();
         await supabase.from('user_devices').upsert(
           {
-            device_id: deviceId,
+            device_id: DEVICE_ID,
             user_id: currentSession.user.id,
             device_name,
             browser_name,
             is_active: true,
-            last_active_at: new Date().toISOString()
+            last_active_at: new Date().toISOString(),
           },
           { onConflict: 'device_id' }
         );
 
-        // Listen for remote device revocation (real-time)
-        if (!deviceSubscription) {
-          deviceSubscription = supabase.channel(`public:user_devices:device_id=eq.${deviceId}`)
+        // Start listening for remote revocation (only once)
+        if (!realtimeChannel) {
+          realtimeChannel = supabase
+            .channel(`device-revoke-${DEVICE_ID}`)
             .on(
               'postgres_changes',
-              { event: 'UPDATE', schema: 'public', table: 'user_devices', filter: `device_id=eq.${deviceId}` },
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'user_devices',
+                filter: `device_id=eq.${DEVICE_ID}`,
+              },
               (payload) => {
-                if (payload.new && payload.new.is_active === false) {
-                  console.warn('Device session was revoked remotely. Signing out.');
+                if (payload.new?.is_active === false) {
+                  console.warn('[Auth] Device revoked remotely → signing out');
                   signOut();
                 }
               }
@@ -84,50 +120,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .subscribe();
         }
       } else {
-        // Cleanup subscription on logout
-        if (deviceSubscription) {
-          supabase.removeChannel(deviceSubscription);
-          deviceSubscription = null;
+        // Logged out → tear down realtime
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+          realtimeChannel = null;
         }
       }
     };
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) console.error('Error getting session:', error);
-      handleSessionChange(session);
+    // 1. Hydrate from existing session
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      onAuthChange('INITIAL_SESSION', s);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
-        handleSessionChange(currentSession);
-      }
-    );
+    // 2. Listen for future auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(onAuthChange);
 
     return () => {
       subscription.unsubscribe();
-      if (deviceSubscription) supabase.removeChannel(deviceSubscription);
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
-  }, []);
-
-  const signOut = async () => {
-    try {
-      // Mark current device as inactive before signing out
-      const deviceId = getDeviceId();
-      if (user) {
-        await supabase.from('user_devices')
-          .update({ is_active: false })
-          .eq('device_id', deviceId);
-      }
-      // Sign out natively — but keep device_id in localStorage!
-      // We MUST keep it so the user can re-login with the same device record
-      // and reactivate it, instead of creating orphaned revoked records.
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+  }, [signOut]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signOut }}>
