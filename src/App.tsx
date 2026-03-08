@@ -55,8 +55,8 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24" style={{ '--container-padding': '1rem' } as React.CSSProperties}>
             {/* Main Layout */}
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-14">
-              <Sidebar />
-              <MainContent />
+              <Sidebar ready={!isLoading} />
+              <MainContent ready={!isLoading} />
             </div>
           </div>
 
@@ -96,6 +96,10 @@ function App() {
           <UserProfilePopup 
             isOpen={isProfileOpen}
             onClose={() => setIsProfileOpen(false)}
+            onLoginRequest={() => {
+              setIsProfileOpen(false);
+              setIsLoginOpen(true);
+            }}
           />
           </div>
         </LayoutGroup>

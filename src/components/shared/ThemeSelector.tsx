@@ -39,12 +39,16 @@ function ProfileCard({
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       transition={SPRING_BOUNCY}
-      className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-2xl border-2 transition-colors duration-150 text-left ${
+      className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-colors duration-150 text-left overflow-hidden ${
         isActive
-          ? 'border-primary bg-primary/8'
-          : 'border-outline/30 bg-surface-variant/30 hover:border-outline/60'
+          ? 'bg-secondary-container text-secondary-container-foreground'
+          : 'bg-surface hover:bg-surface-variant text-foreground'
       }`}
     >
+      {/* State Layer */}
+      <div className="absolute inset-0 state-layer pointer-events-none" />
+      {/* Ripple Effect */}
+      <div className="absolute inset-0 m3-ripple pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
       {/* Color Preview */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <ColorDot color={primaryColor} />
@@ -105,26 +109,36 @@ export function ThemeSelector({ className = '' }: ThemeSelectorProps) {
           <Palette className="w-3.5 h-3.5" />
           Appearance
         </h4>
-        <div className="flex gap-2">
+        <div className="flex bg-surface-variant rounded-full p-1 border border-outline/20">
           {themeOptions.map((option) => {
             const Icon = option.icon;
             const isActive = theme === option.id;
             return (
-              <motion.button
+              <button
                 key={option.id}
                 onClick={() => setTheme(option.id)}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={SPRING_SNAPPY}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 transition-colors duration-150 ${
+                className={`relative flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full transition-colors duration-150 overflow-hidden focus-ring ${
                   isActive
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-outline/30 text-muted-foreground hover:border-outline/60 hover:text-foreground'
+                    ? 'text-secondary-container-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span className="text-label-sm font-medium">{option.label}</span>
-              </motion.button>
+                {/* Background Indicator for Active State */}
+                {isActive && (
+                  <motion.div
+                    layoutId="theme-active-indicator"
+                    className="absolute inset-0 bg-secondary-container -z-10 rounded-full"
+                    transition={SPRING_SNAPPY}
+                  />
+                )}
+                {/* State Layer */}
+                <div className="absolute inset-0 state-layer pointer-events-none z-0" />
+                {/* Ripple Effect */}
+                <div className="absolute inset-0 m3-ripple pointer-events-none opacity-0 hover:opacity-100 transition-opacity z-0" />
+
+                <Icon className="w-4 h-4 z-10 relative" />
+                <span className="text-label-sm font-medium z-10 relative">{option.label}</span>
+              </button>
             );
           })}
         </div>

@@ -5,14 +5,14 @@ import {
   Briefcase, 
   GraduationCap, 
   MessageCircle, 
-  Sun, 
-  Moon,
   Command,
   User
 } from 'lucide-react';
+import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { floatingNavbar, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_DEFAULT } from '@/lib/motion-presets';
+import { IconButton } from '@/components/ui/button';
 
 interface FloatingNavbarProps {
   onChatClick: () => void;
@@ -87,12 +87,12 @@ export function FloatingNavbar({
                 key={item.id}
                 layout
                 onClick={() => handleNavClick(item.id)}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                className={`relative flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 flex-shrink-0 ${
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 flex-shrink-0 z-10 ${
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-surface-variant text-muted-foreground hover:text-foreground'
+                    ? 'text-secondary-container-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {isHome ? (
@@ -120,11 +120,10 @@ export function FloatingNavbar({
                   )}
                 </AnimatePresence>
                 
-                {/* Active Indicator — shared layout animation */}
                 {isActive && (
                   <motion.div
                     layoutId="navActiveIndicator"
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary"
+                    className="absolute inset-0 rounded-full bg-secondary-container -z-10"
                     transition={SPRING_SNAPPY}
                   />
                 )}
@@ -136,26 +135,24 @@ export function FloatingNavbar({
           <div className="w-px h-6 sm:h-8 bg-outline/40 mx-0.5 sm:mx-1" />
 
           {/* Command Palette Button */}
-          <motion.button
+          <IconButton
             onClick={onCommandPaletteClick}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            transition={SPRING_BOUNCY}
-            className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant text-muted-foreground hover:text-foreground transition-colors duration-150 flex-shrink-0"
+            variant="ghost"
             title="Command Palette (⌘K)"
+            className="flex-shrink-0"
           >
-            <Command className="w-4 h-4 sm:w-5 sm:h-5" />
-          </motion.button>
+            <Command className="w-5 h-5" />
+          </IconButton>
 
           {/* Chat Button */}
-          <motion.button
-            onClick={onChatClick}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            transition={SPRING_BOUNCY}
-            className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant text-muted-foreground hover:text-foreground transition-colors duration-150 flex-shrink-0"
-          >
-            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="relative flex-shrink-0">
+            <IconButton
+              onClick={onChatClick}
+              variant="ghost"
+              className="relative"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </IconButton>
             <AnimatePresence>
               {unreadCount > 0 && (
                 <motion.span
@@ -163,43 +160,28 @@ export function FloatingNavbar({
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   transition={SPRING_BOUNCY}
-                  className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-tertiary text-tertiary-foreground text-label-sm font-bold rounded-full flex items-center justify-center"
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-tertiary text-tertiary-foreground text-label-sm font-bold rounded-full flex items-center justify-center pointer-events-none z-10"
                 >
                   {unreadCount}
                 </motion.span>
               )}
             </AnimatePresence>
-          </motion.button>
+          </div>
 
           {/* Theme Toggle */}
-          <motion.button
+          <IconButton
             onClick={toggleTheme}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            transition={SPRING_BOUNCY}
-            className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant text-muted-foreground hover:text-foreground transition-colors duration-150 flex-shrink-0"
+            variant="ghost"
             aria-label="Toggle theme"
+            className="flex-shrink-0"
           >
-            <motion.div
-              initial={false}
-              animate={{ rotate: effectiveTheme === 'dark' ? 180 : 0 }}
-              transition={SPRING_BOUNCY}
-            >
-              {effectiveTheme === 'light' ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </motion.div>
-          </motion.button>
+            <ThemeToggleIcon theme={effectiveTheme} />
+          </IconButton>
 
           {/* User Avatar / Login */}
-          <motion.button
-            onClick={isSignedIn ? onProfileClick : onLoginClick}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            transition={SPRING_BOUNCY}
-            className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0"
+          <button
+            onClick={onProfileClick}
+            className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-1"
           >
             {isSignedIn && user ? (
               <img 
@@ -212,7 +194,7 @@ export function FloatingNavbar({
                 <User className="w-5 h-5" />
               </div>
             )}
-          </motion.button>
+          </button>
         </motion.div>
       </div>
     </motion.nav>

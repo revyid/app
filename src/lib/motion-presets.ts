@@ -655,6 +655,102 @@ export const viewportPartial = {
 };
 
 // ============================================
+// IDLE / AMBIENT ANIMATIONS
+// Subtle looping animations for elements at rest
+// ============================================
+
+/** Gentle floating — cards, avatars, decorative elements */
+export const idleFloat: Variants = {
+  idle: {
+    y: [0, -6, 0],
+    transition: {
+      duration: 4,
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatType: 'loop' as const,
+    },
+  },
+};
+
+/** Slow breathing scale — profile images, icons, badges */
+export const idleBreathe: Variants = {
+  idle: {
+    scale: [1, 1.03, 1],
+    transition: {
+      duration: 3,
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatType: 'loop' as const,
+    },
+  },
+};
+
+/** Subtle rotation wobble — decorative shapes, loading indicators */
+export const idleWobble: Variants = {
+  idle: {
+    rotate: [0, 2, -2, 0],
+    transition: {
+      duration: 5,
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatType: 'loop' as const,
+    },
+  },
+};
+
+/** Pulse glow — status indicators, active badges */
+export const idlePulseGlow: Variants = {
+  idle: {
+    opacity: [0.6, 1, 0.6],
+    scale: [1, 1.15, 1],
+    transition: {
+      duration: 2,
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatType: 'loop' as const,
+    },
+  },
+};
+
+/** Shimmer sweep — skeleton loaders, shiny surfaces */
+export const idleShimmer = {
+  x: ['-100%', '100%'],
+  transition: {
+    duration: 2,
+    ease: 'easeInOut',
+    repeat: Infinity,
+    repeatDelay: 3,
+  },
+};
+
+/** Staggered float — for groups of items that float at different speeds */
+export const idleFloatStaggered = (index: number): Variants => ({
+  idle: {
+    y: [0, -4 - (index % 3) * 2, 0],
+    transition: {
+      duration: 3 + (index % 3),
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatType: 'loop' as const,
+      delay: index * 0.2,
+    },
+  },
+});
+
+/** M3 Shape morph idle — for decorative elements that subtly change shape */
+export const idleShapeMorph: Variants = {
+  idle: {
+    borderRadius: ['24px', '28px', '20px', '24px'],
+    transition: {
+      duration: 6,
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatType: 'loop' as const,
+    },
+  },
+};
+
+// ============================================
 // LEGACY COMPAT — deprecated easing exports
 // These are kept for any components that still
 // reference them, but prefer spring configs above

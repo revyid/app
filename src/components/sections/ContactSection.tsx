@@ -3,6 +3,12 @@ import { Mail, Globe, Phone } from 'lucide-react';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { contactInfo } from '@/data/portfolio-data';
 import { itemVariants } from '@/lib/animations';
+import { SPRING_BOUNCY } from '@/lib/motion-presets';
+
+/**
+ * M3 Contact Section — compact list style
+ * Uses M3 color tokens and icon button hover effects
+ */
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Mail,
@@ -18,14 +24,19 @@ export function ContactSection() {
         {contactInfo.map((contact) => {
           const IconComponent = iconMap[contact.icon] || Mail;
           return (
-            <a
+            <motion.a
               key={contact.id}
               href={contact.href}
-              className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_BOUNCY}
+              className="flex items-center gap-3 text-body-sm text-foreground hover:text-primary transition-colors duration-200 py-1"
             >
-              <IconComponent className="w-4 h-4 text-gray-500 dark:text-zinc-500" />
+              <div className="w-8 h-8 rounded-[8px] bg-surface-variant flex items-center justify-center">
+                <IconComponent className="w-4 h-4 text-muted-foreground" />
+              </div>
               <span>{contact.label}</span>
-            </a>
+            </motion.a>
           );
         })}
       </div>

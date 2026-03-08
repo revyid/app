@@ -8,12 +8,17 @@ import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { ContactFullSection } from '@/components/sections/ContactFullSection';
 import { Footer } from '@/components/sections/Footer';
 
-export function MainContent() {
+interface MainContentProps {
+  /** When true, animations are allowed to play (preloader finished) */
+  ready?: boolean;
+}
+
+export function MainContent({ ready = true }: MainContentProps) {
   return (
     <motion.main
       variants={materialFadeThrough}
       initial="initial"
-      animate="animate"
+      animate={ready ? 'animate' : 'initial'}
       className="flex-1 min-w-0"
     >
       <div id="home">

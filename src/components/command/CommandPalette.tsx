@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { bottomSheetContent, modalBackdrop, SPRING_SNAPPY } from '@/lib/motion-presets';
+import { bottomSheetContent, modalBackdrop } from '@/lib/motion-presets';
+import { IconButton } from '@/components/ui/button';
 
 interface CommandItem {
   id: string;
@@ -243,25 +244,26 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }
               </div>
 
               {/* Search Header */}
-              <div className="flex items-center gap-3 px-5 py-3 border-b border-outline/20">
-                <Search className="w-5 h-5 text-muted-foreground" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search commands..."
-                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-body-md"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={SPRING_SNAPPY}
+              <div className="flex items-center gap-3 px-3 py-3 border-b border-outline/20">
+                <div className="flex-1 relative flex items-center">
+                  <Search className="absolute left-4 w-5 h-5 text-muted-foreground pointer-events-none z-10" />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search commands..."
+                    className="w-full input-filled text-body-lg"
+                    style={{ paddingLeft: '3rem' }}
+                  />
+                </div>
+                <IconButton
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors"
+                  variant="ghost"
+                  className="rounded-lg text-muted-foreground"
                 >
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </motion.button>
+                  <X className="w-5 h-5" />
+                </IconButton>
               </div>
 
               {/* Results */}
@@ -287,12 +289,10 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }
                         const currentIndex = globalIndex++;
 
                         return (
-                          <motion.button
+                          <button
                             key={item.id}
                             onClick={item.action}
                             onMouseEnter={() => setSelectedIndex(currentIndex)}
-                            whileTap={{ scale: 0.98 }}
-                            transition={SPRING_SNAPPY}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-colors duration-100 ${
                               isSelected
                                 ? 'bg-primary text-primary-foreground'
@@ -332,7 +332,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }
                             {isSelected && (
                               <ArrowRight className="w-4 h-4" />
                             )}
-                          </motion.button>
+                          </button>
                         );
                       })}
                     </div>

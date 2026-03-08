@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, LogIn, Trash2 } from 'lucide-react';
+import { X, Send, User, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchMessages, sendMessage, subscribeToMessages, deleteMessage, type ChatMessage } from '@/lib/supabase';
-import { bottomSheetContent, modalBackdrop, SPRING_BOUNCY, SPRING_SNAPPY, SPRING_DEFAULT } from '@/lib/motion-presets';
+import { bottomSheetContent, modalBackdrop, SPRING_DEFAULT } from '@/lib/motion-presets';
 import { M3LinearProgressIndicator } from '@/components/shared/M3LinearProgressIndicator';
+import { Button, IconButton } from '@/components/ui/button';
 
 interface ChatPopupProps {
   isOpen: boolean;
@@ -119,41 +120,18 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
                     </p>
                   </div>
                 </div>
-                <motion.button
+                <IconButton
                   onClick={onClose}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={SPRING_SNAPPY}
-                  className="w-9 h-9 rounded-full bg-surface-variant flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  variant="ghost"
+                  className="rounded-full bg-surface-variant hover:bg-surface-variant/80"
                 >
-                  <X className="w-4 h-4" />
-                </motion.button>
+                  <X className="w-5 h-5" />
+                </IconButton>
               </div>
 
               {/* Messages */}
               <div className="h-80 overflow-y-auto p-4 space-y-4 scrollbar-thin">
-                {!isSignedIn ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                    <div className="w-16 h-16 rounded-2xl bg-surface-variant flex items-center justify-center mb-4">
-                      <LogIn className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-muted-foreground mb-4 text-body-md">
-                      Sign in to join the conversation
-                    </p>
-                    <motion.button 
-                      onClick={() => {
-                        onClose();
-                        onLoginRequest();
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={SPRING_BOUNCY}
-                      className="px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-full"
-                    >
-                      Sign In
-                    </motion.button>
-                  </div>
-                ) : messages.length === 0 ? (
+                {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <p className="text-muted-foreground text-body-md">
                       No messages yet. Be the first to say hello!
@@ -183,19 +161,19 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
                               {msg.user_name}
                             </p>
                             {isOwn && (
-                              <motion.button
+                              <IconButton
                                 onClick={() => {
                                   if (user?.id) {
                                     deleteMessage(msg.id, user.id);
                                   }
                                 }}
-                                whileHover={{ scale: 1.2 }}
-                                whileTap={{ scale: 0.8 }}
-                                className="text-muted-foreground/50 hover:text-error transition-colors p-1"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="text-muted-foreground/50 hover:text-error h-6 w-6"
                                 title="Delete message"
                               >
-                                <Trash2 className="w-3 h-3" />
-                              </motion.button>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </IconButton>
                             )}
                           </div>
                           <div
@@ -216,44 +194,58 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
               </div>
 
               {/* Input */}
-              {isSignedIn && (
-                <div className="border-t border-outline/20 relative">
-                  {/* M3 Disjoint Loading Indicator for message sending */}
-                  <AnimatePresence>
-                    {isLoading && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute top-0 left-0 right-0 -mt-1 z-10"
-                      >
-                        <M3LinearProgressIndicator color="primary" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  
-                  <div className="p-4 flex gap-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Type a message..."
-                      className="flex-1 px-4 py-3 bg-surface-variant border border-outline/30 rounded-full text-body-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                    />
-                    <motion.button
-                      onClick={handleSend}
-                      disabled={!newMessage.trim() || isLoading}
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.92 }}
-                      transition={SPRING_BOUNCY}
-                      className="w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              <div className="border-t border-outline/20 relative">
+                {!isSignedIn ? (
+                  <div className="p-4 flex items-center justify-between bg-surface-variant/30">
+                    <p className="text-body-sm text-muted-foreground mr-4">Sign in to join the conversation</p>
+                    <Button 
+                      onClick={() => {
+                        onClose();
+                        onLoginRequest();
+                      }}
+                      size="sm"
+                      className="rounded-full flex-shrink-0"
                     >
-                      <Send className="w-4 h-4" />
-                    </motion.button>
+                      Sign In
+                    </Button>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <>
+                    {/* M3 Disjoint Loading Indicator for message sending */}
+                    <AnimatePresence>
+                      {isLoading && (
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute top-0 left-0 right-0 -mt-1 z-10"
+                        >
+                          <M3LinearProgressIndicator color="primary" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    
+                    <div className="p-4 flex gap-2">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type a message..."
+                        className="flex-1 px-4 py-3 bg-surface-variant border border-outline/30 rounded-full text-body-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                      />
+                      <IconButton
+                        onClick={handleSend}
+                        disabled={!newMessage.trim() || isLoading}
+                        variant="filled"
+                        className="rounded-full w-12 h-12"
+                      >
+                        <Send className="w-5 h-5 ml-1" />
+                      </IconButton>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
         </>

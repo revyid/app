@@ -21,6 +21,7 @@ import {
   getStoredToken,
 } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button, IconButton } from '@/components/ui/button';
 import {
   bottomSheetContent,
   modalBackdrop,
@@ -481,20 +482,18 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         icon={Lock}
         autoComplete="current-password"
         rightElement={
-          <motion.button
+          <IconButton
             type="button"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            transition={SPRING_SNAPPY}
+            variant="ghost"
             onClick={() => setShowPassword(!showPassword)}
-            className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors"
+            className="text-muted-foreground mr-1"
           >
             {showPassword ? (
-              <EyeOff className="w-5 h-5 text-muted-foreground" />
+              <EyeOff className="w-5 h-5" />
             ) : (
-              <Eye className="w-5 h-5 text-muted-foreground" />
+              <Eye className="w-5 h-5" />
             )}
-          </motion.button>
+          </IconButton>
         }
       />
 
@@ -515,13 +514,11 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         )}
       </AnimatePresence>
 
-      <motion.button
+      <Button
         type="submit"
         disabled={isLoading}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        transition={SPRING_BOUNCY}
-        className="w-full flex items-center justify-center gap-2 py-4 squircle-md bg-primary text-primary-foreground font-medium text-body-md shadow-elevation-1 hover:shadow-elevation-2 disabled:opacity-50 disabled:cursor-not-allowed transition-shadow duration-200"
+        className="w-full flex items-center justify-center gap-2"
+        size="lg"
       >
         {isLoading ? (
           <motion.div
@@ -535,7 +532,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
             <ArrowRight className="w-5 h-5" />
           </>
         )}
-      </motion.button>
+      </Button>
     </form>
   );
 
@@ -597,20 +594,18 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         icon={Lock}
         autoComplete="new-password"
         rightElement={
-          <motion.button
+          <IconButton
             type="button"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            transition={SPRING_SNAPPY}
+            variant="ghost"
             onClick={() => setShowPassword(!showPassword)}
-            className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors"
+            className="text-muted-foreground mr-1"
           >
             {showPassword ? (
-              <EyeOff className="w-5 h-5 text-muted-foreground" />
+              <EyeOff className="w-5 h-5" />
             ) : (
-              <Eye className="w-5 h-5 text-muted-foreground" />
+              <Eye className="w-5 h-5" />
             )}
-          </motion.button>
+          </IconButton>
         }
       />
 
@@ -631,13 +626,11 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         )}
       </AnimatePresence>
 
-      <motion.button
+      <Button
         type="submit"
         disabled={isLoading}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        transition={SPRING_BOUNCY}
-        className="w-full flex items-center justify-center gap-2 py-4 squircle-md bg-primary text-primary-foreground font-medium text-body-md shadow-elevation-1 hover:shadow-elevation-2 disabled:opacity-50 disabled:cursor-not-allowed transition-shadow duration-200"
+        className="w-full flex items-center justify-center gap-2"
+        size="lg"
       >
         {isLoading ? (
           <motion.div
@@ -651,7 +644,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
             <ArrowRight className="w-5 h-5" />
           </>
         )}
-      </motion.button>
+      </Button>
     </form>
   );
 

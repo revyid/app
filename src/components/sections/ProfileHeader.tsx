@@ -4,14 +4,23 @@ import { profileData } from '@/data/portfolio-data';
 import { itemVariants } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
+/**
+ * M3 Profile Header
+ * Features:
+ * - Avatar with smooth CSS idle animation (no choppy keyframes)
+ * - Verified badge with smooth pulse
+ * - M3 typography tokens
+ */
+
 export function ProfileHeader() {
   return (
     <motion.div variants={itemVariants} className="mb-6">
-      {/* Profile Image — Squircle */}
+      {/* Profile Image — smooth CSS idle animation */}
       <motion.div 
         whileHover={{ scale: 1.05 }}
         transition={SPRING_BOUNCY}
-        className="w-20 h-20 squircle-lg overflow-hidden mb-4 bg-surface-variant"
+        className="w-20 h-20 overflow-hidden mb-4 bg-surface-variant ring-2 ring-primary/20 idle-breathe"
+        style={{ borderRadius: '20px' }}
       >
         <img 
           src={profileData.image} 
@@ -30,6 +39,7 @@ export function ProfileHeader() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={SPRING_BOUNCY}
+            className="idle-pulse-glow"
           >
             <BadgeCheck className="w-5 h-5 text-primary fill-primary" />
           </motion.div>

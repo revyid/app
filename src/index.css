@@ -463,7 +463,7 @@
 
 /* M3 Card Styles — squircle */
 .card-filled {
-  @apply squircle-card bg-surface p-6;
+  @apply squircle-card bg-surface p-6 border border-outline/20;
   transition: transform 0.15s, box-shadow 0.2s;
 }
 
@@ -505,7 +505,9 @@
 }
 
 .input-filled {
-  @apply px-4 py-3 bg-surface-variant border-0;
+  @apply py-3 bg-surface-variant border-0;
+  padding-left: 1rem;
+  padding-right: 1rem;
   border-radius: 16px;
   @apply text-foreground placeholder:text-muted-foreground;
   @apply focus:outline-none focus:ring-2 focus:ring-primary/20;
@@ -563,6 +565,53 @@
 /* Selection */
 ::selection {
   @apply bg-primary/30 text-foreground;
+}
+
+/* ============================================
+   IDLE / AMBIENT CSS ANIMATIONS
+   GPU-accelerated for silky smooth 60fps.
+   Use these classes instead of JS keyframe arrays.
+   ============================================ */
+
+@keyframes idle-float-kf {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes idle-breathe-kf {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+
+@keyframes idle-pulse-glow-kf {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes idle-shape-morph-kf {
+  0%, 100% { border-radius: 20px; }
+  33% { border-radius: 24px; }
+  66% { border-radius: 18px; }
+}
+
+.idle-float {
+  animation: idle-float-kf 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.idle-breathe {
+  animation: idle-breathe-kf 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.idle-pulse-glow {
+  animation: idle-pulse-glow-kf 2.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.idle-shape-morph {
+  animation: idle-shape-morph-kf 6s ease-in-out infinite;
+  will-change: border-radius;
 }
 
 /* Reduced Motion */

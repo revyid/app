@@ -1,17 +1,17 @@
 import type { Project, Experience, Education, Testimonial, Contact, SocialLink, Language } from '@/types';
 
 export const profileData = {
-  name: 'Henry Walker',
+  name: 'Revy',
   pronouns: 'he/him',
   verified: true,
-  image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-  about: 'Brooklyn based full-stack software engineer with 7+ years of experience in building web and mobile apps.',
+  image: 'https://scontent.fdjb3-1.fna.fbcdn.net/v/t1.15752-9/643924451_1568867384412033_1644968556563542165_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=fc17b8&efg=eyJxZV9ncm91cHMiOlsiaWdkX2Jlc3RfZWZmb3J0X2ltYWdlOmNvbnRyb2wiXX0%3D&_nc_ohc=EnT2yurEBykQ7kNvwGa2RWR&_nc_oc=AdnEKoxUJMz3LJ6CP5JTHsVUubuCAAMI4dCBT2q9zhWTIYDjKzg5PJRHu5gWiVB8VJA&_nc_zt=23&_nc_ht=scontent.fdjb3-1.fna&_nc_ss=8&oh=03_Q7cD4wGbnq5XFiQKnZZTUqmQeQrRU5TtA6XE02qKxye2_JtUkQ&oe=69D48A14',
+  about: 'I am a full-stack software engineer with 2+ years of experience in building web and mobile apps.',
 };
 
 export const contactInfo = [
-  { id: '1', type: 'email', label: 'hey@henrywalker.com', value: 'hey@henrywalker.com', href: 'mailto:hey@henrywalker.com', icon: 'Mail' },
-  { id: '2', type: 'website', label: 'henrywalker.com', value: 'henrywalker.com', href: 'https://henrywalker.com', icon: 'Globe' },
-  { id: '3', type: 'phone', label: '555-1234-5678', value: '555-1234-5678', href: 'tel:555-1234-5678', icon: 'Phone' },
+  { id: '1', type: 'email', label: 'revy8k@gmail.com', value: 'revy8k@gmail.com', href: 'mailto:revy8k@gmail.com', icon: 'Mail' },
+  { id: '2', type: 'website', label: 'revy.my.id', value: 'revy.my.id', href: 'https://revy.my.id', icon: 'Globe' },
+  { id: '3', type: 'phone', label: '+62 812-3456-7890', value: '+62 812-3456-7890', href: 'tel:+6281234567890', icon: 'Phone' },
 ];
 
 export const skills = [
@@ -29,56 +29,60 @@ export const skills = [
 ];
 
 export const languages: Language[] = [
+  { name: 'Indonesia', flag: '🇮🇩' },
   { name: 'English', flag: '🇬🇧' },
-  { name: 'German', flag: '🇩🇪' },
-  { name: 'French', flag: '🇫🇷' },
-  { name: 'Chinese', flag: '🇨🇳' },
 ];
 
 export const socialLinks: SocialLink[] = [
   { platform: 'X', href: 'https://x.com', icon: 'Twitter' },
   { platform: 'Threads', href: 'https://threads.net', icon: 'AtSign' },
-  { platform: 'Instagram', href: 'https://instagram.com', icon: 'Instagram' },
+  { platform: 'Instagram', href: 'https://instagram.com/revy.id', icon: 'Instagram' },
   { platform: 'LinkedIn', href: 'https://linkedin.com', icon: 'Linkedin' },
-  { platform: 'GitHub', href: 'https://github.com', icon: 'Github' },
+  { platform: 'GitHub', href: 'https://github.com/revyid', icon: 'Github' },
   { platform: 'YouTube', href: 'https://youtube.com', icon: 'Youtube' },
 ];
 
 export const introContent = {
   paragraphs: [
-    "I'm Henry Walker, a product engineer from Brooklyn, New York City. My expertise lies in developing innovative and user-focused products for both web and mobile platforms, where I emphasize intuitive design and robust functionality.",
-    "Holding a Master's degree in Computer Science from the Nova University of Science and Technology, my journey began in a dynamic startup, progressing to lead positions in established tech firms.",
+    "I'm Revy, a software engineer from Jambi, Indonesia. My expertise lies in developing innovative and user-focused products for both web and mobile platforms, where I emphasize intuitive design and robust functionality.",
+    "Holding a Master's degree in Computer Science from the Senior High School 1 Bungo, my journey began in a dynamic startup, progressing to lead positions in established tech firms.",
   ],
 };
 
 export const projects: Project[] = [
   {
     id: '1',
-    title: 'Interactive Data Dashboard',
-    date: 'Jan 24, 2024',
-    role: 'Frontend Lead',
-    category: 'Internal Tools',
-    color: '#FDBA74',
+    title: 'Redeploy',
+    date: 'Feb 24, 2026',
+    role: 'Fullstack Developer',
+    category: 'Developer Tools',
+    color: '#cf00b3ff',
     icon: 'LayoutDashboard',
+    thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+    href: 'https://deploy.revy.my.id',
   },
   {
     id: '2',
-    title: 'Personal Finance Tracker',
+    title: 'Redeploy CLI',
     date: 'Mar 15, 2024',
-    role: 'Frontend Developer',
-    category: 'Fintech',
+    role: 'Backend / CLI Developer',
+    category: 'DevOps Tool',
     color: '#A78BFA',
-    icon: 'Wallet',
+    icon: 'Terminal',
+    thumbnail: 'https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=800&q=80',
+    href: 'https://github.com/revyid/redeploy-cli',
   },
   {
     id: '3',
-    title: 'Collaborative Coding Environment',
+    title: 'IP Geolocation',
     date: 'Jan 12, 2024',
-    role: 'Frontend Developer',
-    category: 'Developer Tools',
+    role: 'Fullstack Developer',
+    category: 'Web Application',
     color: '#86EFAC',
-    icon: 'Code2',
-  },
+    icon: 'Globe',
+    thumbnail: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80',
+    href: 'https://ipgeo.revy.my.id',
+  }
 ];
 
 export const experiences: Experience[] = [

@@ -13,21 +13,22 @@ import {
   Pencil,
   Check,
   Fingerprint,
-  ChevronDown,
-  ChevronUp,
   Trash2,
   MonitorSmartphone,
 } from 'lucide-react';
-import { bottomSheetContent, modalBackdrop, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_DEFAULT } from '@/lib/motion-presets';
+import { bottomSheetContent, modalBackdrop, SPRING_DEFAULT } from '@/lib/motion-presets';
 import { ThemeSelector } from '@/components/shared/ThemeSelector';
+import { Button, IconButton } from '@/components/ui/button';
+import { MorphIcon } from '@/components/ui/morph-icon';
 import { registerPasskey, isWebAuthnSupported, getPasskeysFromDB, revokePasskey, type DBPasskey } from '@/lib/webauthn';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginRequest?: () => void;
 }
 
-export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
+export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfilePopupProps) {
   const { user, signOut, refreshUser } = useAuth();
 
   const initialName = user?.display_name || '';
@@ -97,20 +98,19 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
     };
   }, [user, isOpen]);
 
-  if (!user) return null;
-
-  const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
+  const joinDate = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
   }) : '';
 
-  const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`;
-  const fullName = user.display_name || user.email || 'Anonymous';
+  const avatarUrl = user?.avatar_url || (user ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random` : '');
+  const fullName = user?.display_name || user?.email || 'Guest User';
 
   // ==========================================
   // Profile Editing
   // ==========================================
   const startEditName = () => {
+    if (!user) return;
     setEditName(user.display_name || '');
     setIsEditingName(true);
   };
@@ -145,6 +145,8 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
       setTimeout(() => setPasskeyStatus(''), 4000);
       return;
     }
+
+    if (!user) return;
 
     setPasskeyStatus('Registering...');
     try {
@@ -192,7 +194,7 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
     }
   };
 
-  const provider = user.provider || 'email';
+  const provider = user?.provider || 'email';
 
   return (
     <AnimatePresence>
@@ -225,15 +227,13 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-outline/20">
                 <h3 className="font-semibold text-foreground text-title-sm">Account Settings</h3>
-                <motion.button
+                <IconButton
                   onClick={onClose}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={SPRING_SNAPPY}
-                  className="w-9 h-9 rounded-full bg-surface-variant flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  variant="ghost"
+                  className="rounded-full bg-surface-variant hover:bg-surface-variant/80"
                 >
-                  <X className="w-4 h-4" />
-                </motion.button>
+                  <X className="w-5 h-5" />
+                </IconButton>
               </div>
 
               {/* Profile Header */}
@@ -241,11 +241,17 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
                 <div className="flex items-center gap-4 mb-8">
                   {/* Avatar */}
                   <div className="relative group">
-                    <img
-                      src={avatarUrl}
-                      alt={fullName}
-                      className="w-16 h-16 rounded-full object-cover ring-2 ring-outline/20"
-                    />
+                    {user ? (
+                      <img
+                        src={avatarUrl}
+                        alt={fullName}
+                        className="w-16 h-16 rounded-full object-cover ring-2 ring-outline/20"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-surface-variant text-muted-foreground flex items-center justify-center ring-2 ring-outline/20">
+                        <UserIcon className="w-8 h-8" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Name with edit */}
@@ -259,20 +265,22 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
                           className="px-3 py-1.5 text-body-md bg-surface-variant border border-outline/30 rounded-lg text-foreground outline-none focus:border-primary"
                         />
                         <div className="flex gap-2">
-                          <motion.button
+                          <Button
                             onClick={saveName}
                             disabled={isSaving}
-                            whileTap={{ scale: 0.95 }}
-                            className="flex items-center gap-1 px-3 py-1 text-label-sm bg-primary text-primary-foreground rounded-lg disabled:opacity-50"
+                            variant="filled"
+                            size="sm"
                           >
-                            <Check className="w-3 h-3" /> Save
-                          </motion.button>
-                          <button
+                            <Check className="w-3.5 h-3.5" /> Save
+                          </Button>
+                          <Button
                             onClick={() => setIsEditingName(false)}
-                            className="px-3 py-1 text-label-sm text-muted-foreground hover:text-foreground"
+                            variant="text"
+                            size="sm"
+                            className="text-muted-foreground"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -280,194 +288,213 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
                         <h2 className="text-title-lg font-bold text-foreground">
                           {fullName}
                         </h2>
-                        <motion.button
-                          onClick={startEditName}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="p-1 rounded-lg hover:bg-surface-variant text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </motion.button>
+                        {user && (
+                          <IconButton
+                            onClick={startEditName}
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </IconButton>
+                        )}
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5 text-muted-foreground text-label-md mt-1">
-                      <Mail className="w-3.5 h-3.5" />
-                      {user.email}
-                    </div>
+                    {user ? (
+                      <div className="flex items-center gap-1.5 text-muted-foreground text-label-md mt-1">
+                        <Mail className="w-3.5 h-3.5" />
+                        {user.email}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-muted-foreground text-label-md mt-1">
+                        Not signed in
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  {/* Account Details */}
-                  <div className="space-y-3">
-                    <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
-                      Account Info
-                    </h4>
-                    <div className="p-4 bg-surface-variant/50 rounded-2xl space-y-4 border border-outline/10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
-                          <UserIcon className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-label-sm text-muted-foreground">User ID</p>
-                          <p className="text-body-sm font-mono text-foreground truncate max-w-[200px]">
-                            {user.id}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
-                          <Calendar className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-label-sm text-muted-foreground">Joined</p>
-                          <p className="text-body-sm text-foreground">{joinDate}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
-                          <Key className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-label-sm text-muted-foreground">Sign In Method</p>
-                          <p className="text-body-sm text-foreground capitalize">
-                            {provider}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Active Sessions (Device Tracking) */}
-                  <div className="space-y-3 mt-6">
-                    <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
-                      Active Sessions
-                    </h4>
-                    <div className="p-4 bg-surface-variant/50 rounded-2xl border border-outline/10 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
-                            <MonitorSmartphone className="w-4 h-4" />
+                  {/* User-specific sections */}
+                  {user ? (
+                    <>
+                      {/* Account Details */}
+                      <div className="space-y-3">
+                        <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
+                          Account Info
+                        </h4>
+                        <div className="p-4 bg-surface-variant/50 rounded-2xl space-y-4 border border-outline/10">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
+                              <UserIcon className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-label-sm text-muted-foreground">User ID</p>
+                              <p className="text-body-sm font-mono text-foreground truncate max-w-[200px]">
+                                {user.id}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-body-sm font-medium text-foreground">Logged-in Devices</p>
-                            <p className="text-label-sm text-muted-foreground">
-                              {isFetchingDevices ? 'Loading...' : `${dbDevices.length} active`}
-                            </p>
+
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
+                              <Calendar className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-label-sm text-muted-foreground">Joined</p>
+                              <p className="text-body-sm text-foreground">{joinDate}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
+                              <Key className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-label-sm text-muted-foreground">Sign In Method</p>
+                              <p className="text-body-sm text-foreground capitalize">
+                                {provider}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {dbDevices.length > 0 && (
-                        <div className="space-y-2 mt-2 pt-2 border-t border-outline/10">
-                          {dbDevices.map((dev) => (
-                            <div key={dev.id} className="flex items-center justify-between p-3 rounded-xl bg-surface border border-outline/5">
+                      {/* Active Sessions (Device Tracking) */}
+                      <div className="space-y-3 mt-6">
+                        <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
+                          Active Sessions
+                        </h4>
+                        <div className="p-4 bg-surface-variant/50 rounded-2xl border border-outline/10 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
+                                <MonitorSmartphone className="w-4 h-4" />
+                              </div>
                               <div>
-                                <p className="text-body-sm font-medium text-foreground">{dev.device_name}</p>
-                                <p className="text-label-sm text-muted-foreground flex items-center gap-2">
-                                  <span>{dev.browser_name}</span>
-                                  <span>&bull;</span>
-                                  <span>Last active: {new Date(dev.last_active_at).toLocaleDateString()}</span>
+                                <p className="text-body-sm font-medium text-foreground">Logged-in Devices</p>
+                                <p className="text-label-sm text-muted-foreground">
+                                  {isFetchingDevices ? 'Loading...' : `${dbDevices.length} active`}
                                 </p>
                               </div>
-                              <motion.button
-                                onClick={() => handleRevokeDevice(dev.id)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center text-error hover:bg-error/10 transition-colors"
-                                title="Log Out Device"
-                              >
-                                <LogOut className="w-4 h-4" />
-                              </motion.button>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Passkey Management */}
-                  <div className="space-y-3 mt-6">
-                    <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
-                      Authorized Devices (Passkeys)
-                    </h4>
-                    <div className="p-4 bg-surface-variant/50 rounded-2xl border border-outline/10 space-y-4">
-                      {/* Header Row */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
-                            <Fingerprint className="w-4 h-4" />
                           </div>
-                          <div>
-                            <p className="text-body-sm font-medium text-foreground">Passkeys</p>
-                            <p className="text-label-sm text-muted-foreground">
-                              {isFetchingPasskeys ? 'Loading...' : dbPasskeys.length > 0
-                                ? `${dbPasskeys.length} connected`
-                                : 'None registered'}
-                            </p>
-                          </div>
-                        </div>
-                        <motion.button
-                          onClick={registerNewPasskey}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          transition={SPRING_SNAPPY}
-                          className="px-3 py-1.5 text-label-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
-                        >
-                          Add Device
-                        </motion.button>
-                      </div>
 
-                      {/* Device List */}
-                      {dbPasskeys.length > 0 && (
-                        <div className="space-y-2 mt-2 pt-2 border-t border-outline/10">
-                          {dbPasskeys.map((pk) => (
-                            <div key={pk.id} className="flex items-center justify-between p-3 rounded-xl bg-surface border border-outline/5">
-                              <div>
-                                <p className="text-body-sm font-medium text-foreground">{pk.device_name}</p>
-                                <p className="text-label-sm text-muted-foreground flex items-center gap-2">
-                                  <span>{pk.browser_name}</span>
-                                  {pk.last_used_at && (
-                                    <>
+                          {dbDevices.length > 0 && (
+                            <div className="space-y-2 mt-2 pt-2 border-t border-outline/10">
+                              {dbDevices.map((dev) => (
+                                <div key={dev.id} className="flex items-center justify-between p-3 rounded-xl bg-surface border border-outline/5">
+                                  <div>
+                                    <p className="text-body-sm font-medium text-foreground">{dev.device_name}</p>
+                                    <p className="text-label-sm text-muted-foreground flex items-center gap-2">
+                                      <span>{dev.browser_name}</span>
                                       <span>&bull;</span>
-                                      <span>Last used: {new Date(pk.last_used_at).toLocaleDateString()}</span>
-                                    </>
-                                  )}
+                                      <span>Last active: {new Date(dev.last_active_at).toLocaleDateString()}</span>
+                                    </p>
+                                  </div>
+                                  <IconButton
+                                    onClick={() => handleRevokeDevice(dev.id)}
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="text-error hover:text-error hover:bg-error/10"
+                                    title="Log Out Device"
+                                  >
+                                    <LogOut className="w-4 h-4" />
+                                  </IconButton>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Passkey Management */}
+                      <div className="space-y-3 mt-6">
+                        <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
+                          Authorized Devices (Passkeys)
+                        </h4>
+                        <div className="p-4 bg-surface-variant/50 rounded-2xl border border-outline/10 space-y-4">
+                          {/* Header Row */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-medium shadow-sm">
+                                <Fingerprint className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-body-sm font-medium text-foreground">Passkeys</p>
+                                <p className="text-label-sm text-muted-foreground">
+                                  {isFetchingPasskeys ? 'Loading...' : dbPasskeys.length > 0
+                                    ? `${dbPasskeys.length} connected`
+                                    : 'None registered'}
                                 </p>
                               </div>
-                              <motion.button
-                                onClick={() => handleRevokePasskey(pk.id, pk.credential_id)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error/10 transition-colors"
-                                title="Revoke Device"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </motion.button>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                            <Button
+                              onClick={registerNewPasskey}
+                              variant="tonal"
+                              size="sm"
+                              className="bg-primary/10 text-primary hover:bg-primary/20"
+                            >
+                              Add Device
+                            </Button>
+                          </div>
 
-                      <AnimatePresence>
-                        {passkeyStatus && (
-                          <motion.p
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={SPRING_DEFAULT}
-                            className={`text-label-sm ${
-                              passkeyStatus.includes('success') ? 'text-primary' : 'text-error'
-                            }`}
-                          >
-                            {passkeyStatus}
-                          </motion.p>
-                        )}
-                      </AnimatePresence>
+                          {/* Device List */}
+                          {dbPasskeys.length > 0 && (
+                            <div className="space-y-2 mt-2 pt-2 border-t border-outline/10">
+                              {dbPasskeys.map((pk) => (
+                                <div key={pk.id} className="flex items-center justify-between p-3 rounded-xl bg-surface border border-outline/5">
+                                  <div>
+                                    <p className="text-body-sm font-medium text-foreground">{pk.device_name}</p>
+                                    <p className="text-label-sm text-muted-foreground flex items-center gap-2">
+                                      <span>{pk.browser_name}</span>
+                                      {pk.last_used_at && (
+                                        <>
+                                          <span>&bull;</span>
+                                          <span>Last used: {new Date(pk.last_used_at).toLocaleDateString()}</span>
+                                        </>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <IconButton
+                                    onClick={() => handleRevokePasskey(pk.id, pk.credential_id)}
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="text-error hover:text-error hover:bg-error/10"
+                                    title="Revoke Device"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </IconButton>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <AnimatePresence>
+                            {passkeyStatus && (
+                              <motion.p
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={SPRING_DEFAULT}
+                                className={`text-label-sm ${
+                                  passkeyStatus.includes('success') ? 'text-primary' : 'text-error'
+                                }`}
+                              >
+                                {passkeyStatus}
+                              </motion.p>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-surface-variant/30 rounded-2xl p-5 border border-outline/20 text-center space-y-3 mb-6">
+                      <p className="text-body-md text-foreground">Sign in to access account settings, devices, and profile customization.</p>
+                      <Button onClick={() => { onClose(); onLoginRequest?.(); }} variant="filled" className="rounded-full w-full">
+                        Sign In / Register
+                      </Button>
                     </div>
-                  </div>
+                  )}
 
                   {/* Theme Settings — Collapsible */}
                   <div className="space-y-3">
@@ -478,11 +505,11 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
                       <h4 className="text-label-sm font-semibold text-primary uppercase tracking-wider">
                         Theme
                       </h4>
-                      {showTheme ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                      )}
+                      <MorphIcon 
+                        type="chevron-down-up" 
+                        isActive={showTheme} 
+                        className="w-4 h-4 text-muted-foreground"
+                      />
                     </motion.button>
                     <AnimatePresence>
                       {showTheme && (
@@ -503,19 +530,18 @@ export function UserProfilePopup({ isOpen, onClose }: UserProfilePopupProps) {
 
               {/* Footer Actions */}
               <div className="p-4 border-t border-outline/20 bg-surface-variant/20 flex flex-col gap-2">
-                <motion.button
+                <Button
                   onClick={async () => {
                     await signOut();
                     onClose();
                   }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={SPRING_BOUNCY}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-error/10 text-error hover:bg-error/20 rounded-xl font-medium transition-colors"
+                  variant="destructive"
+                  className="w-full bg-error/10 text-error hover:bg-error/20"
+                  size="lg"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-5 h-5" />
                   Sign Out
-                </motion.button>
+                </Button>
               </div>
             </div>
           </motion.div>

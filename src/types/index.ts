@@ -6,6 +6,8 @@ export interface Project {
   category: string;
   color: string;
   icon: string;
+  href?: string;
+  thumbnail?: string;
 }
 
 export interface Experience {

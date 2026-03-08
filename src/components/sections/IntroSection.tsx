@@ -17,7 +17,7 @@ export function IntroSection() {
         {introContent.paragraphs.map((paragraph, index) => (
           <p 
             key={index}
-            className="text-sm text-gray-700 dark:text-zinc-300 leading-relaxed"
+            className="text-body-sm text-muted-foreground leading-relaxed"
           >
             {paragraph}
           </p>

@@ -1,5 +1,13 @@
 import { motion } from 'framer-motion';
 import { itemVariants, viewportOnce } from '@/lib/animations';
+import { SPRING_BOUNCY } from '@/lib/motion-presets';
+
+/**
+ * M3 Footer
+ * - M3 color tokens (outline, muted-foreground, surface-variant)
+ * - Subtle divider with animated gradient
+ * - Links use M3 button-like styling
+ */
 
 export function Footer() {
   return (
@@ -8,37 +16,47 @@ export function Footer() {
       whileInView="visible"
       viewport={viewportOnce}
       variants={itemVariants}
-      className="pt-8 pb-6 border-t border-gray-200 dark:border-zinc-800"
+      className="pt-8 pb-6 border-t border-outline/20"
     >
       <div className="text-center space-y-3">
-        <p className="text-sm text-gray-500 dark:text-zinc-500">
+        <p className="text-body-sm text-muted-foreground">
           Built using{' '}
-          <a 
+          <motion.a 
             href="https://framer.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="underline hover:text-gray-700 dark:hover:text-zinc-300 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={SPRING_BOUNCY}
+            className="text-primary font-medium hover:underline transition-colors"
           >
             Framer
-          </a>
+          </motion.a>
         </p>
         
-        <div className="flex items-center justify-center gap-4 text-sm">
-          <a 
+        <div className="flex items-center justify-center gap-4 text-body-sm">
+          <motion.a 
             href="#" 
-            className="text-gray-500 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors underline"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={SPRING_BOUNCY}
+            className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             Buy this template
-          </a>
-          <a 
+          </motion.a>
+          <span className="w-1 h-1 rounded-full bg-outline/40" />
+          <motion.a 
             href="#" 
-            className="text-gray-500 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors underline"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={SPRING_BOUNCY}
+            className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             Become an affiliate
-          </a>
+          </motion.a>
         </div>
         
-        <p className="text-xs text-gray-400 dark:text-zinc-600">
+        <p className="text-label-sm text-muted-foreground/50">
           © 2026 Resumx by Jus
         </p>
       </div>
