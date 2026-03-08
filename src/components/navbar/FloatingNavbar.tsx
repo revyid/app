@@ -45,7 +45,29 @@ export function FloatingNavbar({
       setIsScrolled(window.scrollY > 100);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // ScrollSpy: Update active nav item based on what's in view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveItem(entry.target.id);
+        }
+      });
+    }, {
+      rootMargin: '-40% 0px -40% 0px', // Trigger when section is near the middle of the viewport
+    });
+
+    navItems.forEach((item) => {
+      const element = document.getElementById(item.id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
   }, []);
 
   const handleNavClick = (id: string) => {

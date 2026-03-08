@@ -90,6 +90,7 @@ function App() {
               setIsCommandPaletteOpen(false);
               setIsProfileOpen(true);
             }}
+            onChatClick={() => setIsChatOpen(true)}
             />
 
           <UserProfilePopup 

@@ -33,9 +33,10 @@ interface CommandPaletteProps {
   onClose: () => void;
   onLoginClick: () => void;
   onProfileClick: () => void;
+  onChatClick?: () => void;
 }
 
-export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }: CommandPaletteProps) {
+export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, onChatClick }: CommandPaletteProps) {
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { theme, setTheme } = useTheme();
@@ -93,6 +94,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }
       category: 'Actions',
       action: () => {
         onClose();
+        onChatClick?.();
       },
     },
     {
@@ -144,7 +146,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick }
         },
       },
     ]),
-  ], [theme, isSignedIn, user, onClose, onLoginClick, onProfileClick, setTheme, signOut]);
+  ], [theme, isSignedIn, user, onClose, onLoginClick, onProfileClick, onChatClick, setTheme, signOut]);
 
   // Filter commands based on search
   const filteredCommands = useMemo(() => {

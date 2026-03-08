@@ -28,17 +28,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export function ProjectCard({ project }: ProjectCardProps) {
   const IconComponent = iconMap[project.icon] || LayoutDashboard;
 
-  const CardWrapper = project.href ? motion.a : motion.div;
-
-  const wrapperProps = project.href ? {
-    href: project.href,
-    target: '_blank',
-    rel: 'noopener noreferrer'
-  } : {};
-
   return (
-    <CardWrapper
-      {...wrapperProps}
+    <motion.div
       initial="rest"
       whileHover="hover"
       whileTap="pressed"
@@ -84,17 +75,35 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           
           {/* Floating Arrow Icon */}
-          <motion.div
-            variants={{
-              rest: { opacity: 0, scale: 0.8 },
-              hover: { opacity: 1, scale: 1 },
-              pressed: { opacity: 1, scale: 0.9 },
-            }}
-            transition={SPRING_SNAPPY}
-            className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-elevation-2"
-          >
-            <ArrowUpRight className="w-5 h-5 text-foreground" />
-          </motion.div>
+          {project.href ? (
+            <motion.a
+              href={project.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              variants={{
+                rest: { opacity: 0, scale: 0.8 },
+                hover: { opacity: 1, scale: 1 },
+                pressed: { opacity: 1, scale: 0.9 },
+              }}
+              transition={SPRING_SNAPPY}
+              className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-elevation-2 hover:bg-white z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ArrowUpRight className="w-5 h-5 text-foreground" />
+            </motion.a>
+          ) : (
+            <motion.div
+              variants={{
+                rest: { opacity: 0, scale: 0.8 },
+                hover: { opacity: 1, scale: 1 },
+                pressed: { opacity: 1, scale: 0.9 },
+              }}
+              transition={SPRING_SNAPPY}
+              className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-elevation-2"
+            >
+              <ArrowUpRight className="w-5 h-5 text-foreground" />
+            </motion.div>
+          )}
         </div>
         
         {/* Content */}
@@ -150,6 +159,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
           className="absolute bottom-0 left-0 right-0 h-1 origin-left bg-primary"
         />
       </div>
-    </CardWrapper>
+    </motion.div>
   );
 }
