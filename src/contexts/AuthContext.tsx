@@ -128,13 +128,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // 0. Fix malformed double-hash from previous OAuth redirects
+    //    e.g. /##access_token=... → /#access_token=...
+    if (window.location.hash.startsWith('##')) {
+      const fixed = window.location.hash.substring(1); // Remove the extra #
+      window.history.replaceState(null, '', window.location.pathname + fixed);
+      // Force Supabase to re-detect the fixed hash by reloading the client
+    }
+
     // 1. Hydrate from existing session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       onAuthChange('INITIAL_SESSION', s);
     });
 
     // 2. Listen for future auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(onAuthChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, s) => {
+        onAuthChange(event, s);
+
+        // Clean the URL after Supabase processes the OAuth hash fragment
+        if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+    );
 
     return () => {
       subscription.unsubscribe();

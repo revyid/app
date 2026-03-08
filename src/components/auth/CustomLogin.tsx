@@ -213,7 +213,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.href,
+          // IMPORTANT: Use origin + pathname, NOT href!
+          // href includes the # hash fragment, causing Supabase to create
+          // a double-hash ##access_token=... that the SDK can't parse.
+          redirectTo: window.location.origin + window.location.pathname,
         },
       });
 
