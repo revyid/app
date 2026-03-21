@@ -148,25 +148,18 @@ export const education: Education[] = [
 export const testimonials: Testimonial[] = [
   {
     id: '1',
-    name: 'Evelyn Brooks',
-    role: 'Lead Engineer at Sigma, managed Henry directly',
-    quote: "Having worked alongside Henry at Sigma, I've been consistently impressed by his exceptional skills as a frontend engineer. Henry's hands-on approach and dedication to building robust web and mobile applications have greatly contributed to our project's success.",
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
-  },
-  {
-    id: '2',
-    name: 'Raj Patel',
-    role: 'Junior Software Engineer at Omega, worked with Henry on the same team',
-    quote: "Henry's expertise has been crucial in turning our ambitious project ideas into reality at Omega. His proficiency in both front-end and back-end development ensures a seamless integration of features, delivering a user experience that's both intuitive and high-performing.",
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    name: 'Unknown',
+    role: 'Unknown',
+    quote: "Unknown",
+    avatar: '',
   },
 ];
 
 export const fullContacts: Contact[] = [
-  { id: '1', type: 'email', label: 'Email', value: 'hey@henrywalker.com', href: 'mailto:hey@henrywalker.com', icon: 'Mail' },
-  { id: '2', type: 'phone', label: 'Phone', value: '+555 123 4567', href: 'tel:+5551234567', icon: 'Phone' },
+  { id: '1', type: 'email', label: 'Email', value: 'revy8k@gmail.com', href: 'mailto:revy8k@gmail.com', icon: 'Mail' },
+  { id: '2', type: 'phone', label: 'Phone', value: '+62 812345678', href: 'tel:+62812345678', icon: 'Phone' },
   { id: '3', type: 'meeting', label: 'Meeting', value: 'Book call', href: 'https://cal.com/justinfarrugia/30min', icon: 'Calendar' },
-  { id: '4', type: 'website', label: 'Website', value: 'henrywalker.com', href: 'https://henrywalker.com', icon: 'Globe' },
+  { id: '4', type: 'website', label: 'Website', value: 'revy.my.id', href: 'https://revy.my.id', icon: 'Globe' },
   { id: '5', type: 'twitter', label: 'X (Twitter)', value: '@henrywalker', href: 'https://x.com', icon: 'Twitter' },
   { id: '6', type: 'linkedin', label: 'LinkedIn', value: '/henryw', href: 'https://linkedin.com', icon: 'Linkedin' },
 ];
