@@ -19,13 +19,11 @@ export const skills = [
   'React',
   'Python',
   'Git',
-  'Agile',
   'CI/CD',
   'Node.js',
   'Docker',
   'MongoDB',
   'Typescript',
-  'AWS',
 ];
 
 export const languages: Language[] = [
