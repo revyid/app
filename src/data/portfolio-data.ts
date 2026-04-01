@@ -72,6 +72,17 @@ export const projects: Project[] = [
   },
   {
     id: '3',
+    title: 'REArch',
+    date: 'Ma 30, 202',
+    role: 'Fullstack Developer',
+    category: 'Web Application, Linux System',
+    color: '#86EFAC',
+    icon: 'Globe',
+    thumbnail: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80',
+    href: 'https://arch.revy.my.id',
+  },
+  {
+    id: '4',
     title: 'IP Geolocation',
     date: 'Jan 12, 2024',
     role: 'Fullstack Developer',
