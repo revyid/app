@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { getAllPortfolioData } from '@/lib/auth';
 
 // ==========================================
 // Auto-discover all theme files from src/themes/
-// Vite's import.meta.glob resolves at build time — no manual imports needed.
-// Just drop a new .json file in src/themes/ and it appears automatically.
 // ==========================================
 const themeModules = import.meta.glob('@/themes/*.json', { eager: true }) as Record<string, { default: any }>;
 
@@ -167,27 +166,36 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('light');
 
-  // Merge builtin profiles with any user-added profiles from localStorage
   const [profiles, setProfiles] = useState<ThemeColorProfile[]>(() => {
-    // Clear stale profiles from old system that used different IDs
     const storedProfileId = localStorage.getItem('colorProfileId');
     if (storedProfileId === 'default') {
       localStorage.setItem('colorProfileId', builtinProfiles[0]?.id || 'material-theme');
     }
-    
     try {
       const stored = localStorage.getItem('themeProfiles');
       if (stored) {
         const userProfiles = JSON.parse(stored) as ThemeColorProfile[];
-        // Merge: builtins first, then user additions that don't conflict
         const builtinIds = new Set(builtinProfiles.map(p => p.id));
-        // Also filter out old 'default' profile from localStorage
         const extras = userProfiles.filter(p => !builtinIds.has(p.id) && p.id !== 'default');
         return [...builtinProfiles, ...extras];
       }
     } catch { /* ignore */ }
     return builtinProfiles;
   });
+
+  // Load themes from DB and merge
+  useEffect(() => {
+    getAllPortfolioData().then((raw) => {
+      const dbThemes = raw.themes as ThemeColorProfile[] | undefined;
+      if (!dbThemes || !Array.isArray(dbThemes)) return;
+      setProfiles((prev) => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newOnes = dbThemes.filter(t => !existingIds.has(t.id));
+        if (newOnes.length === 0) return prev;
+        return [...prev, ...newOnes];
+      });
+    }).catch(() => {});
+  }, []);
 
   const [colorProfileId, setColorProfileIdState] = useState<string>(() => {
     return localStorage.getItem('colorProfileId') || defaultProfile.id;

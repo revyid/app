@@ -6,6 +6,11 @@ export const profileData = {
   verified: true,
   image: 'https://scontent.fdjb3-1.fna.fbcdn.net/v/t1.15752-9/643924451_1568867384412033_1644968556563542165_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=fc17b8&efg=eyJxZV9ncm91cHMiOlsiaWdkX2Jlc3RfZWZmb3J0X2ltYWdlOmNvbnRyb2wiXX0%3D&_nc_ohc=EnT2yurEBykQ7kNvwGa2RWR&_nc_oc=AdnEKoxUJMz3LJ6CP5JTHsVUubuCAAMI4dCBT2q9zhWTIYDjKzg5PJRHu5gWiVB8VJA&_nc_zt=23&_nc_ht=scontent.fdjb3-1.fna&_nc_ss=8&oh=03_Q7cD4wGbnq5XFiQKnZZTUqmQeQrRU5TtA6XE02qKxye2_JtUkQ&oe=69D48A14',
   about: 'I am a full-stack software engineer with 2+ years of experience in building web and mobile apps.',
+  easter_egg: {
+    name: 'Nawa',
+    image: 'https://scontent.fdjb3-1.fna.fbcdn.net/v/t1.15752-9/643892106_926933829985513_7748531435417713772_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=fc17b8&efg=eyJxZV9ncm91cHMiOlsiaWdkX2Jlc3RfZWZmb3J0X2ltYWdlOmNvbnRyb2wiXX0%3D&_nc_ohc=Kliq_MHYy6sQ7kNvwHQM6ov&_nc_oc=Admw9dFPV-V2sGmH0OzBo-5ISIRpSAuZtNHvt5o5aWuUQ9ZzKbtS2xjU5ZoLPoFgtIY&_nc_zt=23&_nc_ht=scontent.fdjb3-1.fna&_nc_ss=8&oh=03_Q7cD4wFYXQP0S0TYmcp7wYXE2bqHubFkQaRahWbwsuJ6mGdUZg&oe=69D4F2B1',
+    shortcut: 'Ctrl+Alt+L',
+  },
 };
 
 export const contactInfo = [

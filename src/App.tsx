@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { PortfolioProvider } from '@/contexts/PortfolioContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MainContent } from '@/components/layout/MainContent';
 import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
@@ -45,6 +46,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
+        <PortfolioProvider>
         <LayoutGroup>
           <div className="min-h-screen bg-background text-foreground transition-colors duration-300 overflow-x-clip">
             <AnimatePresence mode="wait">
@@ -111,6 +113,7 @@ function App() {
           />
           </div>
         </LayoutGroup>
+        </PortfolioProvider>
       </ThemeProvider>
     </AuthProvider>
   );

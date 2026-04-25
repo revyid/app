@@ -223,6 +223,10 @@ export function FloatingNavbar({
               <img 
                 src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`} 
                 alt={user.display_name || 'User'}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`;
+                }}
                 className="w-full h-full object-cover"
               />
             ) : (

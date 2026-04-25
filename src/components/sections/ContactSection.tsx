@@ -1,27 +1,21 @@
 import { motion } from 'framer-motion';
-import { Mail, Globe, Phone } from 'lucide-react';
+import { Mail, Globe, Phone, Calendar, Twitter, Linkedin } from 'lucide-react';
 import { SectionLabel } from '@/components/shared/SectionLabel';
-import { contactInfo } from '@/data/portfolio-data';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { itemVariants } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
-/**
- * M3 Contact Section — compact list style
- * Uses M3 color tokens and icon button hover effects
- */
-
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Mail,
-  Globe,
-  Phone,
+  Mail, Globe, Phone, Calendar, Twitter, Linkedin,
 };
 
 export function ContactSection() {
+  const { data } = usePortfolio();
   return (
     <motion.div variants={itemVariants} className="mb-6">
       <SectionLabel text="Contact" />
       <div className="space-y-2">
-        {contactInfo.map((contact) => {
+        {data.contacts.map((contact) => {
           const IconComponent = iconMap[contact.icon] || Mail;
           return (
             <motion.a

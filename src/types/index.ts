@@ -8,6 +8,12 @@ export interface Project {
   icon: string;
   href?: string;
   thumbnail?: string;
+  // Detail fields
+  description?: string;
+  techStack?: string[];
+  features?: string[];
+  status?: 'live' | 'wip' | 'archived';
+  repoUrl?: string;
 }
 
 export interface Experience {
@@ -25,14 +31,6 @@ export interface Education {
   institution: string;
   degree: string;
   year: string;
-}
-
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  quote: string;
-  avatar?: string;
 }
 
 export interface Contact {

@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { ExperienceCard } from '@/components/shared/ExperienceCard';
-import { experiences } from '@/data/portfolio-data';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 
 export function ExperienceSection() {
+  const { data } = usePortfolio();
   return (
     <motion.section
       initial="hidden"
@@ -16,9 +17,8 @@ export function ExperienceSection() {
       <motion.div variants={itemVariants}>
         <SectionLabel text="Experience" />
       </motion.div>
-      
       <div className="space-y-4">
-        {experiences.map((experience) => (
+        {data.experiences.map((experience) => (
           <motion.div key={experience.id} variants={itemVariants}>
             <ExperienceCard experience={experience} />
           </motion.div>

@@ -203,7 +203,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   };
 
   // ==========================================
-  // GOOGLE OAUTH (Popup-based, no redirect!)
+  // GOOGLE OAUTH (Popup window with postMessage)
   // ==========================================
   const handleGoogleLogin = useCallback(async () => {
     setIsLoading(true);
@@ -218,67 +218,82 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         return;
       }
 
-      // Load Google Identity Services if not already loaded
-      if (!(window as any).google?.accounts?.id) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://accounts.google.com/gsi/client';
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
-          document.head.appendChild(script);
-        });
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      console.log('[GoogleLogin] redirectUri:', redirectUri);
+      console.log('[GoogleLogin] origin:', window.location.origin);
+      const state = crypto.randomUUID();
+      localStorage.setItem('google_oauth_state', state);
+
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'token id_token',
+        scope: 'openid email profile',
+        state,
+        nonce: crypto.randomUUID(),
+      });
+
+      const popup = window.open(
+        `https://accounts.google.com/o/oauth2/v2/auth?${params}`,
+        'google-oauth',
+        'width=500,height=600,left=200,top=100'
+      );
+
+      if (!popup) {
+        setError('Popup blocked. Please allow popups for this site.');
+        controls.start('shake');
+        setIsLoading(false);
+        return;
       }
 
-      // Use One Tap / popup to get ID token
-      const google = (window as any).google;
-      google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response: any) => {
-          try {
-            // Decode the ID token (JWT) to get user info
-            const parts = response.credential.split('.');
-            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const onMessage = async (event: MessageEvent) => {
+        console.log('[GoogleLogin] message received:', event.origin, event.data?.type);
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type !== 'google-auth-callback') return;
+        window.removeEventListener('message', onMessage);
 
-            const result = await oauthLogin(
-              payload.email,
-              payload.name || payload.email.split('@')[0],
-              payload.picture || '',
-              'google',
-              payload.sub
-            );
+        try {
+          const { user: googleUser } = event.data;
+          console.log('[GoogleLogin] googleUser:', googleUser);
+          if (!googleUser) throw new Error('No user data received.');
 
-            if (result.error) {
-              setError(result.error);
-              controls.start('shake');
-            } else {
-              await refreshUser();
-              onClose();
-              resetForm();
-            }
-          } catch (err: any) {
-            setError(err.message || 'Google login failed');
+          const result = await oauthLogin(
+            googleUser.email,
+            googleUser.name || googleUser.email.split('@')[0],
+            googleUser.picture || '',
+            'google',
+            googleUser.sub
+          );
+
+          console.log('[GoogleLogin] oauthLogin result:', result);
+
+          if (result.error) {
+            setError(result.error);
             controls.start('shake');
-          } finally {
-            setIsLoading(false);
+          } else {
+            await refreshUser();
+            onClose();
+            resetForm();
           }
-        },
-        auto_select: false,
-      });
-
-      // Show the popup
-      google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback: use the button flow by rendering into a hidden div
-          const btn = document.createElement('div');
-          btn.id = '_gsi_btn';
-          btn.style.display = 'none';
-          document.body.appendChild(btn);
-          google.accounts.id.renderButton(btn, { type: 'icon', size: 'large' });
-          (btn.querySelector('[role="button"]') as HTMLElement)?.click();
-          setTimeout(() => btn.remove(), 100);
+        } catch (err: any) {
+          console.error('[GoogleLogin] error:', err);
+          setError(err.message || 'Google login failed');
+          controls.start('shake');
+        } finally {
+          setIsLoading(false);
         }
-      });
+      };
+
+      window.addEventListener('message', onMessage);
+
+      // Cleanup if popup closed without completing
+      const pollClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(pollClosed);
+          window.removeEventListener('message', onMessage);
+          setIsLoading(false);
+        }
+      }, 500);
     } catch (err: any) {
       setError(err.message || 'Google login failed');
       controls.start('shake');

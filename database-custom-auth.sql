@@ -20,6 +20,21 @@ create table if not exists public.app_users (
   created_at timestamptz not null default now()
 );
 
+-- Ensure columns exist (idempotent for re-runs)
+alter table public.app_users add column if not exists is_admin boolean not null default false;
+alter table public.app_users add column if not exists provider text not null default 'email';
+alter table public.app_users add column if not exists provider_id text;
+alter table public.app_users add column if not exists avatar_url text;
+alter table public.app_users add column if not exists display_name text;
+alter table public.app_users add column if not exists password_hash text;
+
+-- Ensure app_sessions columns exist (idempotent for re-runs)
+alter table public.app_sessions add column if not exists device_id text;
+alter table public.app_sessions add column if not exists device_name text;
+alter table public.app_sessions add column if not exists browser_name text;
+-- Ensure token has correct default (pgcrypto must be enabled first)
+alter table public.app_sessions alter column token set default encode(gen_random_bytes(32), 'hex');
+
 -- SECURE RLS: users can only read their own row (via RPC); no direct table access
 alter table public.app_users enable row level security;
 -- Drop old permissive policies
@@ -27,6 +42,7 @@ drop policy if exists "app_users_public_read" on public.app_users;
 drop policy if exists "app_users_public_write" on public.app_users;
 drop policy if exists "app_users_public_update" on public.app_users;
 -- No direct access — all operations go through security definer RPC functions
+drop policy if exists "app_users_deny_all" on public.app_users;
 create policy "app_users_deny_all" on public.app_users for all to anon, authenticated using (false) with check (false);
 
 -- ============================================
@@ -49,10 +65,13 @@ alter table public.app_sessions enable row level security;
 -- Drop old permissive policy
 drop policy if exists "app_sessions_public" on public.app_sessions;
 -- No direct access — all operations go through security definer RPC functions
+drop policy if exists "app_sessions_deny_all" on public.app_sessions;
 create policy "app_sessions_deny_all" on public.app_sessions for all to anon, authenticated using (false) with check (false);
 
 -- Enable realtime (only for session revocation — filtered by token in app)
-alter publication supabase_realtime add table app_sessions;
+do $$ begin
+  alter publication supabase_realtime add table app_sessions;
+exception when others then null; end $$;
 
 -- ============================================
 -- 3. RATE LIMITING TABLE
@@ -68,29 +87,36 @@ create table if not exists public.auth_rate_limits (
 create unique index if not exists auth_rate_limits_identifier_action on public.auth_rate_limits(identifier, action);
 
 alter table public.auth_rate_limits enable row level security;
+drop policy if exists "rate_limits_deny_all" on public.auth_rate_limits;
 create policy "rate_limits_deny_all" on public.auth_rate_limits for all to anon, authenticated using (false) with check (false);
 
 -- ============================================
--- 4. PASSKEYS & DEVICES — SECURE RLS
+-- 4. PASSKEYS & DEVICES — SECURE RLS (only if tables exist)
 -- ============================================
-alter table public.user_passkeys drop constraint if exists user_passkeys_user_id_fkey;
-alter table public.user_devices drop constraint if exists user_devices_user_id_fkey;
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'user_passkeys') then
+    alter table public.user_passkeys drop constraint if exists user_passkeys_user_id_fkey;
+    drop policy if exists "Users can view own passkeys" on public.user_passkeys;
+    drop policy if exists "Users can insert own passkeys" on public.user_passkeys;
+    drop policy if exists "Users can update own passkeys" on public.user_passkeys;
+    drop policy if exists "Users can delete own passkeys" on public.user_passkeys;
+    drop policy if exists "passkeys_public" on public.user_passkeys;
+    execute 'create policy "passkeys_deny_all" on public.user_passkeys for all to anon, authenticated using (false) with check (false)';
+    alter publication supabase_realtime add table user_passkeys;
+  end if;
+exception when others then null; end $$;
 
-drop policy if exists "Users can view own passkeys" on public.user_passkeys;
-drop policy if exists "Users can insert own passkeys" on public.user_passkeys;
-drop policy if exists "Users can update own passkeys" on public.user_passkeys;
-drop policy if exists "Users can delete own passkeys" on public.user_passkeys;
-drop policy if exists "passkeys_public" on public.user_passkeys;
-create policy "passkeys_deny_all" on public.user_passkeys for all to anon, authenticated using (false) with check (false);
-
-drop policy if exists "Users can view own devices" on public.user_devices;
-drop policy if exists "Users can insert own devices" on public.user_devices;
-drop policy if exists "Users can update own devices" on public.user_devices;
-drop policy if exists "devices_public" on public.user_devices;
-create policy "devices_deny_all" on public.user_devices for all to anon, authenticated using (false) with check (false);
-
-alter publication supabase_realtime add table user_devices;
-alter publication supabase_realtime add table user_passkeys;
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'user_devices') then
+    alter table public.user_devices drop constraint if exists user_devices_user_id_fkey;
+    drop policy if exists "Users can view own devices" on public.user_devices;
+    drop policy if exists "Users can insert own devices" on public.user_devices;
+    drop policy if exists "Users can update own devices" on public.user_devices;
+    drop policy if exists "devices_public" on public.user_devices;
+    execute 'create policy "devices_deny_all" on public.user_devices for all to anon, authenticated using (false) with check (false)';
+    alter publication supabase_realtime add table user_devices;
+  end if;
+exception when others then null; end $$;
 
 -- ============================================
 -- 5. PORTFOLIO DATA TABLE (for admin CRUD)
@@ -106,16 +132,20 @@ create unique index if not exists portfolio_data_section on public.portfolio_dat
 
 alter table public.portfolio_data enable row level security;
 -- Public can read portfolio data (it's a public portfolio)
+drop policy if exists "portfolio_public_read" on public.portfolio_data;
 create policy "portfolio_public_read" on public.portfolio_data for select to anon, authenticated using (true);
 -- Only admins can write (via RPC)
+drop policy if exists "portfolio_deny_write" on public.portfolio_data;
 create policy "portfolio_deny_write" on public.portfolio_data for insert to anon, authenticated with check (false);
+drop policy if exists "portfolio_deny_update" on public.portfolio_data;
 create policy "portfolio_deny_update" on public.portfolio_data for update to anon, authenticated using (false);
+drop policy if exists "portfolio_deny_delete" on public.portfolio_data;
 create policy "portfolio_deny_delete" on public.portfolio_data for delete to anon, authenticated using (false);
 
 -- ============================================
 -- 6. HELPER: RATE LIMIT CHECK
 -- ============================================
-create or replace function private.check_rate_limit(
+create or replace function public.check_rate_limit_internal(
   p_identifier text,
   p_action text,
   p_max_attempts int default 5,
@@ -167,6 +197,25 @@ $$;
 -- 7. RPC FUNCTIONS (security definer = runs as owner)
 -- ============================================
 
+-- Drop existing functions to allow return type changes
+drop function if exists public.register_user(text, text, text);
+drop function if exists public.login_user(text, text);
+drop function if exists public.validate_session(text);
+drop function if exists public.logout_session(text);
+drop function if exists public.oauth_login(text, text, text, text, text);
+drop function if exists public.passkey_login(text, text);
+drop function if exists public.update_user_profile(text, text, text);
+drop function if exists public.update_session_device(text, text, text, text);
+drop function if exists public.get_user_sessions(text);
+drop function if exists public.revoke_session(text, uuid);
+drop function if exists public.get_portfolio_section(text);
+drop function if exists public.get_all_portfolio_data();
+drop function if exists public.upsert_portfolio_section(text, text, jsonb);
+drop function if exists public.delete_portfolio_item(text, text, text);
+drop function if exists public.cleanup_expired_sessions();
+drop function if exists public.check_rate_limit_internal(text, text, int, int, int);
+drop function if exists public.verify_admin_internal(text);
+
 -- REGISTER
 create or replace function public.register_user(
   p_email text,
@@ -179,7 +228,7 @@ declare
   v_token text;
 begin
   -- Rate limit by email
-  if not private.check_rate_limit(lower(trim(p_email)), 'register', 3, 60, 60) then
+  if not public.check_rate_limit_internal(lower(trim(p_email)), 'register', 3, 60, 60) then
     return json_build_object('error', 'Too many registration attempts. Please try again later.');
   end if;
 
@@ -229,7 +278,7 @@ declare
   v_token text;
 begin
   -- Rate limit by email
-  if not private.check_rate_limit(lower(trim(p_email)), 'login', 5, 15, 30) then
+  if not public.check_rate_limit_internal(lower(trim(p_email)), 'login', 5, 15, 30) then
     return json_build_object('error', 'Too many login attempts. Please try again in 30 minutes.');
   end if;
 
@@ -503,7 +552,7 @@ $$;
 -- ============================================
 
 -- Helper: verify admin session
-create or replace function private.verify_admin(p_token text) returns uuid
+create or replace function public.verify_admin_internal(p_token text) returns uuid
 language plpgsql security definer as $$
 declare
   v_session app_sessions%rowtype;
@@ -558,7 +607,7 @@ language plpgsql security definer as $$
 declare
   v_admin_id uuid;
 begin
-  v_admin_id := private.verify_admin(p_token);
+  v_admin_id := public.verify_admin_internal(p_token);
 
   insert into portfolio_data (section, data, updated_at, updated_by)
   values (p_section, p_data, now(), v_admin_id)
@@ -586,7 +635,7 @@ declare
   v_data jsonb;
   v_new_data jsonb;
 begin
-  v_admin_id := private.verify_admin(p_token);
+  v_admin_id := public.verify_admin_internal(p_token);
 
   select data into v_data from portfolio_data where section = p_section;
   if not found then

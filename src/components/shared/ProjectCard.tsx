@@ -15,6 +15,7 @@ import { SPRING_BOUNCY, SPRING_SNAPPY } from '@/lib/motion-presets';
 
 interface ProjectCardProps {
   project: Project;
+  onClick?: () => void;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -25,7 +26,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Globe,
 };
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const IconComponent = iconMap[project.icon] || LayoutDashboard;
 
   return (
@@ -40,6 +41,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         pressed: { y: 0, scale: 0.97, borderRadius: '32px' },
       }}
       transition={SPRING_BOUNCY}
+      onClick={onClick}
       className="group cursor-pointer block focus-ring"
       style={{ borderRadius: '24px' }}
     >

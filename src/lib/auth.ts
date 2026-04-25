@@ -120,6 +120,8 @@ export async function validateSession(token?: string): Promise<AuthResult> {
     p_token: t,
   });
 
+  console.log('[validateSession] data:', data, 'error:', error);
+
   if (error) return { error: error.message };
   if (data?.error) return { error: data.error };
 

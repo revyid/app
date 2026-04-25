@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { SectionLabel } from '@/components/shared/SectionLabel';
-import { introContent } from '@/data/portfolio-data';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { itemVariants, viewportOnce } from '@/lib/animations';
 import { M3Shapes } from '@/components/shared/M3ExpressiveIndicator';
 
@@ -28,6 +28,7 @@ const sequence3 = [
 ];
 
 export function IntroSection() {
+  const { data } = usePortfolio();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Parallax effect for shapes on scroll
@@ -108,7 +109,7 @@ export function IntroSection() {
       >
         <SectionLabel text="Intro" />
         <div className="space-y-4">
-          {introContent.paragraphs.map((paragraph, index) => (
+          {data.intro.paragraphs.map((paragraph, index) => (
             <p
               key={index}
               className="text-body-lg text-foreground leading-relaxed"

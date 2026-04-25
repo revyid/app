@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BadgeCheck, Heart } from 'lucide-react';
-import { profileData } from '@/data/portfolio-data';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { itemVariants } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
 const NAWA_IMAGE = 'https://scontent.fdjb3-1.fna.fbcdn.net/v/t1.15752-9/643892106_926933829985513_7748531435417713772_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=fc17b8&efg=eyJxZV9ncm91cHMiOlsiaWdkX2Jlc3RfZWZmb3J0X2ltYWdlOmNvbnRyb2wiXX0%3D&_nc_ohc=Kliq_MHYy6sQ7kNvwHQM6ov&_nc_oc=Admw9dFPV-V2sGmH0OzBo-5ISIRpSAuZtNHvt5o5aWuUQ9ZzKbtS2xjU5ZoLPoFgtIY&_nc_zt=23&_nc_ht=scontent.fdjb3-1.fna&_nc_ss=8&oh=03_Q7cD4wFYXQP0S0TYmcp7wYXE2bqHubFkQaRahWbwsuJ6mGdUZg&oe=69D4F2B1';
 
 export function ProfileHeader() {
+  const { data } = usePortfolio();
+  const profileData = data.profile;
+  const easterEgg = profileData.easter_egg;
   const [isNawaMode, setIsNawaMode] = useState(false);
 
   useEffect(() => {
@@ -35,9 +38,9 @@ export function ProfileHeader() {
           <img src={profileData.image} alt={profileData.name} className="w-full h-full object-cover" />
         </motion.div>
 
-        {/* Nawa's PP */}
+        {/* Easter egg PP */}
         <AnimatePresence>
-          {isNawaMode && (
+          {isNawaMode && easterEgg && (
             <motion.div
               initial={{ x: -20, opacity: 0, scale: 0.8 }}
               animate={{ x: 0, opacity: 1, scale: 1 }}
@@ -46,7 +49,7 @@ export function ProfileHeader() {
               className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-tertiary/40"
               style={{ borderRadius: '20px' }}
             >
-              <img src={NAWA_IMAGE} alt="Nawa" className="w-full h-full object-cover" />
+              <img src={easterEgg.image} alt={easterEgg.name} className="w-full h-full object-cover" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -89,9 +92,9 @@ export function ProfileHeader() {
           </AnimatePresence>
         </div>
 
-        {/* Nawa's name appears on the right of the badge */}
+        {/* Easter egg name appears on the right of the badge */}
         <AnimatePresence>
-          {isNawaMode && (
+          {isNawaMode && easterEgg && (
             <motion.h1
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -99,7 +102,7 @@ export function ProfileHeader() {
               transition={SPRING_BOUNCY}
               className="text-title-lg font-bold text-foreground whitespace-nowrap"
             >
-              Nawa
+              {easterEgg.name}
             </motion.h1>
           )}
         </AnimatePresence>

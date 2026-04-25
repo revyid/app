@@ -3,19 +3,20 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { GithubCallback } from './components/auth/GithubCallback'
+import { GoogleCallback } from './components/auth/GoogleCallback'
 
 const path = window.location.pathname;
 
 if (path === '/auth/github/callback') {
   createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <GithubCallback />
-    </StrictMode>,
+    <StrictMode><GithubCallback /></StrictMode>,
+  )
+} else if (path === '/auth/google/callback') {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode><GoogleCallback /></StrictMode>,
   )
 } else {
   createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
+    <StrictMode><App /></StrictMode>,
   )
 }
