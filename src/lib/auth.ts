@@ -13,6 +13,7 @@ export interface AppUser {
   display_name: string | null;
   avatar_url: string | null;
   provider: string;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -195,4 +196,54 @@ export async function revokeSession(sessionId: string): Promise<boolean> {
 
   if (error || data?.error) return false;
   return true;
+}
+
+// ─── Admin Portfolio CRUD ────────────────────────────────────────────
+
+export async function getPortfolioSection(section: string): Promise<unknown> {
+  const { data, error } = await supabase.rpc('get_portfolio_section', { p_section: section });
+  if (error) throw error;
+  return data;
+}
+
+export async function getAllPortfolioData(): Promise<Record<string, unknown>> {
+  const { data, error } = await supabase.rpc('get_all_portfolio_data');
+  if (error) throw error;
+  return (data as Record<string, unknown>) || {};
+}
+
+export async function upsertPortfolioSection(
+  section: string,
+  data: unknown
+): Promise<{ error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+
+  const { data: result, error } = await supabase.rpc('upsert_portfolio_section', {
+    p_token: token,
+    p_section: section,
+    p_data: data,
+  });
+
+  if (error) return { error: error.message };
+  if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
+  return {};
+}
+
+export async function deletePortfolioItem(
+  section: string,
+  itemId: string
+): Promise<{ error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+
+  const { data: result, error } = await supabase.rpc('delete_portfolio_item', {
+    p_token: token,
+    p_section: section,
+    p_item_id: itemId,
+  });
+
+  if (error) return { error: error.message };
+  if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
+  return {};
 }

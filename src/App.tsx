@@ -9,6 +9,7 @@ import { CustomLogin } from '@/components/auth/CustomLogin';
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
+import { AdminPanel } from '@/components/admin/AdminPanel';
 import { AnimatePresence, LayoutGroup } from 'framer-motion';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -65,6 +67,7 @@ function App() {
             onChatClick={() => setIsChatOpen(true)}
             onCommandPaletteClick={() => setIsCommandPaletteOpen(true)}
             onProfileClick={() => setIsProfileOpen(true)}
+            onAdminClick={() => setIsAdminOpen(true)}
           />
 
           {/* Bottom Sheet Modals */}
@@ -100,6 +103,11 @@ function App() {
               setIsProfileOpen(false);
               setIsLoginOpen(true);
             }}
+          />
+
+          <AdminPanel
+            isOpen={isAdminOpen}
+            onClose={() => setIsAdminOpen(false)}
           />
           </div>
         </LayoutGroup>

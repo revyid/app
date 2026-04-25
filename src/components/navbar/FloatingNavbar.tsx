@@ -6,7 +6,8 @@ import {
   GraduationCap, 
   MessageCircle, 
   Command,
-  User
+  User,
+  Shield,
 } from 'lucide-react';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -18,6 +19,7 @@ interface FloatingNavbarProps {
   onChatClick: () => void;
   onCommandPaletteClick: () => void;
   onProfileClick: () => void;
+  onAdminClick?: () => void;
   unreadCount?: number;
 }
 
@@ -31,6 +33,7 @@ export function FloatingNavbar({
   onChatClick, 
   onCommandPaletteClick, 
   onProfileClick,
+  onAdminClick,
   unreadCount = 0 
 }: FloatingNavbarProps) {
   const { effectiveTheme, toggleTheme } = useTheme();
@@ -197,6 +200,19 @@ export function FloatingNavbar({
           >
             <ThemeToggleIcon theme={effectiveTheme} />
           </IconButton>
+
+          {/* Admin Button — only for admins */}
+          {user?.is_admin && onAdminClick && (
+            <IconButton
+              onClick={onAdminClick}
+              variant="ghost"
+              aria-label="Admin Panel"
+              title="Admin Panel"
+              className="flex-shrink-0 text-primary"
+            >
+              <Shield className="w-5 h-5" />
+            </IconButton>
+          )}
 
           {/* User Avatar / Login */}
           <button
