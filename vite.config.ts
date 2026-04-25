@@ -11,6 +11,5 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['.trycloudflare.com'],
-    historyApiFallback: true,
   }
 })

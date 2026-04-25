@@ -33,6 +33,14 @@ export interface Education {
   year: string;
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  quote: string;
+  avatar?: string;
+}
+
 export interface Contact {
   id: string;
   type: string;

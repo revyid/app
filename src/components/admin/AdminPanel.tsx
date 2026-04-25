@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, ChevronDown, ChevronUp, Loader2, Shield, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -159,7 +159,7 @@ function IntroSectionEditor({ initial, onSaved }: { initial: IntroData; onSaved:
           </IconButton>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setParagraphs((arr) => [...arr, ''])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setParagraphs((arr) => [...arr, ''])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Paragraph
       </Button>
     </Section>
@@ -217,7 +217,7 @@ function LanguagesSectionEditor({ initial, onSaved }: { initial: Language[]; onS
           </IconButton>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setItems((arr) => [...arr, { name: '', flag: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { name: '', flag: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Language
       </Button>
     </Section>
@@ -246,7 +246,7 @@ function SocialLinksSectionEditor({ initial, onSaved }: { initial: SocialLink[];
           </div>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setItems((arr) => [...arr, { platform: '', href: '', icon: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { platform: '', href: '', icon: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Link
       </Button>
     </Section>
@@ -279,7 +279,7 @@ function ContactsSectionEditor({ initial, onSaved }: { initial: Contact[]; onSav
           </div>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), type: 'email', label: '', value: '', href: '', icon: 'Mail' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), type: 'email', label: '', value: '', href: '', icon: 'Mail' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Contact
       </Button>
     </Section>
@@ -346,7 +346,7 @@ function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSav
           </Field>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), title: '', date: '', role: '', category: '', color: '#6750A4', icon: 'Globe', href: '', thumbnail: '', description: '', techStack: [], features: [], status: 'live' as const, repoUrl: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), title: '', date: '', role: '', category: '', color: '#6750A4', icon: 'Globe', href: '', thumbnail: '', description: '', techStack: [], features: [], status: 'live' as const, repoUrl: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Project
       </Button>
     </Section>
@@ -381,7 +381,7 @@ function ExperiencesSectionEditor({ initial, onSaved }: { initial: Experience[];
           <Field label="Description"><Textarea value={exp.description} onChange={(v) => update(i, 'description', v)} rows={3} /></Field>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), title: '', company: '', location: '', dateRange: '', description: '', logoColor: '#6750A4' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), title: '', company: '', location: '', dateRange: '', description: '', logoColor: '#6750A4' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Experience
       </Button>
     </Section>
@@ -411,7 +411,7 @@ function EducationSectionEditor({ initial, onSaved }: { initial: Education[]; on
           <Field label="Year"><Input value={edu.year} onChange={(v) => update(i, 'year', v)} /></Field>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), institution: '', degree: '', year: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), institution: '', degree: '', year: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Education
       </Button>
     </Section>
