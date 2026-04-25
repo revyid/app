@@ -12,8 +12,21 @@ import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
 import { AdminPanel } from '@/components/admin/AdminPanel';
 import { AnimatePresence, LayoutGroup } from 'framer-motion';
+import { NotFound } from '@/pages/NotFound';
+
+// Known routes — anything else renders 404
+const KNOWN_ROUTES = ['/'];
 
 function App() {
+  const pathname = window.location.pathname;
+  if (!KNOWN_ROUTES.includes(pathname)) {
+    return (
+      <ThemeProvider>
+        <NotFound />
+      </ThemeProvider>
+    );
+  }
+
   const [isLoading, setIsLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
