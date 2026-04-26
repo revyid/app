@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { ContactItem } from '@/components/shared/ContactItem';
-import { fullContacts } from '@/data/portfolio-data';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 
 export function ContactFullSection() {
+  const { data } = usePortfolio();
   return (
     <motion.section
       initial="hidden"
@@ -16,9 +17,8 @@ export function ContactFullSection() {
       <motion.div variants={itemVariants}>
         <SectionLabel text="Contact" />
       </motion.div>
-      
       <div className="space-y-3">
-        {fullContacts.map((contact) => (
+        {data.contacts.map((contact) => (
           <motion.div key={contact.id} variants={itemVariants}>
             <ContactItem contact={contact} />
           </motion.div>

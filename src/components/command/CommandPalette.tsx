@@ -54,7 +54,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       title: 'Go to Home',
       description: 'Navigate to the home section',
       icon: Home,
-      shortcut: '⌘H',
+      shortcut: 'Ctrl+Alt+H',
       category: 'Navigation',
       action: () => {
         document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' });
@@ -66,7 +66,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       title: 'View Projects',
       description: 'See all my projects',
       icon: Briefcase,
-      shortcut: '⌘P',
+      shortcut: 'Ctrl+Alt+P',
       category: 'Navigation',
       action: () => {
         document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
@@ -78,7 +78,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       title: 'View Education',
       description: 'Check my educational background',
       icon: GraduationCap,
-      shortcut: '⌘E',
+      shortcut: 'Ctrl+Alt+E',
       category: 'Navigation',
       action: () => {
         document.getElementById('education')?.scrollIntoView({ behavior: 'smooth' });
@@ -91,6 +91,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       title: 'Open Chat',
       description: 'Open the global chat',
       icon: MessageCircle,
+      shortcut: 'Ctrl+Alt+C',
       category: 'Actions',
       action: () => {
         onClose();
@@ -102,6 +103,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       title: 'Toggle Theme',
       description: theme === 'light' ? 'Currently: Light → Dark' : theme === 'dark' ? 'Currently: Dark → System' : 'Currently: System → Light',
       icon: Palette,
+      shortcut: 'Ctrl+Alt+D',
       category: 'Preferences',
       action: () => {
         const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
@@ -116,6 +118,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
         title: 'View Profile',
         description: fullName || 'Your profile',
         icon: User,
+        shortcut: 'Ctrl+Alt+U',
         category: 'Account',
         action: () => {
           onClose();
@@ -139,6 +142,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
         title: 'Sign In',
         description: 'Sign in to your account',
         icon: User,
+        shortcut: 'Ctrl+Alt+U',
         category: 'Account',
         action: () => {
           onClose();
@@ -192,6 +196,16 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       if (e.key === 'Escape') {
         onClose();
         return;
+      }
+
+      // Ctrl+Alt shortcuts fire the matching command directly
+      if (e.ctrlKey && e.altKey) {
+        const map: Record<string, string> = {
+          h: 'home', p: 'projects', e: 'education',
+          c: 'chat', d: 'theme-toggle', u: isSignedIn ? 'profile' : 'login',
+        };
+        const cmd = commands.find(c => c.id === map[e.key.toLowerCase()]);
+        if (cmd) { e.preventDefault(); cmd.action(); return; }
       }
 
       if (e.key === 'ArrowDown') {

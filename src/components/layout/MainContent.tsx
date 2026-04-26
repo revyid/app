@@ -7,6 +7,7 @@ import { EducationSection } from '@/components/sections/EducationSection';
 import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { ContactFullSection } from '@/components/sections/ContactFullSection';
 import { Footer } from '@/components/sections/Footer';
+import { PublicAnalytics } from '@/components/shared/PublicAnalytics';
 
 interface MainContentProps {
   /** When true, animations are allowed to play (preloader finished) */
@@ -27,6 +28,10 @@ export function MainContent({ ready = true }: MainContentProps) {
       <div id="projects">
         <ProjectsSection />
       </div>
+      
+      {/* Public Analytics - After Projects */}
+      <PublicAnalytics />
+      
       <ExperienceSection />
       <div id="education">
         <EducationSection />

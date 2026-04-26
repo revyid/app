@@ -29,7 +29,7 @@ export function ContactSection() {
               <div className="w-8 h-8 rounded-[8px] bg-surface-variant flex items-center justify-center">
                 <IconComponent className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span>{contact.label}</span>
+              <span>{contact.value}</span>
             </motion.a>
           );
         })}

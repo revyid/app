@@ -14,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { floatingNavbar, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_DEFAULT } from '@/lib/motion-presets';
 import { IconButton } from '@/components/ui/button';
+import { getSiteSetting } from '@/lib/auth';
 
 interface FloatingNavbarProps {
   onChatClick: () => void;
@@ -42,6 +43,7 @@ export function FloatingNavbar({
   const [activeItem, setActiveItem] = useState('home');
   const [isHovered, setIsHovered] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [siteLogo, setSiteLogo] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,6 +75,21 @@ export function FloatingNavbar({
     };
   }, []);
 
+  // Load site logo
+  useEffect(() => {
+    const loadLogo = async () => {
+      try {
+        const logo = await getSiteSetting('site_logo');
+        if (logo) {
+          setSiteLogo(logo);
+        }
+      } catch (error) {
+        console.error('Failed to load site logo:', error);
+      }
+    };
+    loadLogo();
+  }, []);
+
   const handleNavClick = (id: string) => {
     setActiveItem(id);
     const element = document.getElementById(id);
@@ -86,7 +103,7 @@ export function FloatingNavbar({
       variants={floatingNavbar}
       initial="hidden"
       animate="visible"
-      className="fixed bottom-6 left-0 right-0 z-50 flex justify-center w-full pointer-events-none"
+      className="fixed bottom-6 left-0 right-0 z-40 flex justify-center w-full pointer-events-none"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -119,12 +136,21 @@ export function FloatingNavbar({
                 }`}
               >
                 {isHome ? (
-                  <motion.div
-                    layoutId="logo"
-                    className="w-5 h-5 bg-surface text-foreground font-bold rounded-md flex items-center justify-center text-[10px] shadow-sm ring-1 ring-border/20"
-                  >
-                    R
-                  </motion.div>
+                  siteLogo ? (
+                    <motion.img
+                      layoutId="logo"
+                      src={siteLogo}
+                      alt="Site Logo"
+                      className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20"
+                    />
+                  ) : (
+                    <motion.div
+                      layoutId="logo"
+                      className="w-5 h-5 bg-surface text-foreground font-bold rounded-md flex items-center justify-center text-[10px] shadow-sm ring-1 ring-border/20"
+                    >
+                      R
+                    </motion.div>
+                  )
                 ) : (
                   <Icon className="w-5 h-5" />
                 )}
@@ -161,7 +187,7 @@ export function FloatingNavbar({
           <IconButton
             onClick={onCommandPaletteClick}
             variant="ghost"
-            title="Command Palette (⌘K)"
+            title="Command Palette (Ctrl+K)"
             className="flex-shrink-0"
           >
             <Command className="w-5 h-5" />

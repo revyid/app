@@ -20,17 +20,30 @@ export function Footer() {
     >
       <div className="text-center space-y-3">
         <p className="text-body-sm text-muted-foreground">
-          Built using{' '}
-          <motion.a 
-            href="https://framer.com" 
-            target="_blank" 
+          Built with{' '}
+          <motion.a
+            href="https://react.dev"
+            target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={SPRING_BOUNCY}
             className="text-primary font-medium hover:underline transition-colors"
           >
-            Framer
+            React
+          </motion.a>
+          {' & '}
+          <motion.a
+            href="https://vite.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={SPRING_BOUNCY}
+            className="font-medium hover:underline transition-colors"
+            style={{ color: '#646cff' }}
+          >
+            Vite
           </motion.a>
         </p>
         
@@ -42,7 +55,7 @@ export function Footer() {
             transition={SPRING_BOUNCY}
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
-            Buy this template
+            Explore Work
           </motion.a>
           <span className="w-1 h-1 rounded-full bg-outline/40" />
           <motion.a 
@@ -52,12 +65,12 @@ export function Footer() {
             transition={SPRING_BOUNCY}
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
-            Become an affiliate
+            Work With Me
           </motion.a>
         </div>
         
         <p className="text-label-sm text-muted-foreground/50">
-          © 2026 Resumx by Jus
+          © 2026 Portfolio by revyid
         </p>
       </div>
     </motion.footer>

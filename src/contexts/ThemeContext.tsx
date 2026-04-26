@@ -1,10 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { getAllPortfolioData } from '@/lib/auth';
-
-// ==========================================
-// Auto-discover all theme files from src/themes/
-// ==========================================
-const themeModules = import.meta.glob('@/themes/*.json', { eager: true }) as Record<string, { default: any }>;
+import { getThemes } from '@/lib/auth';
 
 // ==========================================
 // HEX → HSL Utility
@@ -110,47 +105,101 @@ interface ThemeContextType {
   currentProfile: ThemeColorProfile;
 }
 
-// ==========================================
-// Auto-build profiles from discovered themes
-// ==========================================
-
-function buildProfilesFromGlob(): ThemeColorProfile[] {
-  const profiles: ThemeColorProfile[] = [];
-
-  for (const [path, mod] of Object.entries(themeModules)) {
-    const data = (mod as any).default || mod;
-    // Derive a stable ID from the filename: /src/themes/material-theme.json → material-theme
-    const filename = path.split('/').pop()?.replace('.json', '') || 'unknown';
-
-    profiles.push({
-      id: filename,
-      name: data.name || filename.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-      description: data.description || '',
-      seed: data.seed || '#000000',
-      schemes: {
-        light: data.schemes?.light || {},
-        dark: data.schemes?.dark || {},
-      },
-      palettes: data.palettes,
-    });
-  }
-
-  // Sort: put the default theme first
-  profiles.sort((a, b) => {
-    if (a.id === 'material-theme') return -1;
-    if (b.id === 'material-theme') return 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  return profiles;
-}
-
-const builtinProfiles = buildProfilesFromGlob();
-const defaultProfile = builtinProfiles[0] || {
-  id: 'fallback',
+// Default fallback theme
+const defaultProfile: ThemeColorProfile = {
+  id: 'default',
   name: 'Default',
   seed: '#6750A4',
-  schemes: { light: {}, dark: {} },
+  schemes: {
+    light: {
+      primary: '#4A5C92',
+      surfaceTint: '#4A5C92',
+      onPrimary: '#FFFFFF',
+      primaryContainer: '#DBE1FF',
+      onPrimaryContainer: '#324478',
+      secondary: '#585E72',
+      onSecondary: '#FFFFFF',
+      secondaryContainer: '#DDE1F9',
+      onSecondaryContainer: '#414659',
+      tertiary: '#745471',
+      onTertiary: '#FFFFFF',
+      tertiaryContainer: '#FFD6F8',
+      onTertiaryContainer: '#5A3D58',
+      error: '#BA1A1A',
+      onError: '#FFFFFF',
+      errorContainer: '#FFDAD6',
+      onErrorContainer: '#93000A',
+      background: '#FAF8FF',
+      onBackground: '#1A1B21',
+      surface: '#FAF8FF',
+      onSurface: '#1A1B21',
+      surfaceVariant: '#E2E2EC',
+      onSurfaceVariant: '#45464F',
+      outline: '#757680',
+      outlineVariant: '#C5C6D0',
+      shadow: '#000000',
+      scrim: '#000000',
+      inverseSurface: '#2F3036',
+      inverseOnSurface: '#F1F0F7',
+      inversePrimary: '#B4C5FF',
+      primaryFixed: '#DBE1FF',
+      onPrimaryFixed: '#00174A',
+      primaryFixedDim: '#B4C5FF',
+      onPrimaryFixedVariant: '#324478',
+      secondaryFixed: '#DDE1F9',
+      onSecondaryFixed: '#151B2C',
+      secondaryFixedDim: '#C1C6DD',
+      onSecondaryFixedVariant: '#414659',
+      tertiaryFixed: '#FFD6F8',
+      onTertiaryFixed: '#2B122B',
+      tertiaryFixedDim: '#E5BADF',
+      onTertiaryFixedVariant: '#5A3D58',
+    },
+    dark: {
+      primary: '#B4C5FF',
+      surfaceTint: '#B4C5FF',
+      onPrimary: '#1A2C5C',
+      primaryContainer: '#324478',
+      onPrimaryContainer: '#DBE1FF',
+      secondary: '#C1C6DD',
+      onSecondary: '#2A3042',
+      secondaryContainer: '#414659',
+      onSecondaryContainer: '#DDE1F9',
+      tertiary: '#E5BADF',
+      onTertiary: '#422740',
+      tertiaryContainer: '#5A3D58',
+      onTertiaryContainer: '#FFD6F8',
+      error: '#FFB4AB',
+      onError: '#690005',
+      errorContainer: '#93000A',
+      onErrorContainer: '#FFDAD6',
+      background: '#111318',
+      onBackground: '#E3E2E9',
+      surface: '#111318',
+      onSurface: '#E3E2E9',
+      surfaceVariant: '#45464F',
+      onSurfaceVariant: '#C5C6D0',
+      outline: '#8F909A',
+      outlineVariant: '#45464F',
+      shadow: '#000000',
+      scrim: '#000000',
+      inverseSurface: '#E3E2E9',
+      inverseOnSurface: '#2F3036',
+      inversePrimary: '#4A5C92',
+      primaryFixed: '#DBE1FF',
+      onPrimaryFixed: '#00174A',
+      primaryFixedDim: '#B4C5FF',
+      onPrimaryFixedVariant: '#324478',
+      secondaryFixed: '#DDE1F9',
+      onSecondaryFixed: '#151B2C',
+      secondaryFixedDim: '#C1C6DD',
+      onSecondaryFixedVariant: '#414659',
+      tertiaryFixed: '#FFD6F8',
+      onTertiaryFixed: '#2B122B',
+      tertiaryFixedDim: '#E5BADF',
+      onTertiaryFixedVariant: '#5A3D58',
+    }
+  }
 };
 
 // ==========================================
@@ -167,34 +216,44 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('light');
 
   const [profiles, setProfiles] = useState<ThemeColorProfile[]>(() => {
-    const storedProfileId = localStorage.getItem('colorProfileId');
-    if (storedProfileId === 'default') {
-      localStorage.setItem('colorProfileId', builtinProfiles[0]?.id || 'material-theme');
-    }
     try {
       const stored = localStorage.getItem('themeProfiles');
       if (stored) {
         const userProfiles = JSON.parse(stored) as ThemeColorProfile[];
-        const builtinIds = new Set(builtinProfiles.map(p => p.id));
-        const extras = userProfiles.filter(p => !builtinIds.has(p.id) && p.id !== 'default');
-        return [...builtinProfiles, ...extras];
+        return [defaultProfile, ...userProfiles];
       }
     } catch { /* ignore */ }
-    return builtinProfiles;
+    return [defaultProfile];
   });
 
-  // Load themes from DB and merge
+  // Load themes from DB
   useEffect(() => {
-    getAllPortfolioData().then((raw) => {
-      const dbThemes = raw.themes as ThemeColorProfile[] | undefined;
-      if (!dbThemes || !Array.isArray(dbThemes)) return;
-      setProfiles((prev) => {
-        const existingIds = new Set(prev.map(p => p.id));
-        const newOnes = dbThemes.filter(t => !existingIds.has(t.id));
-        if (newOnes.length === 0) return prev;
-        return [...prev, ...newOnes];
-      });
-    }).catch(() => {});
+    const loadThemes = async () => {
+      try {
+        const themes = await getThemes();
+        const themeProfiles: ThemeColorProfile[] = themes.map(theme => ({
+          id: theme.id || crypto.randomUUID(),
+          name: theme.name,
+          description: theme.description,
+          seed: theme.seed_color,
+          schemes: {
+            light: theme.light_scheme,
+            dark: theme.dark_scheme
+          }
+        }));
+        
+        setProfiles(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newOnes = themeProfiles.filter(t => !existingIds.has(t.id));
+          if (newOnes.length === 0) return prev;
+          return [...prev, ...newOnes];
+        });
+      } catch (error) {
+        console.error('Failed to load themes:', error);
+      }
+    };
+    
+    loadThemes();
   }, []);
 
   const [colorProfileId, setColorProfileIdState] = useState<string>(() => {
@@ -246,10 +305,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme, currentProfile, applyColors]);
 
-  // Persist user-added profiles (not builtins) to localStorage
+  // Persist user-added profiles to localStorage
   useEffect(() => {
-    const builtinIds = new Set(builtinProfiles.map(p => p.id));
-    const userOnly = profiles.filter(p => !builtinIds.has(p.id));
+    const userOnly = profiles.filter(p => p.id !== 'default');
     localStorage.setItem('themeProfiles', JSON.stringify(userOnly));
   }, [profiles]);
 
@@ -258,16 +316,41 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('colorProfileId', id);
   }, []);
 
-  const addColorProfile = useCallback((profile: ThemeColorProfile) => {
-    setProfiles(prev => {
-      const existing = prev.findIndex(p => p.id === profile.id);
-      if (existing >= 0) {
-        const updated = [...prev];
-        updated[existing] = profile;
-        return updated;
+  const addColorProfile = useCallback(async (profile: ThemeColorProfile) => {
+    try {
+      const { upsertTheme } = await import('@/lib/auth');
+      const result = await upsertTheme({
+        id: profile.id !== 'default' ? profile.id : undefined,
+        name: profile.name,
+        description: profile.description,
+        seed_color: profile.seed,
+        light_scheme: profile.schemes.light,
+        dark_scheme: profile.schemes.dark,
+        is_public: true
+      });
+      
+      if (result.error) {
+        console.error('Failed to save theme:', result.error);
+        return;
       }
-      return [...prev, profile];
-    });
+      
+      const savedProfile = {
+        ...profile,
+        id: result.id || profile.id
+      };
+      
+      setProfiles(prev => {
+        const existing = prev.findIndex(p => p.id === savedProfile.id);
+        if (existing >= 0) {
+          const updated = [...prev];
+          updated[existing] = savedProfile;
+          return updated;
+        }
+        return [...prev, savedProfile];
+      });
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+    }
   }, []);
 
   const toggleTheme = () => {

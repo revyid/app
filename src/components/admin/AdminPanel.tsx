@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, ChevronDown, ChevronUp, Loader2, Shield, Plus, Trash2 } from 'lucide-react';
+import { X, Save, ChevronDown, ChevronUp, Loader2, Shield, Plus, Trash2, Palette, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { upsertPortfolioSection } from '@/lib/auth';
 import { Button, IconButton } from '@/components/ui/button';
-import { modalBackdrop } from '@/lib/motion-presets';
-import type { Project, Experience, Education, SocialLink, Contact, Language } from '@/types';
+import { modalBackdrop, bottomSheetContent } from '@/lib/motion-presets';
+import type { Project, Experience, Education, SocialLink, Contact, Language, Testimonial } from '@/types';
 import type { ProfileData, IntroData } from '@/contexts/PortfolioContext';
+import { ThemeBuilder } from './ThemeBuilder';
+import { SiteSettings } from './SiteSettings';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { ImageUpload } from '@/components/shared/ImageUpload';
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -132,12 +136,20 @@ function ProfileSection({ initial, onSaved }: { initial: ProfileData; onSaved: (
     <Section label="Profile" onSave={() => save(form)} saving={saving} saved={saved} error={error}>
       <Field label="Name"><Input value={form.name} onChange={set('name')} /></Field>
       <Field label="Pronouns"><Input value={form.pronouns} onChange={set('pronouns')} /></Field>
-      <Field label="Profile Image URL"><Input value={form.image} onChange={set('image')} placeholder="https://..." /></Field>
+      <Field label="Profile Image">
+        <ImageUpload value={form.image} onChange={set('image')} previewClass="aspect-square max-w-[120px]" />
+      </Field>
       <Field label="About"><Textarea value={form.about} onChange={set('about')} rows={4} /></Field>
       <div className="pt-2 border-t border-border space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Easter Egg (Ctrl+Alt+L)</p>
         <Field label="Name"><Input value={form.easter_egg?.name ?? ''} onChange={(v) => setForm(f => ({ ...f, easter_egg: { ...f.easter_egg, name: v, image: f.easter_egg?.image ?? '', shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))} /></Field>
-        <Field label="Image URL"><Input value={form.easter_egg?.image ?? ''} onChange={(v) => setForm(f => ({ ...f, easter_egg: { ...f.easter_egg, name: f.easter_egg?.name ?? '', image: v, shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))} placeholder="https://..." /></Field>
+        <Field label="Image">
+          <ImageUpload
+            value={form.easter_egg?.image ?? ''}
+            onChange={(v) => setForm(f => ({ ...f, easter_egg: { ...f.easter_egg, name: f.easter_egg?.name ?? '', image: v, shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))}
+            previewClass="aspect-square max-w-[120px]"
+          />
+        </Field>
       </div>
     </Section>
   );
@@ -324,7 +336,9 @@ function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSav
             </Field>
             <Field label="URL"><Input value={p.href ?? ''} onChange={(v) => update(i, 'href', v)} placeholder="https://..." /></Field>
             <Field label="Repo URL"><Input value={p.repoUrl ?? ''} onChange={(v) => update(i, 'repoUrl', v)} placeholder="https://github.com/..." /></Field>
-            <Field label="Thumbnail URL"><Input value={p.thumbnail ?? ''} onChange={(v) => update(i, 'thumbnail', v)} placeholder="https://..." /></Field>
+            <Field label="Thumbnail">
+              <ImageUpload value={p.thumbnail ?? ''} onChange={(v) => update(i, 'thumbnail', v)} previewClass="aspect-video" />
+            </Field>
           </div>
           <Field label="Tech Stack (comma separated)">
             <Input
@@ -418,6 +432,39 @@ function EducationSectionEditor({ initial, onSaved }: { initial: Education[]; on
   );
 }
 
+// ─── Testimonials Section ─────────────────────────────────────────────
+function TestimonialsSectionEditor({ initial, onSaved }: { initial: Testimonial[]; onSaved: () => void }) {
+  const [items, setItems] = useState(initial);
+  useEffect(() => setItems(initial), [initial]);
+  const { save, saving, saved, error } = useSave('testimonials', onSaved);
+  const update = (i: number, k: keyof Testimonial, v: string) =>
+    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+
+  return (
+    <Section label="Testimonials" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
+      {items.map((t, i) => (
+        <div key={t.id} className="p-3 border border-border rounded-lg space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-medium text-muted-foreground">{t.name || `Testimonial ${i + 1}`}</span>
+            <IconButton variant="ghost" size="sm" onClick={() => setItems((arr) => arr.filter((_, j) => j !== i))}>
+              <Trash2 className="w-4 h-4 text-destructive" />
+            </IconButton>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Name"><Input value={t.name} onChange={(v) => update(i, 'name', v)} /></Field>
+            <Field label="Role"><Input value={t.role} onChange={(v) => update(i, 'role', v)} /></Field>
+          </div>
+          <Field label="Avatar URL"><Input value={t.avatar ?? ''} onChange={(v) => update(i, 'avatar', v)} placeholder="https://..." /></Field>
+          <Field label="Quote"><Textarea value={t.quote} onChange={(v) => update(i, 'quote', v)} rows={3} /></Field>
+        </div>
+      ))}
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), name: '', role: '', quote: '', avatar: '' }])} className="gap-1">
+        <Plus className="w-3.5 h-3.5" /> Add Testimonial
+      </Button>
+    </Section>
+  );
+}
+
 // ─── Main Admin Panel ─────────────────────────────────────────────────
 interface AdminPanelProps {
   isOpen: boolean;
@@ -427,16 +474,20 @@ interface AdminPanelProps {
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
   const { data, refresh } = usePortfolio();
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics'>('portfolio');
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop with animated blobs */}
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop — identical to CustomLogin */}
           <motion.div
-            {...modalBackdrop}
+            variants={modalBackdrop}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             onClick={onClose}
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           >
@@ -459,51 +510,88 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             </div>
           </motion.div>
 
-          {/* Modal content */}
+          {/* Bottom sheet — identical structure to CustomLogin */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-[36px] overflow-hidden"
+            variants={bottomSheetContent}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="relative w-full max-w-2xl mx-0 sm:mx-4"
+            style={{ maxHeight: '92vh' }}
           >
-            <div className="absolute inset-0 bg-surface/95 dark:bg-surface/95 backdrop-blur-[40px]" />
+            <div className="relative rounded-t-[32px] sm:rounded-t-[36px] overflow-hidden" style={{ maxHeight: '92vh' }}>
+              <div className="absolute inset-0 bg-surface/95 dark:bg-surface/95 backdrop-blur-[40px]" />
 
-            <div className="relative flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-outline/10 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" />
-                <h2 className="font-semibold text-base">Admin Panel</h2>
-              </div>
-              <IconButton variant="ghost" size="sm" onClick={onClose} aria-label="Close">
-                <X className="w-4 h-4" />
-              </IconButton>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-8 space-y-3">
-              {!user?.is_admin ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">Admin access required.</p>
+              <div className="relative flex flex-col" style={{ maxHeight: '92vh' }}>
+                {/* Drag handle */}
+                <div className="pt-3 pb-0 flex-shrink-0">
+                  <div className="sheet-handle" />
                 </div>
-              ) : (
-                <>
-                  <p className="text-xs text-muted-foreground pb-1">
-                    Changes are saved to the database and reflected live.
-                  </p>
-                  <ProfileSection initial={data.profile} onSaved={refresh} />
-                  <IntroSectionEditor initial={data.intro} onSaved={refresh} />
-                  <SkillsSectionEditor initial={data.skills} onSaved={refresh} />
-                  <LanguagesSectionEditor initial={data.languages} onSaved={refresh} />
-                  <SocialLinksSectionEditor initial={data.social_links} onSaved={refresh} />
-                  <ContactsSectionEditor initial={data.contacts} onSaved={refresh} />
-                  <ProjectsSectionEditor initial={data.projects} onSaved={refresh} />
-                  <ExperiencesSectionEditor initial={data.experiences} onSaved={refresh} />
-                  <EducationSectionEditor initial={data.education} onSaved={refresh} />
-                </>
-              )}
-            </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-outline/10 flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" />
+                    <h2 className="font-semibold text-base">Admin Panel</h2>
+                  </div>
+                  <IconButton variant="ghost" size="sm" onClick={onClose} aria-label="Close">
+                    <X className="w-4 h-4" />
+                  </IconButton>
+                </div>
+
+                {/* Tabs */}
+                {user?.is_admin && (
+                  <div className="flex border-b border-outline/10 flex-shrink-0">
+                    {(['portfolio', 'themes', 'analytics', 'settings'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`flex-1 py-3 text-sm font-medium capitalize transition-colors ${activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                      >
+                        {tab === 'themes' ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <Palette className="w-3.5 h-3.5" />Themes
+                          </span>
+                        ) : tab === 'analytics' ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <BarChart3 className="w-3.5 h-3.5" />Analytics
+                          </span>
+                        ) : tab === 'portfolio' ? 'Portfolio' : 'Settings'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {!user?.is_admin ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">Admin access required.</p>
+                    </div>
+                  ) : activeTab === 'portfolio' ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
+                      <ProfileSection initial={data.profile} onSaved={refresh} />
+                      <IntroSectionEditor initial={data.intro} onSaved={refresh} />
+                      <SkillsSectionEditor initial={data.skills} onSaved={refresh} />
+                      <LanguagesSectionEditor initial={data.languages} onSaved={refresh} />
+                      <SocialLinksSectionEditor initial={data.social_links} onSaved={refresh} />
+                      <ContactsSectionEditor initial={data.contacts} onSaved={refresh} />
+                      <ProjectsSectionEditor initial={data.projects} onSaved={refresh} />
+                      <ExperiencesSectionEditor initial={data.experiences} onSaved={refresh} />
+                      <EducationSectionEditor initial={data.education} onSaved={refresh} />
+                      <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={refresh} />
+                    </div>
+                  ) : activeTab === 'themes' ? (
+                    <ThemeBuilder />
+                  ) : activeTab === 'analytics' ? (
+                    <AnalyticsDashboard />
+                  ) : (
+                    <SiteSettings />
+                  )}
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>

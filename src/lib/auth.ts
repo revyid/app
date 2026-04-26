@@ -249,3 +249,127 @@ export async function deletePortfolioItem(
   if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
   return {};
 }
+
+// ─── Theme Management ────────────────────────────────────────────────
+
+export interface ThemeData {
+  id?: string;
+  name: string;
+  description?: string;
+  seed_color: string;
+  light_scheme: Record<string, string>;
+  dark_scheme: Record<string, string>;
+  is_public?: boolean;
+}
+
+export interface SiteSetting {
+  key: string;
+  value: string;
+  description?: string;
+}
+
+export async function getThemes(): Promise<ThemeData[]> {
+  const { data, error } = await supabase.rpc('get_themes', {
+    p_user_id: null
+  });
+  
+  if (error) throw error;
+  return (data as ThemeData[]) || [];
+}
+
+export async function upsertTheme(theme: ThemeData): Promise<{ id?: string; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+
+  const { data: result, error } = await supabase.rpc('upsert_theme', {
+    p_id: theme.id || null,
+    p_name: theme.name,
+    p_description: theme.description || null,
+    p_seed_color: theme.seed_color,
+    p_light_scheme: theme.light_scheme,
+    p_dark_scheme: theme.dark_scheme,
+    p_is_public: theme.is_public ?? true,
+    p_user_id: token
+  });
+
+  if (error) return { error: error.message };
+  if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
+  return { id: result as string };
+}
+
+// ─── Site Settings ───────────────────────────────────────────────────
+export async function getSiteSetting(key: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('get_site_setting', { p_key: key });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateSiteSetting(key: string, value: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.rpc('update_site_setting', {
+    p_token: token,
+    p_key: key,
+    p_value: value
+  });
+
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+}
+
+// ─── Analytics ───────────────────────────────────────────────────────
+export async function trackEvent(
+  eventType: string,
+  eventData?: Record<string, any>,
+  userAgent?: string,
+  ipAddress?: string,
+  referrer?: string
+): Promise<void> {
+  try {
+    const { data, error } = await supabase.rpc('track_event', {
+      p_event_type: eventType,
+      p_event_data: eventData || null,
+      p_user_agent: userAgent || null,
+      p_ip_address: ipAddress || null,
+      p_referrer: referrer || null
+    });
+
+    if (error) {
+      console.error('Track event error:', error);
+      throw error;
+    }
+    
+    console.log('Event tracked:', eventType, data);
+  } catch (error) {
+    console.error('Failed to track event:', error);
+    throw error;
+  }
+}
+
+export async function getAnalyticsSummary(days: number = 30): Promise<any> {
+  const token = getStoredToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase.rpc('get_analytics_summary', {
+    p_token: token,
+    p_days: days
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteTheme(themeId: string): Promise<{ error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+
+  const { data: result, error } = await supabase.rpc('delete_theme', {
+    p_id: themeId,
+    p_user_id: token
+  });
+
+  if (error) return { error: error.message };
+  if (!result) return { error: 'Failed to delete theme or insufficient permissions' };
+  return {};
+}

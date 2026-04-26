@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { getStoredToken, updateProfile, getUserSessions } from '@/lib/auth';
+import { getStoredToken, updateProfile, getUserSessions, revokeSession } from '@/lib/auth';
 import {
   X,
   LogOut,
@@ -185,10 +185,9 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
   const handleRevokeDevice = async (id: string) => {
     try {
       setDbDevices(prev => prev.filter(d => d.id !== id));
-      await supabase.from('user_devices').update({ is_active: false }).eq('id', id);
+      await revokeSession(id);
     } catch (err) {
       console.error('Failed to revoke device', err);
-      // refetch on error
       const sessions = await getUserSessions();
       setDbDevices(sessions || []);
     }

@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { TestimonialCard } from '@/components/shared/TestimonialCard';
-import { testimonials } from '@/data/portfolio-data';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 
 export function TestimonialsSection() {
+  const { data } = usePortfolio();
+  if (!data.testimonials?.length) return null;
   return (
     <motion.section
       initial="hidden"
@@ -16,9 +18,8 @@ export function TestimonialsSection() {
       <motion.div variants={itemVariants}>
         <SectionLabel text="Testimonials" />
       </motion.div>
-      
       <div className="space-y-4">
-        {testimonials.map((testimonial) => (
+        {data.testimonials.map((testimonial) => (
           <motion.div key={testimonial.id} variants={itemVariants}>
             <TestimonialCard testimonial={testimonial} />
           </motion.div>

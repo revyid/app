@@ -10,8 +10,9 @@ import {
   socialLinks as staticSocialLinks,
   contactInfo as staticContacts,
   languages as staticLanguages,
+  testimonials as staticTestimonials,
 } from '@/data/portfolio-data';
-import type { Project, Experience, Education, SocialLink, Contact, Language } from '@/types';
+import type { Project, Experience, Education, SocialLink, Contact, Language, Testimonial } from '@/types';
 
 export interface ProfileData {
   name: string;
@@ -40,6 +41,7 @@ export interface PortfolioData {
   social_links: SocialLink[];
   contacts: Contact[];
   languages: Language[];
+  testimonials: Testimonial[];
 }
 
 const defaultData: PortfolioData = {
@@ -52,6 +54,7 @@ const defaultData: PortfolioData = {
   social_links: staticSocialLinks,
   contacts: staticContacts,
   languages: staticLanguages,
+  testimonials: staticTestimonials,
 };
 
 interface PortfolioContextType {
@@ -85,6 +88,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
         contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
         languages: (raw.languages as Language[]) ?? defaultData.languages,
+        testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
       });
     } catch {
       // silently fall back to static data
