@@ -151,7 +151,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
                         className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
                       >
                         <img
-                          src={msg.user_image || '/default-avatar.png'}
+                          src={msg.user_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.user_name)}&background=random`}
                           alt={msg.user_name}
                           className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                         />
