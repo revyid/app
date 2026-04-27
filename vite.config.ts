@@ -55,5 +55,19 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['.trycloudflare.com', 'dev.revy.my.id'],
-  }
+  },
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
+  },
 })
