@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { PortfolioProvider } from '@/contexts/PortfolioContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MainContent } from '@/components/layout/MainContent';
 import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
-import { ChatPopup } from '@/components/chat/ChatPopup';
 import { CustomLogin } from '@/components/auth/CustomLogin';
-import { CommandPalette } from '@/components/command/CommandPalette';
 import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
-import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
-import { AdminPanel } from '@/components/admin/AdminPanel';
-import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
 import { AnimatePresence, LayoutGroup } from 'framer-motion';
 import { NotFound } from '@/pages/NotFound';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { trackEvent } from '@/lib/auth';
+
+// Lazy load heavy modal components
+const ChatPopup = lazy(() => import('@/components/chat/ChatPopup').then(m => ({ default: m.ChatPopup })));
+const CommandPalette = lazy(() => import('@/components/command/CommandPalette').then(m => ({ default: m.CommandPalette })));
+const AdminPanel = lazy(() => import('@/components/admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
+const UserProfilePopup = lazy(() => import('@/components/profile/UserProfilePopup').then(m => ({ default: m.UserProfilePopup })));
+const ShortcutHelp = lazy(() => import('@/components/shared/ShortcutHelp').then(m => ({ default: m.ShortcutHelp })));
 
 // Known routes — anything else renders 404
 const KNOWN_ROUTES = ['/'];
@@ -57,8 +59,14 @@ function AppContent() {
       }
     };
 
-    trackPageView();
+    // Don't block FCP — run when browser is idle
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => trackPageView(), { timeout: 3000 });
+    } else {
+      setTimeout(trackPageView, 2000);
+    }
   }, []);
+
   const { toggleTheme } = useTheme();
 
   // Set up keyboard shortcuts
@@ -136,49 +144,51 @@ function AppContent() {
           onAdminClick={() => setIsAdminOpen(true)}
         />
 
-        {/* Modals */}
-        <ChatPopup 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
-          onLoginRequest={() => setIsLoginOpen(true)}
-        />
-        
+        {/* Modals — lazy loaded, don't block initial render */}
+        <Suspense fallback={null}>
+          <ChatPopup 
+            isOpen={isChatOpen} 
+            onClose={() => setIsChatOpen(false)} 
+            onLoginRequest={() => setIsLoginOpen(true)}
+          />
+          
+          <CommandPalette 
+            isOpen={isCommandPaletteOpen}
+            onClose={() => setIsCommandPaletteOpen(false)}
+            onLoginClick={() => {
+              setIsCommandPaletteOpen(false);
+              setIsLoginOpen(true);
+            }}
+            onProfileClick={() => {
+              setIsCommandPaletteOpen(false);
+              setIsProfileOpen(true);
+            }}
+            onChatClick={() => setIsChatOpen(true)}
+          />
+
+          <UserProfilePopup 
+            isOpen={isProfileOpen}
+            onClose={() => setIsProfileOpen(false)}
+            onLoginRequest={() => {
+              setIsProfileOpen(false);
+              setIsLoginOpen(true);
+            }}
+          />
+
+          <AdminPanel
+            isOpen={isAdminOpen}
+            onClose={() => setIsAdminOpen(false)}
+          />
+
+          <ShortcutHelp
+            isOpen={isShortcutHelpOpen}
+            onClose={() => setIsShortcutHelpOpen(false)}
+          />
+        </Suspense>
+
         <CustomLogin 
           isOpen={isLoginOpen} 
           onClose={() => setIsLoginOpen(false)} 
-        />
-        
-        <CommandPalette 
-          isOpen={isCommandPaletteOpen}
-          onClose={() => setIsCommandPaletteOpen(false)}
-          onLoginClick={() => {
-            setIsCommandPaletteOpen(false);
-            setIsLoginOpen(true);
-          }}
-          onProfileClick={() => {
-            setIsCommandPaletteOpen(false);
-            setIsProfileOpen(true);
-          }}
-          onChatClick={() => setIsChatOpen(true)}
-        />
-
-        <UserProfilePopup 
-          isOpen={isProfileOpen}
-          onClose={() => setIsProfileOpen(false)}
-          onLoginRequest={() => {
-            setIsProfileOpen(false);
-            setIsLoginOpen(true);
-          }}
-        />
-
-        <AdminPanel
-          isOpen={isAdminOpen}
-          onClose={() => setIsAdminOpen(false)}
-        />
-
-        <ShortcutHelp
-          isOpen={isShortcutHelpOpen}
-          onClose={() => setIsShortcutHelpOpen(false)}
         />
       </div>
     </LayoutGroup>
