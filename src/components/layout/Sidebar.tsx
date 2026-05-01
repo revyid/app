@@ -27,19 +27,19 @@ export function Sidebar({ ready = true }: SidebarProps) {
       
       {/* Desktop card wrapper */}
       <div className="hidden lg:block">
-        <div className="squircle-card bg-surface border border-outline/20 p-6 space-y-2 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide">
+        <div className="squircle-card bg-surface border border-outline/20 p-6 space-y-2 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-surface-variant scrollbar-track-transparent hover:scrollbar-thumb-outline/30">
           <ProfileHeader />
           <AboutSection />
           <ContactSection />
           <SkillsSection />
           <LanguagesSection />
-          <div className="pt-4">
+          <div className="pt-4 pb-2">
             <SocialLinks />
           </div>
         </div>
       </div>
 
-      {/* Mobile: sections flow naturally, no card wrapper */}
+      {/* Mobile: sections flow naturally */}
       <div className="lg:hidden space-y-6">
         <ProfileHeader />
         <AboutSection />

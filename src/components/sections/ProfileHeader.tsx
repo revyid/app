@@ -33,7 +33,13 @@ export function ProfileHeader() {
           className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-primary/20 idle-breathe"
           style={{ borderRadius: '20px' }}
         >
-          <img src={profileData.image} alt={profileData.name} className="w-full h-full object-cover" />
+          <img 
+            src={profileData.image} 
+            alt={profileData.name} 
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
         </motion.div>
 
         {/* Easter egg PP */}
@@ -47,7 +53,13 @@ export function ProfileHeader() {
               className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-tertiary/40"
               style={{ borderRadius: '20px' }}
             >
-              <img src={easterEgg.image} alt={easterEgg.name} className="w-full h-full object-cover" />
+              <img 
+                src={easterEgg.image} 
+                alt={easterEgg.name} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
             </motion.div>
           )}
         </AnimatePresence>

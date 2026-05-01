@@ -1,17 +1,20 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { PortfolioProvider } from '@/contexts/PortfolioContext';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { MainContent } from '@/components/layout/MainContent';
+import { ActiveSectionProvider } from '@/contexts/ActiveSectionContext';
 import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
 import { CustomLogin } from '@/components/auth/CustomLogin';
 import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { AnimatePresence, LayoutGroup } from 'framer-motion';
 import { NotFound } from '@/pages/NotFound';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useTheme } from '@/contexts/ThemeContext';
-import { trackEvent } from '@/lib/auth';
+
+// Lazy load the single main page
+const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.HomePage })));
 
 // Lazy load heavy modal components
 const ChatPopup = lazy(() => import('@/components/chat/ChatPopup').then(m => ({ default: m.ChatPopup })));
@@ -19,9 +22,6 @@ const CommandPalette = lazy(() => import('@/components/command/CommandPalette').
 const AdminPanel = lazy(() => import('@/components/admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
 const UserProfilePopup = lazy(() => import('@/components/profile/UserProfilePopup').then(m => ({ default: m.UserProfilePopup })));
 const ShortcutHelp = lazy(() => import('@/components/shared/ShortcutHelp').then(m => ({ default: m.ShortcutHelp })));
-
-// Known routes — anything else renders 404
-const KNOWN_ROUTES = ['/'];
 
 function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,42 +32,52 @@ function AppContent() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
 
-  // Track page view on mount
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Page meta — single page now
+  useEffect(() => {
+    document.title = 'Revy — Developer Portfolio';
+    const descEl = document.querySelector('meta[name="description"]');
+    if (descEl) descEl.setAttribute('content', 'Full-stack developer portfolio showcasing projects, skills, and experience.');
+  }, []);
+
+  // Track page view via backend API — fire once, non-blocking
   useEffect(() => {
     const trackPageView = async () => {
       try {
-        const userAgent = navigator.userAgent;
-        const referrer = document.referrer || 'direct';
-
-        // Get real visitor IP
-        let ipAddress = 'unknown';
-        try {
-          const res = await fetch('https://api.ipify.org?format=json');
-          const json = await res.json();
-          ipAddress = json.ip || 'unknown';
-        } catch {
-          // fallback: leave as 'unknown'
-        }
-
-        await trackEvent('page_view', {
-          page: window.location.pathname,
-          referrer: referrer,
-          timestamp: new Date().toISOString()
-        }, userAgent, ipAddress, referrer);
-      } catch (error) {
-        console.error('Failed to track page view:', error);
-      }
+        await fetch('/api/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_type: 'page_view',
+            event_data: {
+              page: location.pathname,
+              timestamp: new Date().toISOString(),
+            },
+            referrer: document.referrer || 'direct',
+          }),
+        });
+      } catch { /* non-critical */ }
     };
 
-    // Don't block FCP — run when browser is idle
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => trackPageView(), { timeout: 3000 });
     } else {
       setTimeout(trackPageView, 2000);
     }
-  }, []);
+  }, [location.pathname]);
 
   const { toggleTheme } = useTheme();
+
+  const closeAllModals = useCallback(() => {
+    setIsChatOpen(false);
+    setIsLoginOpen(false);
+    setIsCommandPaletteOpen(false);
+    setIsProfileOpen(false);
+    setIsAdminOpen(false);
+    setIsShortcutHelpOpen(false);
+  }, []);
 
   // Set up keyboard shortcuts
   useKeyboardShortcuts([
@@ -77,9 +87,7 @@ function AppContent() {
     },
     {
       ...defaultShortcuts.find(s => s.id === 'theme-switcher')!,
-      action: () => {
-        console.log('Open theme selector');
-      }
+      action: () => { console.log('Open theme selector'); }
     },
     {
       ...defaultShortcuts.find(s => s.id === 'dark-mode-toggle')!,
@@ -87,12 +95,7 @@ function AppContent() {
     },
     {
       ...defaultShortcuts.find(s => s.id === 'projects')!,
-      action: () => {
-        const element = document.getElementById('projects');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
+      action: () => navigate('/')
     },
     {
       ...defaultShortcuts.find(s => s.id === 'admin-panel')!,
@@ -108,16 +111,9 @@ function AppContent() {
     },
     {
       ...defaultShortcuts.find(s => s.id === 'escape')!,
-      action: () => {
-        setIsChatOpen(false);
-        setIsLoginOpen(false);
-        setIsCommandPaletteOpen(false);
-        setIsProfileOpen(false);
-        setIsAdminOpen(false);
-        setIsShortcutHelpOpen(false);
-      }
+      action: closeAllModals
     }
-  ], [toggleTheme]);
+  ], [toggleTheme, navigate, closeAllModals]);
 
   return (
     <LayoutGroup>
@@ -128,67 +124,64 @@ function AppContent() {
           )}
         </AnimatePresence>
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24" style={{ '--container-padding': '1rem' } as React.CSSProperties}>
+        {/* Persistent Layout: Sidebar + Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-14">
+            {/* Sidebar: persistent, never remounts */}
             <Sidebar ready={!isLoading} />
-            <MainContent ready={!isLoading} />
+
+            {/* Main Content */}
+            <main className="flex-1 min-w-0">
+              <Suspense fallback={null}>
+                <Routes location={location}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </main>
           </div>
         </div>
 
         {/* Floating Navbar */}
-        <FloatingNavbar 
+        <FloatingNavbar
           onChatClick={() => setIsChatOpen(true)}
           onCommandPaletteClick={() => setIsCommandPaletteOpen(true)}
           onProfileClick={() => setIsProfileOpen(true)}
           onAdminClick={() => setIsAdminOpen(true)}
         />
 
-        {/* Modals — lazy loaded, don't block initial render */}
+        {/* Modals — lazy loaded */}
         <Suspense fallback={null}>
-          <ChatPopup 
-            isOpen={isChatOpen} 
-            onClose={() => setIsChatOpen(false)} 
+          <ChatPopup
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
             onLoginRequest={() => setIsLoginOpen(true)}
           />
-          
-          <CommandPalette 
+          <CommandPalette
             isOpen={isCommandPaletteOpen}
             onClose={() => setIsCommandPaletteOpen(false)}
-            onLoginClick={() => {
-              setIsCommandPaletteOpen(false);
-              setIsLoginOpen(true);
-            }}
-            onProfileClick={() => {
-              setIsCommandPaletteOpen(false);
-              setIsProfileOpen(true);
-            }}
+            onLoginClick={() => { setIsCommandPaletteOpen(false); setIsLoginOpen(true); }}
+            onProfileClick={() => { setIsCommandPaletteOpen(false); setIsProfileOpen(true); }}
             onChatClick={() => setIsChatOpen(true)}
           />
-
-          <UserProfilePopup 
+          <UserProfilePopup
             isOpen={isProfileOpen}
             onClose={() => setIsProfileOpen(false)}
-            onLoginRequest={() => {
-              setIsProfileOpen(false);
-              setIsLoginOpen(true);
-            }}
+            onLoginRequest={() => { setIsProfileOpen(false); setIsLoginOpen(true); }}
           />
-
           <AdminPanel
             isOpen={isAdminOpen}
             onClose={() => setIsAdminOpen(false)}
           />
-
           <ShortcutHelp
             isOpen={isShortcutHelpOpen}
             onClose={() => setIsShortcutHelpOpen(false)}
           />
         </Suspense>
 
-        <CustomLogin 
-          isOpen={isLoginOpen} 
-          onClose={() => setIsLoginOpen(false)} 
+        <CustomLogin
+          isOpen={isLoginOpen}
+          onClose={() => setIsLoginOpen(false)}
         />
       </div>
     </LayoutGroup>
@@ -196,20 +189,13 @@ function AppContent() {
 }
 
 function App() {
-  const pathname = window.location.pathname;
-  if (!KNOWN_ROUTES.includes(pathname)) {
-    return (
-      <ThemeProvider>
-        <NotFound />
-      </ThemeProvider>
-    );
-  }
-
   return (
     <AuthProvider>
       <ThemeProvider>
         <PortfolioProvider>
-          <AppContent />
+          <ActiveSectionProvider>
+            <AppContent />
+          </ActiveSectionProvider>
         </PortfolioProvider>
       </ThemeProvider>
     </AuthProvider>

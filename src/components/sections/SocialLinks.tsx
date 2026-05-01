@@ -1,11 +1,25 @@
 import { motion } from 'framer-motion';
-import { Twitter, AtSign, Instagram, Linkedin, Github, Youtube } from 'lucide-react';
+import { Twitter, AtSign, Instagram, Linkedin, Github, Youtube, Facebook, Twitch, Mail, Globe, MessageCircle, Send, Link as LinkIcon, Music, Video } from 'lucide-react';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { itemVariants } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Twitter, AtSign, Instagram, Linkedin, Github, Youtube,
+  Twitter, 
+  AtSign, 
+  Instagram, 
+  Linkedin, 
+  Github, 
+  Youtube,
+  Facebook,
+  Twitch,
+  Mail,
+  Globe,
+  MessageCircle, // Discord/WhatsApp
+  Send, // Telegram
+  Link: LinkIcon, // Generic link
+  Music, // TikTok/Spotify
+  Video, // TikTok alternative
 };
 
 export function SocialLinks() {

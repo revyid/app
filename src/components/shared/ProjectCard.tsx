@@ -69,6 +69,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
                 alt={project.title} 
                 className="w-full h-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             )}
           </motion.div>

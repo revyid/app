@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, 
-  Briefcase, 
-  GraduationCap, 
-  MessageCircle, 
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  Home,
+  Briefcase,
+  GraduationCap,
+  MessageCircle,
   Command,
   User,
   Shield,
+  Mail,
 } from 'lucide-react';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -15,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { floatingNavbar, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_DEFAULT } from '@/lib/motion-presets';
 import { IconButton } from '@/components/ui/button';
 import { getSiteSetting } from '@/lib/auth';
+import { useActiveSection } from '@/contexts/ActiveSectionContext';
 
 interface FloatingNavbarProps {
   onChatClick: () => void;
@@ -26,21 +29,52 @@ interface FloatingNavbarProps {
 
 const navItems = [
   { id: 'home', icon: Home, label: 'Home' },
+  { id: 'about', icon: User, label: 'About' },
   { id: 'projects', icon: Briefcase, label: 'Projects' },
+  { id: 'experience', icon: Briefcase, label: 'Experience' },
   { id: 'education', icon: GraduationCap, label: 'Education' },
+  { id: 'contact', icon: Mail, label: 'Contact' },
 ];
 
-export function FloatingNavbar({ 
-  onChatClick, 
-  onCommandPaletteClick, 
+export function FloatingNavbar({
+  onChatClick,
+  onCommandPaletteClick,
   onProfileClick,
   onAdminClick,
-  unreadCount = 0 
+  unreadCount = 0
 }: FloatingNavbarProps) {
   const { effectiveTheme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const isSignedIn = !!user;
-  const [activeItem, setActiveItem] = useState('home');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { activeSection } = useActiveSection();
+
+  // Use scroll spy section when available, otherwise default to 'home'
+  const activeItem = useMemo(() => {
+    return activeSection || 'home';
+  }, [activeSection]);
+
+  // Smooth scroll to section, or navigate home first if on 404
+  const scrollToSection = useCallback((sectionId: string) => {
+    if (location.pathname !== '/') {
+      navigate('/');
+      // Wait for navigation then scroll
+      setTimeout(() => {
+        if (sectionId === 'home') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      return;
+    }
+    if (sectionId === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.pathname, navigate]);
   const [isHovered, setIsHovered] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [siteLogo, setSiteLogo] = useState<string | null>(null);
@@ -50,28 +84,8 @@ export function FloatingNavbar({
       setIsScrolled(window.scrollY > 100);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // ScrollSpy: Update active nav item based on what's in view
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveItem(entry.target.id);
-        }
-      });
-    }, {
-      rootMargin: '-40% 0px -40% 0px', // Trigger when section is near the middle of the viewport
-    });
-
-    navItems.forEach((item) => {
-      const element = document.getElementById(item.id);
-      if (element) {
-        observer.observe(element);
-      }
-    });
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      observer.disconnect();
     };
   }, []);
 
@@ -89,14 +103,6 @@ export function FloatingNavbar({
     };
     loadLogo();
   }, []);
-
-  const handleNavClick = (id: string) => {
-    setActiveItem(id);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <motion.nav
@@ -123,60 +129,64 @@ export function FloatingNavbar({
             const isHome = item.id === 'home';
 
             return (
-              <motion.button
+              <motion.div
                 key={item.id}
                 layout
-                onClick={() => handleNavClick(item.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`relative flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 flex-shrink-0 z-10 ${
-                  isActive
-                    ? 'text-secondary-container-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className="relative flex-shrink-0"
               >
-                {isHome ? (
-                  siteLogo ? (
-                    <motion.img
-                      layoutId="logo"
-                      src={siteLogo}
-                      alt="Site Logo"
-                      className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20"
-                    />
+                <button
+                  onClick={() => scrollToSection(item.id)}
+                  className={`relative flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 z-10 cursor-pointer ${
+                    isActive
+                      ? 'text-secondary-container-foreground font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {isHome ? (
+                    siteLogo ? (
+                      <motion.img
+                        layoutId="logo"
+                        src={siteLogo}
+                        alt="Site Logo"
+                        className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20"
+                      />
+                    ) : (
+                      <motion.div
+                        layoutId="logo"
+                        className="w-5 h-5 bg-surface text-foreground font-bold rounded-md flex items-center justify-center text-[10px] shadow-sm ring-1 ring-border/20"
+                      >
+                        R
+                      </motion.div>
+                    )
                   ) : (
-                    <motion.div
-                      layoutId="logo"
-                      className="w-5 h-5 bg-surface text-foreground font-bold rounded-md flex items-center justify-center text-[10px] shadow-sm ring-1 ring-border/20"
-                    >
-                      R
-                    </motion.div>
-                  )
-                ) : (
-                  <Icon className="w-5 h-5" />
-                )}
-                {/* Only show labels on sm+ screens when hovered or active */}
-                <AnimatePresence mode="wait">
-                  {(isActive || isHovered) && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={SPRING_DEFAULT}
-                      className="text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline"
-                    >
-                      {item.label}
-                    </motion.span>
+                    <Icon className="w-5 h-5" />
                   )}
-                </AnimatePresence>
-                
-                {isActive && (
-                  <motion.div
-                    layoutId="navActiveIndicator"
-                    className="absolute inset-0 rounded-full bg-secondary-container -z-10"
-                    transition={SPRING_SNAPPY}
-                  />
-                )}
-              </motion.button>
+                  {/* Only show labels on sm+ screens when hovered or active */}
+                  <AnimatePresence mode="wait">
+                    {(isActive || isHovered) && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={SPRING_DEFAULT}
+                        className="text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+
+                  {isActive && (
+                    <motion.div
+                      layoutId="navActiveIndicator"
+                      className="absolute inset-0 rounded-full bg-secondary-container -z-10"
+                      transition={SPRING_SNAPPY}
+                    />
+                  )}
+                </button>
+              </motion.div>
             );
           })}
 
@@ -246,8 +256,8 @@ export function FloatingNavbar({
             className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-1"
           >
             {isSignedIn && user ? (
-              <img 
-                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`} 
+              <img
+                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`}
                 alt={user.display_name || 'User'}
                 referrerPolicy="no-referrer"
                 onError={(e) => {

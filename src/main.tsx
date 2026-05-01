@@ -8,6 +8,7 @@ if (!crypto.randomUUID) {
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { GithubCallback } from './components/auth/GithubCallback'
@@ -25,6 +26,10 @@ if (path === '/auth/github/callback') {
   )
 } else {
   createRoot(document.getElementById('root')!).render(
-    <StrictMode><App /></StrictMode>,
+    <StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StrictMode>,
   )
 }

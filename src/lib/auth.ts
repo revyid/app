@@ -120,7 +120,7 @@ export async function validateSession(token?: string): Promise<AuthResult> {
     p_token: t,
   });
 
-  console.log('[validateSession] data:', data, 'error:', error);
+
 
   if (error) return { error: error.message };
   if (data?.error) return { error: data.error };
@@ -340,7 +340,7 @@ export async function trackEvent(
       throw error;
     }
     
-    console.log('Event tracked:', eventType, data);
+
   } catch (error) {
     console.error('Failed to track event:', error);
     throw error;

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1200" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Canvas */
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: #FFFBFE;
+      font-family: 'Google Sans', 'Inter', system-ui, sans-serif;
+      position: relative;
+    }
+
+    /* Background blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+    .blob-1 {
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, #EADDFF 0%, transparent 70%);
+      top: -120px; right: -80px;
+      opacity: 0.75;
+    }
+    .blob-2 {
+      width: 360px; height: 360px;
+      background: radial-gradient(circle, #E8DEF8 0%, transparent 70%);
+      bottom: -90px; left: -60px;
+      opacity: 0.65;
+    }
+    .blob-3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, #D0BCFF 0%, transparent 70%);
+      top: 200px; right: 220px;
+      opacity: 0.4;
+    }
+
+    /* Card */
+    .card {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1080px;
+      min-height: 510px;
+      background: #F3EDF7;
+      border-radius: 28px;
+      box-shadow: 0px 1px 2px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15);
+      padding: 52px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Name */
+    .name {
+      font-size: 76px;
+      font-weight: 400;
+      letter-spacing: -1.5px;
+      line-height: 1.05;
+      background: linear-gradient(135deg, #1C1B1F 55%, #6750A4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Job title */
+    .title {
+      font-size: 28px;
+      font-weight: 400;
+      color: #49454F;
+      margin-top: 10px;
+      letter-spacing: 0.1px;
+    }
+
+    /* Location chip */
+    .location-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #E8DEF8;
+      color: #1D192B;
+      border: 1px solid #CAC4D0;
+      border-radius: 9999px;
+      padding: 6px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 20px;
+      width: fit-content;
+    }
+
+    /* Skills */
+    .skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .skill-chip {
+      background: #EADDFF;
+      color: #21005D;
+      border: 1px solid #D0BCFF;
+      border-radius: 9999px;
+      padding: 6px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.1px;
+    }
+
+    /* URL */
+    .url {
+      font-size: 16px;
+      font-weight: 500;
+      color: #6750A4;
+      letter-spacing: 0.5px;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- Main card -->
+  <div class="card">
+    <div>
+      <div class="name">Revy</div>
+      <div class="title">Full-Stack Software Engineer</div>
+      <div class="location-chip">📍 Jambi, Indonesia</div>
+      <div class="skills">
+        <span class="skill-chip">JavaScript</span>
+        <span class="skill-chip">React</span>
+        <span class="skill-chip">Python</span>
+        <span class="skill-chip">Git</span>
+        <span class="skill-chip">CI/CD</span>
+        <span class="skill-chip">Node.js</span>
+        <span class="skill-chip">Docker</span>
+        <span class="skill-chip">MongoDB</span>
+        <span class="skill-chip">TypeScript</span>
+      </div>
+    </div>
+    <div class="url">revy.my.id</div>
+  </div>
+</body>
+</html>

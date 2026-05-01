@@ -2,11 +2,8 @@ import { useEffect, useState } from 'react';
 
 /**
  * Handles the GitHub OAuth callback.
- * Since GitHub requires a server-side exchange (and has CORS restrictions),
- * we use a simple CORS proxy and require VITE_GITHUB_CLIENT_SECRET for this
- * purely client-side implementation.
- * 
- * In a production App, this exchange should happen on a secure backend!
+ * Sends the authorization code to our backend API for secure token exchange.
+ * The client secret never touches the browser.
  */
 export function GithubCallback() {
   const [status, setStatus] = useState('Verifying authentication...');
@@ -28,78 +25,28 @@ export function GithubCallback() {
           throw new Error('Invalid state parameter (potential CSRF).');
         }
 
+        // Cleanup state immediately to prevent replay
+        localStorage.removeItem('github_oauth_state');
+
         setStatus('Exchanging code for token...');
 
-        const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-        const clientSecret = import.meta.env.VITE_GITHUB_CLIENT_SECRET;
-
-        if (!clientSecret) {
-          throw new Error('VITE_GITHUB_CLIENT_SECRET is missing in .env. Needed for client-side OAuth exchange.');
-        }
-
-        // 1. Exchange code for access token (Using a CORS proxy as GitHub blocks direct browser requests)
-        const tokenResponse = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://github.com/login/oauth/access_token'), {
+        // Call our secure backend API — no client secret needed here
+        const res = await fetch('/api/auth/github', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            client_id: clientId,
-            client_secret: clientSecret,
-            code,
-            redirect_uri: window.location.origin + '/auth/github/callback',
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
         });
 
-        if (!tokenResponse.ok) {
-          throw new Error(`Token exchange failed: ${tokenResponse.statusText}`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Server error: ${res.status}`);
         }
 
-        const tokenData = await tokenResponse.json();
-        const accessToken = tokenData.access_token;
-
-        if (!accessToken) {
-          throw new Error('Failed to obtain access token from GitHub.');
-        }
-
-        setStatus('Fetching user profile...');
-
-        // 2. Fetch user profile
-        const userResponse = await fetch('https://api.github.com/user', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: 'application/json',
-          },
-        });
-
-        if (!userResponse.ok) {
-          throw new Error('Failed to fetch GitHub user profile.');
-        }
-
-        const userData = await userResponse.json();
-
-        // 3. Fetch user emails (if primary email is private)
-        let primaryEmail = userData.email;
-        if (!primaryEmail) {
-          const emailsResponse = await fetch('https://api.github.com/user/emails', {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              Accept: 'application/json',
-            },
-          });
-          if (emailsResponse.ok) {
-            const emails = await emailsResponse.json();
-            const primary = emails.find((e: any) => e.primary);
-            primaryEmail = primary ? primary.email : emails[0]?.email;
-          }
-        }
-
-        userData.email = primaryEmail || `${userData.login}@users.noreply.github.com`;
+        const { user: userData } = await res.json();
 
         setStatus('Authentication successful! Closing window...');
 
-        // 4. Send data back to the opener window
+        // Send data back to the opener window
         if (window.opener) {
           window.opener.postMessage(
             { type: 'github-auth-callback', user: userData },
@@ -109,7 +56,6 @@ export function GithubCallback() {
           setError('Could not find parent window to complete login.');
         }
       } catch (err: any) {
-        console.error('GitHub OAuth Error:', err);
         setError(err.message || 'Authentication failed');
       }
     };

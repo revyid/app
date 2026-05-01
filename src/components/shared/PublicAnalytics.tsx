@@ -7,12 +7,9 @@ import { supabase } from '@/lib/supabase';
 import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
-// ─── GitHub fetch with token ──────────────────────────────────────────
+// ─── GitHub fetch via backend proxy ───────────────────────────────────
 async function fetchGitHub(path: string): Promise<any> {
-  const token = import.meta.env.VITE_GITHUB_TOKEN;
-  const headers: Record<string, string> = { 'Accept': 'application/vnd.github+json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`https://api.github.com/${path}`, { headers });
+  const res = await fetch(`/api/github?path=${encodeURIComponent(path)}`);
   return res.json();
 }
 
@@ -47,10 +44,10 @@ export function VisitorCounter() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <Card className="p-6 bg-surface-container"><Skeleton className="h-28" /></Card>;
+  if (loading) return <Card className="p-6"><Skeleton className="h-28" /></Card>;
 
   return (
-    <Card className="p-6 bg-surface-container hover:bg-surface-container-high transition-colors">
+    <Card className="p-6 hover:bg-surface-container/50 transition-colors">
       <CardHeader icon={<Eye className="w-5 h-5" />} title="Site Traffic" bg="bg-primary-container" iconColor="text-on-primary-container" />
       <div className="grid grid-cols-3 gap-3">
         {[['Total', stats.total], ['Today', stats.today], ['Unique', stats.unique]].map(([label, val]) => (
@@ -69,18 +66,47 @@ export function VisitorCounter() {
 export function PlatformStats() {
   const [platforms, setPlatforms] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     Promise.resolve(supabase.rpc('get_public_analytics')).then(({ data }) => {
       const count: Record<string, number> = {};
       (data?.user_agents || []).forEach((ua: string) => {
-        let p = 'Other';
+        let p = 'Unknown';
+        
+        // Simplified OS detection - group by family
         if (ua.includes('Windows')) p = 'Windows';
         else if (ua.includes('Mac OS') || ua.includes('Macintosh')) p = 'macOS';
         else if (ua.includes('Android')) p = 'Android';
-        else if (ua.includes('iPhone') || ua.includes('iPad')) p = 'iOS';
-        else if (ua.includes('Linux')) p = 'Linux';
+        else if (ua.includes('iPhone') || ua.includes('iPad') || ua.includes('iOS')) p = 'iOS';
         else if (ua.includes('CrOS')) p = 'Chrome OS';
+        else if (ua.includes('Ubuntu')) p = 'Ubuntu';
+        else if (ua.includes('Fedora')) p = 'Fedora';
+        else if (ua.includes('Debian')) p = 'Debian';
+        else if (ua.includes('Arch')) p = 'Arch Linux';
+        else if (ua.includes('CentOS')) p = 'CentOS';
+        else if (ua.includes('Red Hat')) p = 'Red Hat';
+        else if (ua.includes('Linux')) p = 'Linux';
+        else if (ua.includes('FreeBSD')) p = 'FreeBSD';
+        else if (ua.includes('OpenBSD')) p = 'OpenBSD';
+        else if (ua.includes('NetBSD')) p = 'NetBSD';
+        else if (ua.includes('SunOS')) p = 'Solaris';
+        else {
+          // Try to extract meaningful OS info from UA
+          // Skip common non-OS patterns
+          const skipPatterns = ['rv:', 'KHTML', 'Gecko', 'AppleWebKit', 'Chrome', 'Safari', 'Firefox', 'Edge', 'compatible'];
+          const osMatch = ua.match(/\(([^)]+)\)/);
+          if (osMatch) {
+            const parts = osMatch[1].split(';').map(s => s.trim());
+            for (const part of parts) {
+              if (!skipPatterns.some(skip => part.includes(skip)) && part.length > 2 && part.length < 40) {
+                p = part;
+                break;
+              }
+            }
+          }
+        }
+        
         count[p] = (count[p] || 0) + 1;
       });
       setPlatforms(count);
@@ -88,36 +114,50 @@ export function PlatformStats() {
     }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <Card className="p-6 bg-surface-container"><Skeleton className="h-24" /></Card>;
+  if (loading) return <Card className="p-6"><Skeleton className="h-24" /></Card>;
 
-  const sorted = Object.entries(platforms).sort(([, a], [, b]) => b - a).slice(0, 6);
+  const sorted = Object.entries(platforms).sort(([, a], [, b]) => b - a);
   const total = sorted.reduce((s, [, c]) => s + c, 0);
+  const displayed = showAll ? sorted : sorted.slice(0, 6);
+  const hasMore = sorted.length > 6;
 
   return (
-    <Card className="p-6 bg-surface-container hover:bg-surface-container-high transition-colors">
+    <Card className="p-6 hover:bg-surface-container/50 transition-colors">
       <CardHeader icon={<Activity className="w-5 h-5" />} title="Visitor Platforms" bg="bg-primary-container" iconColor="text-on-primary-container" />
       {total === 0 ? (
         <p className="text-sm text-on-surface-variant text-center py-4">No data yet</p>
       ) : (
-        <div className="space-y-3">
-          {sorted.map(([platform, count]) => (
-            <div key={platform}>
-              <div className="flex justify-between text-sm mb-1.5">
-                <span className="font-medium text-on-surface">{platform} <span className="text-on-surface-variant text-xs">({count})</span></span>
-                <span className="text-on-surface font-medium">{Math.round((count / total) * 100)}%</span>
+        <>
+          <div className="space-y-3">
+            {displayed.map(([platform, count]) => (
+              <div key={platform}>
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="font-medium text-on-surface truncate">{platform} <span className="text-on-surface-variant text-xs">({count})</span></span>
+                  <span className="text-on-surface font-medium shrink-0 ml-2">{Math.round((count / total) * 100)}%</span>
+                </div>
+                <div className="h-2 bg-surface-variant rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${(count / total) * 100}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    className="h-full bg-primary rounded-full"
+                  />
+                </div>
               </div>
-              <div className="h-2 bg-surface-variant rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${(count / total) * 100}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  className="h-full bg-primary rounded-full"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          {hasMore && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowAll(!showAll)}
+              className="w-full mt-3 py-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              {showAll ? 'Show Less' : `Show ${sorted.length - 6} More`}
+            </motion.button>
+          )}
+        </>
       )}
     </Card>
   );
@@ -141,10 +181,10 @@ export function GitHubStats({ username }: { username: string }) {
       .finally(() => setLoading(false));
   }, [username]);
 
-  if (loading) return <Card className="p-6 bg-surface-container"><Skeleton className="h-28" /></Card>;
+  if (loading) return <Card className="p-6"><Skeleton className="h-28" /></Card>;
 
   if (error) return (
-    <Card className="p-6 bg-surface-container">
+    <Card className="p-6">
       <CardHeader icon={<GitBranch className="w-5 h-5" />} title="GitHub Activity" bg="bg-secondary-container" iconColor="text-on-secondary-container" />
       <p className="text-sm text-on-surface-variant">{error.includes('rate limit') ? 'Rate limit reached. Try again later.' : error}</p>
     </Card>
@@ -154,7 +194,7 @@ export function GitHubStats({ username }: { username: string }) {
   const totalStars = repos.reduce((s, r) => s + (r.stargazers_count || 0), 0);
 
   return (
-    <Card className="p-6 bg-surface-container hover:bg-surface-container-high transition-colors">
+    <Card className="p-6 hover:bg-surface-container/50 transition-colors">
       <CardHeader icon={<GitBranch className="w-5 h-5" />} title="GitHub Activity" bg="bg-secondary-container" iconColor="text-on-secondary-container" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {[['Repos', stats.public_repos], ['Stars', totalStars], ['Followers', stats.followers], ['Following', stats.following]].map(([label, val]) => (
@@ -199,13 +239,13 @@ export function TopLanguages({ username }: { username: string }) {
     }).finally(() => setLoading(false));
   }, [username]);
 
-  if (loading) return <Card className="p-6 bg-surface-container"><Skeleton className="h-32" /></Card>;
+  if (loading) return <Card className="p-6"><Skeleton className="h-32" /></Card>;
 
   const sorted = Object.entries(languages).sort(([, a], [, b]) => b - a).slice(0, 5);
   const total = sorted.reduce((s, [, c]) => s + c, 0);
 
   return (
-    <Card className="p-6 bg-surface-container hover:bg-surface-container-high transition-colors">
+    <Card className="p-6 hover:bg-surface-container/50 transition-colors">
       <CardHeader icon={<Code className="w-5 h-5" />} title="Top Languages" bg="bg-tertiary-container" iconColor="text-on-tertiary-container" />
       {sorted.length === 0 ? <p className="text-sm text-on-surface-variant text-center py-4">No data yet</p> : (
         <div className="space-y-3">
@@ -243,11 +283,11 @@ export function TrendingProjects({ username }: { username: string }) {
       .finally(() => setLoading(false));
   }, [username]);
 
-  if (loading) return <Card className="p-6 bg-surface-container"><Skeleton className="h-40" /></Card>;
+  if (loading) return <Card className="p-6"><Skeleton className="h-40" /></Card>;
   if (repos.length === 0) return null;
 
   return (
-    <Card className="p-6 bg-surface-container hover:bg-surface-container-high transition-colors">
+    <Card className="p-6 hover:bg-surface-container/50 transition-colors">
       <CardHeader icon={<TrendingUp className="w-5 h-5" />} title="Top Projects" bg="bg-secondary-container" iconColor="text-on-secondary-container" />
       <div className="space-y-3">
         {repos.map(repo => (
@@ -315,7 +355,7 @@ export function PublicAnalytics() {
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <VisitorCounter />
         {githubUsername === null
-          ? <Card className="p-6 bg-surface-container"><Skeleton className="h-28" /></Card>
+          ? <Card className="p-6"><Skeleton className="h-28" /></Card>
           : githubUsername ? <GitHubStats username={githubUsername} /> : null}
       </motion.div>
 
@@ -325,8 +365,8 @@ export function PublicAnalytics() {
 
       {githubUsername === null ? (
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="p-6 bg-surface-container"><Skeleton className="h-40" /></Card>
-          <Card className="p-6 bg-surface-container"><Skeleton className="h-40" /></Card>
+          <Card className="p-6"><Skeleton className="h-40" /></Card>
+          <Card className="p-6"><Skeleton className="h-40" /></Card>
         </motion.div>
       ) : githubUsername ? (
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">

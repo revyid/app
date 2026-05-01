@@ -1,17 +1,18 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  Home, 
-  Briefcase, 
-  GraduationCap, 
-  MessageCircle, 
-  User, 
+import {
+  Search,
+  Home,
+  Briefcase,
+  GraduationCap,
+  MessageCircle,
+  User,
   LogOut,
   Command,
   X,
   ArrowRight,
-  Palette
+  Palette,
+  Mail,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +45,18 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
   const isSignedIn = !!user;
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Scroll to section helper (replaces route navigation)
+  const scrollToSection = useCallback((sectionId: string) => {
+    onClose();
+    requestAnimationFrame(() => {
+      if (sectionId === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }, [onClose]);
+
   const fullName = user?.display_name || user?.email || 'Anonymous';
 
   // Command items
@@ -56,10 +69,15 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       icon: Home,
       shortcut: 'Ctrl+Alt+H',
       category: 'Navigation',
-      action: () => {
-        document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' });
-        onClose();
-      },
+      action: () => scrollToSection('home'),
+    },
+    {
+      id: 'about',
+      title: 'Go to About',
+      description: 'Learn more about me',
+      icon: User,
+      category: 'Navigation',
+      action: () => scrollToSection('about'),
     },
     {
       id: 'projects',
@@ -68,10 +86,15 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       icon: Briefcase,
       shortcut: 'Ctrl+Alt+P',
       category: 'Navigation',
-      action: () => {
-        document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
-        onClose();
-      },
+      action: () => scrollToSection('projects'),
+    },
+    {
+      id: 'experience',
+      title: 'View Experience',
+      description: 'Check my work experience',
+      icon: Briefcase,
+      category: 'Navigation',
+      action: () => scrollToSection('experience'),
     },
     {
       id: 'education',
@@ -80,10 +103,15 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
       icon: GraduationCap,
       shortcut: 'Ctrl+Alt+E',
       category: 'Navigation',
-      action: () => {
-        document.getElementById('education')?.scrollIntoView({ behavior: 'smooth' });
-        onClose();
-      },
+      action: () => scrollToSection('education'),
+    },
+    {
+      id: 'contact',
+      title: 'Contact Me',
+      description: 'Get in touch',
+      icon: Mail,
+      category: 'Navigation',
+      action: () => scrollToSection('contact'),
     },
     // Actions
     {
@@ -150,7 +178,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
         },
       },
     ]),
-  ], [theme, isSignedIn, user, onClose, onLoginClick, onProfileClick, onChatClick, setTheme, signOut]);
+  ], [theme, isSignedIn, user, onClose, onLoginClick, onProfileClick, onChatClick, setTheme, signOut, scrollToSection]);
 
   // Filter commands based on search
   const filteredCommands = useMemo(() => {
@@ -203,6 +231,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
         const map: Record<string, string> = {
           h: 'home', p: 'projects', e: 'education',
           c: 'chat', d: 'theme-toggle', u: isSignedIn ? 'profile' : 'login',
+          a: 'about', x: 'experience', n: 'contact',
         };
         const cmd = commands.find(c => c.id === map[e.key.toLowerCase()]);
         if (cmd) { e.preventDefault(); cmd.action(); return; }

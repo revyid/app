@@ -66,6 +66,8 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
                     src={testimonial.avatar} 
                     alt={testimonial.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground text-lg font-medium bg-surface-variant">

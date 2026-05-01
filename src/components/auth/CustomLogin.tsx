@@ -219,8 +219,6 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       }
 
       const redirectUri = `${window.location.origin}/auth/google/callback`;
-      console.log('[GoogleLogin] redirectUri:', redirectUri);
-      console.log('[GoogleLogin] origin:', window.location.origin);
       const state = crypto.randomUUID();
       localStorage.setItem('google_oauth_state', state);
 
@@ -254,8 +252,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
         try {
           const { user: googleUser } = event.data;
-          console.log('[GoogleLogin] googleUser:', googleUser);
           if (!googleUser) throw new Error('No user data received.');
+
+          // Cleanup state after use to prevent replay attacks
+          localStorage.removeItem('google_oauth_state');
 
           const result = await oauthLogin(
             googleUser.email,
@@ -265,7 +265,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
             googleUser.sub
           );
 
-          console.log('[GoogleLogin] oauthLogin result:', result);
+
 
           if (result.error) {
             setError(result.error);
@@ -276,8 +276,8 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
             resetForm();
           }
         } catch (err: any) {
-          console.error('[GoogleLogin] error:', err);
-          setError(err.message || 'Google login failed');
+          console.error('[GoogleLogin] OAuth flow error');
+          setError('Google login failed');
           controls.start('shake');
         } finally {
           setIsLoading(false);
@@ -329,6 +329,8 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
       // Listen for the callback message
       const handleMessage = async (event: MessageEvent) => {
+        // SECURITY: Verify the message origin
+        if (event.origin !== window.location.origin) return;
         if (event.data?.type === 'github-auth-callback') {
           window.removeEventListener('message', handleMessage);
           popup?.close();

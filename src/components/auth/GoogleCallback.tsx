@@ -7,36 +7,30 @@ import { useEffect } from 'react';
  */
 export function GoogleCallback() {
   useEffect(() => {
-    console.log('[GoogleCallback] URL:', window.location.href);
-    console.log('[GoogleCallback] hash:', window.location.hash);
     try {
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const idToken = hash.get('id_token');
       const state = hash.get('state');
       const savedState = localStorage.getItem('google_oauth_state');
 
-      console.log('[GoogleCallback] id_token present:', !!idToken);
-      console.log('[GoogleCallback] state match:', state === savedState);
-
       if (!idToken) throw new Error('No id_token in response.');
       if (state !== savedState) throw new Error('Invalid state parameter (potential CSRF).');
 
+      // Cleanup the state immediately to prevent replay attacks
+      localStorage.removeItem('google_oauth_state');
+
       const payload = JSON.parse(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      console.log('[GoogleCallback] payload:', payload);
 
       if (window.opener) {
-        console.log('[GoogleCallback] sending postMessage to opener');
         window.opener.postMessage(
           { type: 'google-auth-callback', user: payload },
           window.location.origin
         );
-      } else {
-        console.warn('[GoogleCallback] no window.opener!');
       }
       window.close();
     } catch (err: any) {
-      console.error('[GoogleCallback] error:', err);
-      document.body.innerHTML = `<p style="font-family:sans-serif;padding:2rem;color:red">Google auth error: ${err.message}</p>`;
+      // Safe error display — no raw user input, only our own error message
+      document.body.textContent = `Google auth error: ${err.message || 'Unknown error'}`;
     }
   }, []);
 

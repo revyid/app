@@ -24,12 +24,12 @@ export function ContactSection() {
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.97 }}
               transition={SPRING_BOUNCY}
-              className="flex items-center gap-3 text-body-sm text-foreground hover:text-primary transition-colors duration-200 py-1"
+              className="flex items-center gap-3 text-body-sm text-foreground hover:text-primary transition-colors duration-200 py-1 min-w-0"
             >
               <div className="w-8 h-8 rounded-[8px] bg-surface-variant flex items-center justify-center">
                 <IconComponent className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span>{contact.value}</span>
+              <span className="truncate">{contact.value}</span>
             </motion.a>
           );
         })}

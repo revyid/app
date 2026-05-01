@@ -8,7 +8,7 @@ export function AboutSection() {
   return (
     <motion.div variants={itemVariants} className="mb-6">
       <SectionLabel text="About" />
-      <p className="text-body-sm text-muted-foreground leading-relaxed">
+      <p className="text-body-sm text-muted-foreground leading-relaxed break-words">
         {data.profile.about}
       </p>
     </motion.div>

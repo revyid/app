@@ -118,7 +118,8 @@ function useSave(section: string, onSaved: () => void) {
     } else {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-      onSaved();
+      // Force refresh after a short delay to ensure DB write completes
+      setTimeout(() => onSaved(), 300);
     }
   };
 

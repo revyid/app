@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 export function NotFound() {
   return (
@@ -62,18 +63,19 @@ export function NotFound() {
           </p>
 
           {/* Back button */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => (window.location.href = '/')}
-            className="mt-2 w-full py-3 px-6 rounded-2xl font-semibold text-sm transition-colors"
-            style={{
-              background: 'hsl(var(--primary))',
-              color: 'hsl(var(--primary-foreground))',
-            }}
-          >
-            Go home
-          </motion.button>
+          <Link to="/">
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="mt-2 w-full py-3 px-6 rounded-2xl font-semibold text-sm transition-colors cursor-pointer text-center"
+              style={{
+                background: 'hsl(var(--primary))',
+                color: 'hsl(var(--primary-foreground))',
+              }}
+            >
+              Go home
+            </motion.div>
+          </Link>
         </motion.div>
 
         {/* Subtle footer */}
@@ -84,7 +86,8 @@ export function NotFound() {
           className="text-xs"
           style={{ color: 'hsl(var(--outline))' }}
         >
-          {window.location.pathname}
+          {/* Show a safe, truncated version of the path */}
+          {decodeURIComponent(window.location.pathname).replace(/[<>"'&]/g, '').slice(0, 60)}
         </motion.p>
       </div>
     </div>

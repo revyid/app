@@ -49,7 +49,13 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
               {/* Thumbnail header */}
               {project.thumbnail ? (
                 <div className="relative h-40 flex-shrink-0 overflow-hidden">
-                  <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
+                  <img 
+                    src={project.thumbnail} 
+                    alt={project.title} 
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-surface/80 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 h-1" style={{ backgroundColor: project.color }} />
                   <div className="absolute top-3 right-3">
