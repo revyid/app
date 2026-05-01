@@ -57,7 +57,7 @@
       "sameAs": [
         "https://github.com/revyid",
         "https://instagram.com/revy.id",
-        "https://linkedin.com"
+        "https://linkedin.com/in/revyid"
       ],
       "address": {
         "@type": "PostalAddress",
@@ -80,6 +80,61 @@
         "@type": "Person",
         "name": "Revy"
       }
+    }
+    </script>
+
+    <!-- Structured Data: SiteNavigationElement -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SiteLinksSearchBox",
+      "url": "https://revy.my.id",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://revy.my.id/#projects"
+      }
+    }
+    </script>
+
+    <!-- Structured Data: ItemList (Portfolio Sections) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Portfolio Sections",
+      "url": "https://revy.my.id",
+      "itemListElement": [
+        {
+          "@type": "SiteNavigationElement",
+          "position": 1,
+          "name": "About",
+          "url": "https://revy.my.id/#about"
+        },
+        {
+          "@type": "SiteNavigationElement",
+          "position": 2,
+          "name": "Projects",
+          "url": "https://revy.my.id/#projects"
+        },
+        {
+          "@type": "SiteNavigationElement",
+          "position": 3,
+          "name": "Experience",
+          "url": "https://revy.my.id/#experience"
+        },
+        {
+          "@type": "SiteNavigationElement",
+          "position": 4,
+          "name": "Education",
+          "url": "https://revy.my.id/#education"
+        },
+        {
+          "@type": "SiteNavigationElement",
+          "position": 5,
+          "name": "Contact",
+          "url": "https://revy.my.id/#contact"
+        }
+      ]
     }
     </script>
   </head>

@@ -94,6 +94,7 @@ export function HomePage() {
         </Suspense>
       </motion.div>
 
+      <SectionDivider />
 
       {/* Experience & Testimonials */}
       <motion.div

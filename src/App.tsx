@@ -35,12 +35,7 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Page meta — single page now
-  useEffect(() => {
-    document.title = 'Revy — Developer Portfolio';
-    const descEl = document.querySelector('meta[name="description"]');
-    if (descEl) descEl.setAttribute('content', 'Full-stack developer portfolio showcasing projects, skills, and experience.');
-  }, []);
+
 
   // Track page view via backend API — fire once, non-blocking
   useEffect(() => {
