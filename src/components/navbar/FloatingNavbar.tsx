@@ -4,12 +4,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
   Briefcase,
-  GraduationCap,
   MessageCircle,
   Command,
   User,
   Shield,
   Mail,
+  Layers,
 } from 'lucide-react';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -30,9 +30,8 @@ interface FloatingNavbarProps {
 const navItems = [
   { id: 'home', icon: Home, label: 'Home' },
   { id: 'about', icon: User, label: 'About' },
-  { id: 'projects', icon: Briefcase, label: 'Projects' },
-  { id: 'experience', icon: Briefcase, label: 'Experience' },
-  { id: 'education', icon: GraduationCap, label: 'Education' },
+  { id: 'projects', icon: Layers, label: 'Works', sections: ['projects', 'testimonials'] },
+  { id: 'experience', icon: Briefcase, label: 'Resume', sections: ['experience', 'education'] },
   { id: 'contact', icon: Mail, label: 'Contact' },
 ];
 
@@ -52,7 +51,11 @@ export function FloatingNavbar({
 
   // Use scroll spy section when available, otherwise default to 'home'
   const activeItem = useMemo(() => {
-    return activeSection || 'home';
+    if (!activeSection) return 'home';
+    const item = navItems.find(item => 
+      item.id === activeSection || (item.sections && item.sections.includes(activeSection))
+    );
+    return item ? item.id : 'home';
   }, [activeSection]);
 
   // Smooth scroll to section, or navigate home first if on 404
