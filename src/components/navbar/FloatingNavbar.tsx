@@ -109,7 +109,7 @@ export function FloatingNavbar({
       variants={floatingNavbar}
       initial="hidden"
       animate="visible"
-      className="fixed bottom-6 left-0 right-0 z-40 flex justify-center w-full pointer-events-none"
+      className="fixed bottom-6 left-4 right-4 lg:left-auto lg:right-8 z-40 flex justify-center lg:justify-end w-auto pointer-events-none"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -120,7 +120,7 @@ export function FloatingNavbar({
             scale: isScrolled && !isHovered ? 0.92 : 1,
           }}
           transition={SPRING_SNAPPY}
-          className="flex items-center justify-center gap-0.5 sm:gap-2 px-1.5 py-1.5 sm:px-2.5 sm:py-2.5 bg-surface/92 dark:bg-surface/92 backdrop-blur-[24px] rounded-full shadow-elevation-4 border border-outline/30 w-max mx-auto"
+          className="flex items-center justify-center gap-0.5 sm:gap-2 px-1.5 py-1.5 sm:px-2.5 sm:py-2.5 bg-surface/92 dark:bg-surface/92 backdrop-blur-[24px] rounded-full shadow-elevation-4 border border-outline/30 w-max"
         >
           {/* Navigation Items */}
           {navItems.map((item) => {
@@ -138,7 +138,7 @@ export function FloatingNavbar({
               >
                 <button
                   onClick={() => scrollToSection(item.id)}
-                  className={`relative flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 z-10 cursor-pointer ${
+                  className={`relative flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base ${
                     isActive
                       ? 'text-secondary-container-foreground font-medium'
                       : 'text-muted-foreground hover:text-foreground'
