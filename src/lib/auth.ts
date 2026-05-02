@@ -327,7 +327,7 @@ export async function trackEvent(
   referrer?: string
 ): Promise<void> {
   try {
-    const { data, error } = await supabase.rpc('track_event', {
+    const { error } = await supabase.rpc('track_event', {
       p_event_type: eventType,
       p_event_data: eventData || null,
       p_user_agent: userAgent || null,

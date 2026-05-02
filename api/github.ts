@@ -31,6 +31,7 @@ export default async function handler(req: Request) {
   }
 
   try {
+    // @ts-ignore
     const token = process.env.GITHUB_TOKEN;
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github+json',

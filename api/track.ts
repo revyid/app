@@ -33,7 +33,9 @@ export default async function handler(req: Request) {
     const referrer = req.headers.get('referer') || body.referrer || 'direct';
 
     // Forward to Supabase RPC
+    // @ts-ignore
     const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    // @ts-ignore
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
@@ -57,7 +59,6 @@ export default async function handler(req: Request) {
     });
 
     if (!rpcRes.ok) {
-      const err = await rpcRes.text();
       return json({ error: 'Tracking failed' }, 502);
     }
 
