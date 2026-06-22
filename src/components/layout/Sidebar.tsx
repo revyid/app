@@ -4,7 +4,9 @@ import { ContactSection } from '@/components/sections/ContactSection';
 import { LanguagesSection } from '@/components/sections/LanguagesSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
 
-interface SidebarProps {}
+interface SidebarProps {
+  ready?: boolean;
+}
 
 export function Sidebar(_props: SidebarProps) {
   return (
