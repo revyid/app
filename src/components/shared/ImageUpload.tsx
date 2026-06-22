@@ -38,6 +38,7 @@ export function ImageUpload({ value, onChange, placeholder = 'https://...', prev
           <img src={value} alt="preview" className="w-full h-full object-cover" />
           <button
             onClick={() => onChange('')}
+            aria-label="Remove image"
             className="absolute top-2 right-2 p-1 rounded-full bg-black/50 hover:bg-black/70 text-white"
           >
             <X className="w-3 h-3" />
