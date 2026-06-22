@@ -111,7 +111,7 @@ function apiDevPlugin(): Plugin {
 }
 
 // ─── Mobile Log Plugin ────────────────────────────────────────────────
-// Pipes browser console.* to terminal for mobile debugging.
+// Pipes browser console.* to terminal for mobile debugging. DEV ONLY.
 function mobileLogPlugin(): Plugin {
   return {
     name: 'mobile-log',
@@ -131,6 +131,7 @@ function mobileLogPlugin(): Plugin {
       })
     },
     transformIndexHtml() {
+      if (process.env.NODE_ENV !== 'development') return [];
       return [
         {
           tag: 'script',

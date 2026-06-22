@@ -32,10 +32,10 @@ export function ProjectsSection() {
         <motion.div variants={itemVariants} className="flex items-center justify-between mb-4">
           <SectionLabel text="Projects" />
           <div className="flex items-center gap-2">
-            <IconButton variant="ghost" onClick={() => scroll('left')} className="rounded-full bg-surface-variant/50 hover:bg-surface-variant flex-shrink-0">
+            <IconButton variant="ghost" onClick={() => scroll('left')} aria-label="Scroll Left" className="rounded-full bg-surface-variant/50 hover:bg-surface-variant flex-shrink-0">
               <ChevronLeft className="w-5 h-5" />
             </IconButton>
-            <IconButton variant="ghost" onClick={() => scroll('right')} className="rounded-full bg-surface-variant/50 hover:bg-surface-variant flex-shrink-0">
+            <IconButton variant="ghost" onClick={() => scroll('right')} aria-label="Scroll Right" className="rounded-full bg-surface-variant/50 hover:bg-surface-variant flex-shrink-0">
               <ChevronRight className="w-5 h-5" />
             </IconButton>
           </div>

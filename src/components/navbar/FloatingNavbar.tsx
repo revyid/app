@@ -141,6 +141,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
               >
                 <button
                   onClick={() => scrollToSection(item.id)}
+                  aria-label={item.label}
                   className={`relative flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base ${
                     isActive
                       ? 'text-secondary-container-foreground font-medium'
@@ -211,6 +212,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
             <IconButton
               onClick={onChatClick}
               variant="ghost"
+              aria-label="Open Chat"
               className="relative"
             >
               <MessageCircle className="w-5 h-5" />
@@ -256,6 +258,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
           {/* User Avatar / Login */}
           <button
             onClick={onProfileClick}
+            aria-label="Open Profile"
             className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-1"
           >
             {isSignedIn && user ? (
