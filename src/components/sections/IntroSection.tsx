@@ -1,8 +1,7 @@
 import { useRef, memo } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useScroll, useTransform, motion } from 'framer-motion';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { usePortfolio } from '@/contexts/PortfolioContext';
-import { itemVariants, viewportOnce } from '@/lib/animations';
 
 export const IntroSection = memo(function IntroSection() {
   const { data } = usePortfolio();
@@ -22,7 +21,7 @@ export const IntroSection = memo(function IntroSection() {
       ref={containerRef}
       className="mb-10 relative overflow-hidden py-6 -mx-4 px-4 sm:mx-0 sm:px-0 rounded-[32px]"
     >
-      {/* Background Shapes — CSS-only, no framer-motion */}
+      {/* Background Shapes — CSS spin + framer-motion parallax */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-40 dark:opacity-30 isolated">
         <motion.div style={{ y: y1 }} className="absolute -top-16 -right-16 w-56 h-56">
           <div className="w-full h-full rounded-full bg-primary/20 blur-[2px] animate-[spin_20s_linear_infinite]" />
@@ -36,25 +35,16 @@ export const IntroSection = memo(function IntroSection() {
       </div>
 
       {/* Foreground Content */}
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={itemVariants}
-        className="relative z-10 w-full sm:w-2/3 backdrop-blur-sm bg-background/50 sm:bg-transparent p-4 sm:p-0 rounded-[24px]"
-      >
+      <div className="relative z-10 w-full sm:w-2/3 backdrop-blur-sm bg-background/50 sm:bg-transparent p-4 sm:p-0 rounded-[24px]">
         <SectionLabel text="Intro" />
         <div className="space-y-4">
           {data.intro.paragraphs.map((paragraph, index) => (
-            <p
-              key={index}
-              className="text-body-lg text-foreground leading-relaxed"
-            >
+            <p key={index} className="text-body-lg text-foreground leading-relaxed">
               {paragraph}
             </p>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 });

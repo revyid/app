@@ -1,24 +1,16 @@
-import { motion } from 'framer-motion';
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ContactSection } from '@/components/sections/ContactSection';
 import { LanguagesSection } from '@/components/sections/LanguagesSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
-import { containerVariants } from '@/lib/animations';
 
 interface SidebarProps {
-  /** When true, animations are allowed to play (preloader finished) */
   ready?: boolean;
 }
 
 export function Sidebar({ ready = true }: SidebarProps) {
   return (
-    <motion.aside
-      initial="hidden"
-      animate={ready ? 'visible' : 'hidden'}
-      variants={containerVariants}
-      className="w-full lg:w-80 lg:sticky lg:top-8 lg:self-start h-fit"
-    >
+    <aside className="w-full lg:w-80 lg:sticky lg:top-8 lg:self-start h-fit">
       <ProfileHeader />
 
       {/* Desktop card wrapper */}
@@ -42,6 +34,6 @@ export function Sidebar({ ready = true }: SidebarProps) {
           <SocialLinks />
         </div>
       </div>
-    </motion.aside>
+    </aside>
   );
 }

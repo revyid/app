@@ -1,10 +1,8 @@
 import { useEffect, lazy, Suspense, memo } from 'react';
-import { motion } from 'framer-motion';
 import { IntroSection } from '@/components/sections/IntroSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { useActiveSection } from '@/contexts/ActiveSectionContext';
-import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 
 const ProjectsSection = lazy(() => import('@/components/sections/ProjectsSection').then(m => ({ default: m.ProjectsSection })));
 const ExperienceSection = lazy(() => import('@/components/sections/ExperienceSection').then(m => ({ default: m.ExperienceSection })));
@@ -16,9 +14,6 @@ const Footer = lazy(() => import('@/components/sections/Footer').then(m => ({ de
 
 const SECTION_IDS = ['about', 'projects', 'experience', 'education', 'contact'];
 
-/**
- * Thin divider between major sections — adds visual breathing room.
- */
 const SectionDivider = memo(function SectionDivider() {
   return (
     <div className="py-2">
@@ -37,120 +32,53 @@ export function HomePage() {
   }, [activeId, setActiveSection]);
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      {/* Intro */}
-      <motion.div variants={itemVariants}>
-        <IntroSection />
-      </motion.div>
-
+    <div>
+      <IntroSection />
       <SectionDivider />
 
-      {/* Skills */}
-      <motion.div
-        id="skills"
-        className="scroll-mt-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={containerVariants}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 400px' }}
-      >
+      <div id="skills" className="scroll-mt-24 content-visibility-auto">
         <SkillsSection />
-      </motion.div>
-
+      </div>
       <SectionDivider />
 
-      {/* Projects */}
-      <motion.div
-        id="projects"
-        className="scroll-mt-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={containerVariants}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
-      >
+      <div id="projects" className="scroll-mt-24 content-visibility-auto-lg">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <ProjectsSection />
         </Suspense>
-      </motion.div>
-
+      </div>
       <SectionDivider />
 
-      <motion.div
-        id="analytic"
-        className="scroll-mt-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={containerVariants}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
-      >
-        {/* Analytics — lazy, low-priority */}
+      <div id="analytic" className="scroll-mt-24 content-visibility-auto-lg">
         <Suspense fallback={<div className="mb-10 h-96 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <PublicAnalytics />
         </Suspense>
-      </motion.div>
-
+      </div>
       <SectionDivider />
 
-      {/* Experience & Testimonials */}
-      <motion.div
-        id="experience"
-        className="scroll-mt-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={containerVariants}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 600px' }}
-      >
+      <div id="experience" className="scroll-mt-24 content-visibility-auto-xl">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <ExperienceSection />
           <TestimonialsSection />
         </Suspense>
-      </motion.div>
-
+      </div>
       <SectionDivider />
 
-      {/* Education */}
-      <motion.div
-        id="education"
-        className="scroll-mt-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={containerVariants}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 400px' }}
-      >
+      <div id="education" className="scroll-mt-24 content-visibility-auto">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <EducationSection />
         </Suspense>
-      </motion.div>
-
+      </div>
       <SectionDivider />
 
-      {/* Contact */}
-      <motion.div
-        id="contact"
-        className="scroll-mt-24"
-        initial="hidden"
-        whileInView="visible"
-        viewport={viewportOnce}
-        variants={containerVariants}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 300px' }}
-      >
+      <div id="contact" className="scroll-mt-24 content-visibility-auto-sm">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <ContactFullSection />
         </Suspense>
-      </motion.div>
+      </div>
 
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
-    </motion.div>
+    </div>
   );
 }

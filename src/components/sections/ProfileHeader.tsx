@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Heart } from 'lucide-react';
 import { usePortfolio } from '@/contexts/PortfolioContext';
-import { itemVariants } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
 export function ProfileHeader() {
@@ -13,7 +12,6 @@ export function ProfileHeader() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle on Ctrl + Alt + L
       if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'l') {
         setIsNawaMode(prev => !prev);
       }
@@ -23,16 +21,10 @@ export function ProfileHeader() {
   }, []);
 
   return (
-    <motion.div variants={itemVariants} className="mb-6">
-      {/* Profile Images - Side by side gracefully */}
+    <div className="mb-6">
+      {/* Profile Images */}
       <div className="flex items-center gap-4 mb-4 h-20">
-        {/* Revy's PP */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          transition={SPRING_BOUNCY}
-          className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-primary/20 idle-breathe"
-          style={{ borderRadius: '20px' }}
-        >
+        <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-primary/20 idle-breathe rounded-[20px] hover:scale-105 transition-transform duration-300">
           <img 
             src={profileData.image} 
             alt={profileData.name} 
@@ -40,9 +32,8 @@ export function ProfileHeader() {
             fetchPriority="high"
             decoding="async"
           />
-        </motion.div>
+        </div>
 
-        {/* Easter egg PP */}
         <AnimatePresence>
           {isNawaMode && easterEgg && (
             <motion.div
@@ -50,8 +41,7 @@ export function ProfileHeader() {
               animate={{ x: 0, opacity: 1, scale: 1 }}
               exit={{ x: -20, opacity: 0, scale: 0.8 }}
               transition={SPRING_BOUNCY}
-              className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-tertiary/40"
-              style={{ borderRadius: '20px' }}
+              className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-tertiary/40 rounded-[20px]"
             >
               <img 
                 src={easterEgg.image} 
@@ -65,15 +55,12 @@ export function ProfileHeader() {
         </AnimatePresence>
       </div>
 
-      {/* Name Area: Revy [Badge->Heart] Nawa */}
+      {/* Name Area */}
       <div className="flex items-center gap-2 mb-1">
-
-        {/* Always display Revy */}
         <h1 className="text-title-lg font-bold text-foreground flex-shrink-0">
           {profileData.name}
         </h1>
 
-        {/* The Icon that swaps and belongs IN THE MIDDLE */}
         <div className="relative w-5 h-5 flex items-center justify-center flex-shrink-0 idle-pulse-glow">
           <AnimatePresence mode="popLayout" initial={false}>
             {!isNawaMode ? (
@@ -102,7 +89,6 @@ export function ProfileHeader() {
           </AnimatePresence>
         </div>
 
-        {/* Easter egg name appears on the right of the badge */}
         <AnimatePresence>
           {isNawaMode && easterEgg && (
             <motion.span
@@ -116,13 +102,11 @@ export function ProfileHeader() {
             </motion.span>
           )}
         </AnimatePresence>
-
       </div>
 
-      {/* Pronouns */}
       <p className="text-body-sm text-muted-foreground">
         {profileData.pronouns}
       </p>
-    </motion.div>
+    </div>
   );
 }
