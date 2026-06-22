@@ -19,15 +19,11 @@ export function Sidebar({ ready = true }: SidebarProps) {
       variants={containerVariants}
       className="w-full lg:w-80 lg:sticky lg:top-8 lg:self-start h-fit"
     >
-      {/* 
-        Desktop: squircle card with blur and scroll
-        Mobile: plain sections flowing naturally (no card wrapper)
-      */}
+      <ProfileHeader />
 
       {/* Desktop card wrapper */}
       <div className="hidden lg:block">
         <div className="squircle-card bg-surface border border-outline/20 p-6 space-y-2 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-surface-variant scrollbar-track-transparent hover:scrollbar-thumb-outline/30">
-          <ProfileHeader />
           <AboutSection />
           <ContactSection />
           <LanguagesSection />
@@ -39,7 +35,6 @@ export function Sidebar({ ready = true }: SidebarProps) {
 
       {/* Mobile: sections flow naturally */}
       <div className="lg:hidden space-y-6">
-        <ProfileHeader />
         <AboutSection />
         <LanguagesSection />
         <ContactSection />

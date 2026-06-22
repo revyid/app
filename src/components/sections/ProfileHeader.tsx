@@ -37,7 +37,7 @@ export function ProfileHeader() {
             src={profileData.image} 
             alt={profileData.name} 
             className="w-full h-full object-cover"
-            loading="lazy"
+            fetchPriority="high"
             decoding="async"
           />
         </motion.div>
