@@ -105,7 +105,7 @@ export function ProfileHeader() {
         {/* Easter egg name appears on the right of the badge */}
         <AnimatePresence>
           {isNawaMode && easterEgg && (
-            <motion.h1
+            <motion.span
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
@@ -113,7 +113,7 @@ export function ProfileHeader() {
               className="text-title-lg font-bold text-foreground whitespace-nowrap"
             >
               {easterEgg.name}
-            </motion.h1>
+            </motion.span>
           )}
         </AnimatePresence>
 
