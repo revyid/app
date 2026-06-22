@@ -4,11 +4,9 @@ import { ContactSection } from '@/components/sections/ContactSection';
 import { LanguagesSection } from '@/components/sections/LanguagesSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
 
-interface SidebarProps {
-  ready?: boolean;
-}
+interface SidebarProps {}
 
-export function Sidebar({ ready = true }: SidebarProps) {
+export function Sidebar(_props: SidebarProps) {
   return (
     <aside className="w-full lg:w-80 lg:sticky lg:top-8 lg:self-start h-fit">
       <ProfileHeader />
