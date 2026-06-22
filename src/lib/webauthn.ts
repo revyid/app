@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase';
+import { getStoredToken } from './auth';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, AuthenticatorTransportFuture } from '@simplewebauthn/types';
 
@@ -216,19 +217,23 @@ export async function registerPasskey(
       createdAt: new Date().toISOString(),
     };
 
-    // 1. Sync to Supabase Database
+    // 1. Sync to Supabase Database via RPC
+    const token = getStoredToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated. Please log in first.' };
+    }
     const { browser_name, device_name } = getDeviceInfo();
-    const { error: dbError } = await supabase.from('user_passkeys').insert({
-      user_id: userId,
-      credential_id: credentialIdStr,
-      public_key: publicKeyStr,
-      device_name,
-      browser_name
+    const { data: rpcData, error: dbError } = await supabase.rpc('register_passkey', {
+      p_token: token,
+      p_credential_id: credentialIdStr,
+      p_public_key: publicKeyStr,
+      p_device_name: device_name,
+      p_browser_name: browser_name,
     });
 
-    if (dbError) {
-      console.error('Failed to sync passkey to database:', dbError);
-      return { success: false, error: 'Database sync failed.' };
+    if (dbError || rpcData?.error) {
+      console.error('Failed to sync passkey to database:', dbError || rpcData?.error);
+      return { success: false, error: rpcData?.error || 'Database sync failed.' };
     }
 
     // 2. Save locally
@@ -305,26 +310,25 @@ export async function authenticateWithPasskey(): Promise<{
     // Try matching from local cache first
     let matchedCred = storedCredentials.find(c => c.credentialId === assertionId);
 
-    // If not in localStorage, look it up in the database
+    // If not in localStorage, look it up in the database via RPC
     if (!matchedCred) {
-      const { data: dbRecord } = await supabase
-        .from('user_passkeys')
-        .select('user_id, credential_id')
-        .eq('credential_id', assertionId)
-        .single();
+      const token = getStoredToken();
+      const { data: rpcData } = await supabase.rpc('list_passkeys', {
+        p_token: token || '',
+      });
 
-      if (dbRecord) {
-        // We found the passkey in the DB! Build a minimal credential object.
-        // The refresh token is NOT available from the DB (security), so we return
-        // without it — the caller will need to handle the fallback login flow.
-        matchedCred = {
-          credentialId: dbRecord.credential_id,
-          publicKey: 'db_lookup',
-          userId: dbRecord.user_id,
-          userEmail: '',
-          userName: '',
-          createdAt: new Date().toISOString(),
-        };
+      if (rpcData?.passkeys) {
+        const dbRecord = rpcData.passkeys.find((pk: any) => pk.credential_id === assertionId);
+        if (dbRecord) {
+          matchedCred = {
+            credentialId: dbRecord.credential_id,
+            publicKey: 'db_lookup',
+            userId: dbRecord.user_id,
+            userEmail: '',
+            userName: '',
+            createdAt: dbRecord.created_at,
+          };
+        }
       }
     }
 
@@ -332,11 +336,7 @@ export async function authenticateWithPasskey(): Promise<{
       return { success: false, error: 'Credential not recognized. Please register a new passkey.' };
     }
 
-    // Update last_used_at in DB asynchronously (don't block login)
-    supabase.from('user_passkeys')
-      .update({ last_used_at: new Date().toISOString() })
-      .eq('credential_id', assertionId)
-      .then();
+    // Update last_used_at is handled server-side by passkey_login RPC
 
     return { success: true, credential: matchedCred };
   } catch (err: any) {
@@ -376,30 +376,32 @@ export interface DBPasskey {
 }
 
 /**
- * Get passkeys directly from the Supabase database
+ * Get passkeys from the Supabase database via RPC
  */
 export async function getPasskeysFromDB(): Promise<DBPasskey[]> {
-  const { data, error } = await supabase
-    .from('user_passkeys')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
+  const token = getStoredToken();
+  if (!token) return [];
+  const { data, error } = await supabase.rpc('list_passkeys', { p_token: token });
   if (error) throw error;
-  return data as DBPasskey[];
+  return (data?.passkeys || []) as DBPasskey[];
 }
 
 /**
  * Revoke a passkey from the database and locally
  */
 export async function revokePasskey(id: string, credentialId: string): Promise<boolean> {
-  // 1. Delete from DB
-  const { error } = await supabase.from('user_passkeys').delete().eq('id', id);
-  if (error) {
-    console.error('Failed to revoke passkey from DB:', error);
+  const token = getStoredToken();
+  if (!token) return false;
+  const { data, error } = await supabase.rpc('delete_passkey', {
+    p_token: token,
+    p_id: id,
+  });
+  if (error || data?.error) {
+    console.error('Failed to revoke passkey from DB:', error || data?.error);
     return false;
   }
   
-  // 2. Delete locally
+  // Delete locally
   removePasskey(credentialId);
   return true;
 }

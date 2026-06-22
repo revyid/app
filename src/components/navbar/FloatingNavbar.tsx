@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -35,7 +35,7 @@ const navItems = [
   { id: 'contact', icon: Mail, label: 'Contact' },
 ];
 
-export function FloatingNavbar({
+export const FloatingNavbar = memo(function FloatingNavbar({
   onChatClick,
   onCommandPaletteClick,
   onProfileClick,
@@ -278,4 +278,4 @@ export function FloatingNavbar({
       </div>
     </motion.nav>
   );
-}
+});
