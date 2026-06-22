@@ -2,17 +2,17 @@ import { useEffect, lazy, Suspense, memo } from 'react';
 import { motion } from 'framer-motion';
 import { IntroSection } from '@/components/sections/IntroSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
-import { ProjectsSection } from '@/components/sections/ProjectsSection';
-import { ExperienceSection } from '@/components/sections/ExperienceSection';
-import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
-import { EducationSection } from '@/components/sections/EducationSection';
-import { ContactFullSection } from '@/components/sections/ContactFullSection';
-import { Footer } from '@/components/sections/Footer';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { useActiveSection } from '@/contexts/ActiveSectionContext';
 import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 
+const ProjectsSection = lazy(() => import('@/components/sections/ProjectsSection').then(m => ({ default: m.ProjectsSection })));
+const ExperienceSection = lazy(() => import('@/components/sections/ExperienceSection').then(m => ({ default: m.ExperienceSection })));
+const TestimonialsSection = lazy(() => import('@/components/sections/TestimonialsSection').then(m => ({ default: m.TestimonialsSection })));
+const EducationSection = lazy(() => import('@/components/sections/EducationSection').then(m => ({ default: m.EducationSection })));
+const ContactFullSection = lazy(() => import('@/components/sections/ContactFullSection').then(m => ({ default: m.ContactFullSection })));
 const PublicAnalytics = lazy(() => import('@/components/shared/PublicAnalytics').then(m => ({ default: m.PublicAnalytics })));
+const Footer = lazy(() => import('@/components/sections/Footer').then(m => ({ default: m.Footer })));
 
 const SECTION_IDS = ['about', 'projects', 'experience', 'education', 'contact'];
 
@@ -74,7 +74,9 @@ export function HomePage() {
         variants={containerVariants}
         style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
       >
-        <ProjectsSection />
+        <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
+          <ProjectsSection />
+        </Suspense>
       </motion.div>
 
       <SectionDivider />
@@ -106,8 +108,10 @@ export function HomePage() {
         variants={containerVariants}
         style={{ contentVisibility: 'auto', containIntrinsicSize: '0 600px' }}
       >
-        <ExperienceSection />
-        <TestimonialsSection />
+        <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
+          <ExperienceSection />
+          <TestimonialsSection />
+        </Suspense>
       </motion.div>
 
       <SectionDivider />
@@ -122,7 +126,9 @@ export function HomePage() {
         variants={containerVariants}
         style={{ contentVisibility: 'auto', containIntrinsicSize: '0 400px' }}
       >
-        <EducationSection />
+        <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
+          <EducationSection />
+        </Suspense>
       </motion.div>
 
       <SectionDivider />
@@ -137,10 +143,14 @@ export function HomePage() {
         variants={containerVariants}
         style={{ contentVisibility: 'auto', containIntrinsicSize: '0 300px' }}
       >
-        <ContactFullSection />
+        <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
+          <ContactFullSection />
+        </Suspense>
       </motion.div>
 
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </motion.div>
   );
 }
