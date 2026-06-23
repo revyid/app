@@ -3,7 +3,7 @@ import { Eye, GitBranch, Star, GitFork, Activity, TrendingUp, Code } from 'lucid
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { SectionLabel } from '@/components/shared/SectionLabel';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
@@ -36,7 +36,7 @@ export function VisitorCounter() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.resolve(supabase.rpc('get_public_analytics'))
+    Promise.resolve(getSupabase().then(c => c.rpc('get_public_analytics')))
       .then(({ data }) => {
         if (data) setStats({ total: data.total_views || 0, today: data.today_views || 0, unique: data.unique_visitors || 0 });
         setLoading(false);
@@ -69,7 +69,7 @@ export function PlatformStats() {
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
-    Promise.resolve(supabase.rpc('get_public_analytics')).then(({ data }) => {
+    Promise.resolve(getSupabase().then(c => c.rpc('get_public_analytics'))).then(({ data }) => {
       const count: Record<string, number> = {};
       (data?.user_agents || []).forEach((ua: string) => {
         let p = 'Unknown';

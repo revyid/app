@@ -1,9 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let _supabase: SupabaseClient | null = null;
+let _configPromise: Promise<{ url: string; key: string }> | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+async function getConfig(): Promise<{ url: string; key: string }> {
+  if (!_configPromise) {
+    _configPromise = fetch('/api/config')
+      .then(r => r.json())
+      .then(data => ({
+        url: data.supabaseUrl,
+        key: data.supabaseAnonKey,
+      }));
+  }
+  return _configPromise;
+}
+
+export async function getSupabase(): Promise<SupabaseClient> {
+  if (_supabase) return _supabase;
+  const { url, key } = await getConfig();
+  _supabase = createClient(url, key);
+  return _supabase;
+}
+
+// Sync getter for backward compat — returns client if already initialized
+export function supabase(): SupabaseClient {
+  if (!_supabase) throw new Error('Supabase not initialized. Call getSupabase() first.');
+  return _supabase;
+}
+
+// Initialize eagerly in background
+getSupabase().catch(() => {});
 
 // Chat message type
 export interface ChatMessage {
@@ -15,9 +41,9 @@ export interface ChatMessage {
   created_at: string;
 }
 
-// Fetch all messages
 export async function fetchMessages(): Promise<ChatMessage[]> {
-  const { data, error } = await supabase
+  const client = await getSupabase();
+  const { data, error } = await client
     .from('chat_messages')
     .select('*')
     .order('created_at', { ascending: true })
@@ -31,12 +57,12 @@ export async function fetchMessages(): Promise<ChatMessage[]> {
   return data || [];
 }
 
-// Subscribe to new messages and deletions
 export function subscribeToMessages(
   onInsert: (message: ChatMessage) => void,
   onDelete?: (id: string) => void
 ) {
-  return supabase
+  const client = supabase();
+  return client
     .channel('chat_messages')
     .on(
       'postgres_changes',
@@ -55,14 +81,14 @@ export function subscribeToMessages(
     .subscribe();
 }
 
-// Send a message
 export async function sendMessage(
   userId: string,
   userName: string,
   userImage: string | null,
   message: string
 ): Promise<boolean> {
-  const { error } = await supabase.from('chat_messages').insert({
+  const client = await getSupabase();
+  const { error } = await client.from('chat_messages').insert({
     user_id: userId,
     user_name: userName,
     user_image: userImage,
@@ -77,13 +103,13 @@ export async function sendMessage(
   return true;
 }
 
-// Delete a message — only own messages (client-side verification)
 export async function deleteMessage(messageId: string, userId: string): Promise<boolean> {
-  const { error } = await supabase
+  const client = await getSupabase();
+  const { error } = await client
     .from('chat_messages')
     .delete()
     .eq('id', messageId)
-    .eq('user_id', userId); // Only delete if the message belongs to this user
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error deleting message:', error);

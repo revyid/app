@@ -5,7 +5,7 @@
  * and verified client-side against the user's device authenticator.
  */
 
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 import { getStoredToken } from './auth';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, AuthenticatorTransportFuture } from '@simplewebauthn/types';
@@ -223,7 +223,7 @@ export async function registerPasskey(
       return { success: false, error: 'Not authenticated. Please log in first.' };
     }
     const { browser_name, device_name } = getDeviceInfo();
-    const { data: rpcData, error: dbError } = await supabase.rpc('register_passkey', {
+    const { data: rpcData, error: dbError } = await (await getSupabase()).rpc('register_passkey', {
       p_token: token,
       p_credential_id: credentialIdStr,
       p_public_key: publicKeyStr,
@@ -313,7 +313,7 @@ export async function authenticateWithPasskey(): Promise<{
     // If not in localStorage, look it up in the database via RPC
     if (!matchedCred) {
       const token = getStoredToken();
-      const { data: rpcData } = await supabase.rpc('list_passkeys', {
+      const { data: rpcData } = await (await getSupabase()).rpc('list_passkeys', {
         p_token: token || '',
       });
 
@@ -381,7 +381,7 @@ export interface DBPasskey {
 export async function getPasskeysFromDB(): Promise<DBPasskey[]> {
   const token = getStoredToken();
   if (!token) return [];
-  const { data, error } = await supabase.rpc('list_passkeys', { p_token: token });
+  const { data, error } = await (await getSupabase()).rpc('list_passkeys', { p_token: token });
   if (error) throw error;
   return (data?.passkeys || []) as DBPasskey[];
 }
@@ -392,7 +392,7 @@ export async function getPasskeysFromDB(): Promise<DBPasskey[]> {
 export async function revokePasskey(id: string, credentialId: string): Promise<boolean> {
   const token = getStoredToken();
   if (!token) return false;
-  const { data, error } = await supabase.rpc('delete_passkey', {
+  const { data, error } = await (await getSupabase()).rpc('delete_passkey', {
     p_token: token,
     p_id: id,
   });

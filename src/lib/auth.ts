@@ -4,7 +4,7 @@
  * No dependency on Supabase Auth — sessions are simple tokens.
  */
 
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 // ─── Types ──────────────────────────────────────────────────────────
 export interface AppUser {
@@ -45,7 +45,8 @@ export async function register(
   password: string,
   displayName?: string
 ): Promise<AuthResult> {
-  const { data, error } = await supabase.rpc('register_user', {
+  const client = await getSupabase();
+  const { data, error } = await client.rpc('register_user', {
     p_email: email,
     p_password: password,
     p_display_name: displayName || null,
@@ -62,7 +63,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  const { data, error } = await supabase.rpc('login_user', {
+  const { data, error } = await (await getSupabase()).rpc('login_user', {
     p_email: email,
     p_password: password,
   });
@@ -81,7 +82,7 @@ export async function oauthLogin(
   provider: 'google' | 'github',
   providerId: string
 ): Promise<AuthResult> {
-  const { data, error } = await supabase.rpc('oauth_login', {
+  const { data, error } = await (await getSupabase()).rpc('oauth_login', {
     p_email: email,
     p_display_name: displayName,
     p_avatar_url: avatarUrl,
@@ -100,7 +101,7 @@ export async function passkeyLogin(
   credentialId: string,
   oldToken: string
 ): Promise<AuthResult> {
-  const { data, error } = await supabase.rpc('passkey_login', {
+  const { data, error } = await (await getSupabase()).rpc('passkey_login', {
     p_credential_id: credentialId,
     p_old_token: oldToken,
   });
@@ -116,7 +117,7 @@ export async function validateSession(token?: string): Promise<AuthResult> {
   const t = token || getStoredToken();
   if (!t) return { error: 'No session' };
 
-  const { data, error } = await supabase.rpc('validate_session', {
+  const { data, error } = await (await getSupabase()).rpc('validate_session', {
     p_token: t,
   });
 
@@ -132,7 +133,7 @@ export async function logout(): Promise<void> {
   const token = getStoredToken();
   if (token) {
     try {
-      await supabase.rpc('logout_session', { p_token: token });
+      await (await getSupabase()).rpc('logout_session', { p_token: token });
     } catch { /* ignore */ }
   }
   clearToken();
@@ -145,7 +146,7 @@ export async function updateProfile(
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data, error } = await supabase.rpc('update_user_profile', {
+  const { data, error } = await (await getSupabase()).rpc('update_user_profile', {
     p_token: token,
     p_display_name: displayName || null,
     p_avatar_url: avatarUrl || null,
@@ -166,7 +167,7 @@ export async function updateSessionDevice(
   if (!token) return;
 
   try {
-    await supabase.rpc('update_session_device', {
+    await (await getSupabase()).rpc('update_session_device', {
       p_token: token,
       p_device_id: deviceId,
       p_device_name: deviceName,
@@ -179,7 +180,7 @@ export async function getUserSessions(): Promise<any[]> {
   const token = getStoredToken();
   if (!token) return [];
 
-  const { data, error } = await supabase.rpc('get_user_sessions', {
+  const { data, error } = await (await getSupabase()).rpc('get_user_sessions', {
     p_token: token,
   });
 
@@ -191,7 +192,7 @@ export async function revokeSession(sessionId: string): Promise<boolean> {
   const token = getStoredToken();
   if (!token) return false;
 
-  const { data, error } = await supabase.rpc('revoke_session', {
+  const { data, error } = await (await getSupabase()).rpc('revoke_session', {
     p_token: token,
     p_session_id: sessionId,
   });
@@ -203,13 +204,13 @@ export async function revokeSession(sessionId: string): Promise<boolean> {
 // ─── Admin Portfolio CRUD ────────────────────────────────────────────
 
 export async function getPortfolioSection(section: string): Promise<unknown> {
-  const { data, error } = await supabase.rpc('get_portfolio_section', { p_section: section });
+  const { data, error } = await (await getSupabase()).rpc('get_portfolio_section', { p_section: section });
   if (error) throw error;
   return data;
 }
 
 export async function getAllPortfolioData(): Promise<Record<string, unknown>> {
-  const { data, error } = await supabase.rpc('get_all_portfolio_data');
+  const { data, error } = await (await getSupabase()).rpc('get_all_portfolio_data');
   if (error) throw error;
   return (data as Record<string, unknown>) || {};
 }
@@ -221,7 +222,7 @@ export async function upsertPortfolioSection(
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await supabase.rpc('upsert_portfolio_section', {
+  const { data: result, error } = await (await getSupabase()).rpc('upsert_portfolio_section', {
     p_token: token,
     p_section: section,
     p_data: data,
@@ -239,7 +240,7 @@ export async function deletePortfolioItem(
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await supabase.rpc('delete_portfolio_item', {
+  const { data: result, error } = await (await getSupabase()).rpc('delete_portfolio_item', {
     p_token: token,
     p_section: section,
     p_item_id: itemId,
@@ -269,7 +270,7 @@ export interface SiteSetting {
 }
 
 export async function getThemes(): Promise<ThemeData[]> {
-  const { data, error } = await supabase.rpc('get_themes', {
+  const { data, error } = await (await getSupabase()).rpc('get_themes', {
     p_user_id: null
   });
   
@@ -281,7 +282,7 @@ export async function upsertTheme(theme: ThemeData): Promise<{ id?: string; erro
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await supabase.rpc('upsert_theme', {
+  const { data: result, error } = await (await getSupabase()).rpc('upsert_theme', {
     p_id: theme.id || null,
     p_name: theme.name,
     p_description: theme.description || null,
@@ -299,7 +300,7 @@ export async function upsertTheme(theme: ThemeData): Promise<{ id?: string; erro
 
 // ─── Site Settings ───────────────────────────────────────────────────
 export async function getSiteSetting(key: string): Promise<string | null> {
-  const { data, error } = await supabase.rpc('get_site_setting', { p_key: key });
+  const { data, error } = await (await getSupabase()).rpc('get_site_setting', { p_key: key });
   if (error) throw error;
   return data;
 }
@@ -308,7 +309,7 @@ export async function updateSiteSetting(key: string, value: string): Promise<voi
   const token = getStoredToken();
   if (!token) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase.rpc('update_site_setting', {
+  const { data, error } = await (await getSupabase()).rpc('update_site_setting', {
     p_token: token,
     p_key: key,
     p_value: value
@@ -327,7 +328,7 @@ export async function trackEvent(
   referrer?: string
 ): Promise<void> {
   try {
-    const { error } = await supabase.rpc('track_event', {
+    const { error } = await (await getSupabase()).rpc('track_event', {
       p_event_type: eventType,
       p_event_data: eventData || null,
       p_user_agent: userAgent || null,
@@ -351,7 +352,7 @@ export async function getAnalyticsSummary(days: number = 30): Promise<any> {
   const token = getStoredToken();
   if (!token) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase.rpc('get_analytics_summary', {
+  const { data, error } = await (await getSupabase()).rpc('get_analytics_summary', {
     p_token: token,
     p_days: days
   });
@@ -364,7 +365,7 @@ export async function deleteTheme(themeId: string): Promise<{ error?: string }> 
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await supabase.rpc('delete_theme', {
+  const { data: result, error } = await (await getSupabase()).rpc('delete_theme', {
     p_id: themeId,
     p_user_id: token
   });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { getStoredToken, updateProfile, getUserSessions, revokeSession } from '@/lib/auth';
 import {
   X,
@@ -69,32 +69,34 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
     fetchDevices();
 
     // -------- Realtime Subscriptions --------
-    const passkeysChannel = supabase
-      .channel('profile-passkeys-rt')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'user_passkeys', filter: `user_id=eq.${user.id}` },
-        () => {
-          // Re-fetch passkeys on any change (INSERT/UPDATE/DELETE)
-          getPasskeysFromDB().then(setDbPasskeys).catch(console.error);
-        }
-      )
-      .subscribe();
+    let passkeysChannel: any;
+    let devicesChannel: any;
+    getSupabase().then(client => {
+      passkeysChannel = client
+        .channel('profile-passkeys-rt')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'user_passkeys', filter: `user_id=eq.${user.id}` },
+          () => {
+            getPasskeysFromDB().then(setDbPasskeys).catch(console.error);
+          }
+        )
+        .subscribe();
 
-    const devicesChannel = supabase
-      .channel('profile-devices-rt')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'app_sessions', filter: `user_id=eq.${user.id}` },
-        () => {
+      devicesChannel = client
+        .channel('profile-devices-rt')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'app_sessions', filter: `user_id=eq.${user.id}` },
+          () => {
           getUserSessions().then(s => setDbDevices(s || []));
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(passkeysChannel);
-      supabase.removeChannel(devicesChannel);
+      if (passkeysChannel) getSupabase().then(c => c.removeChannel(passkeysChannel));
+      if (devicesChannel) getSupabase().then(c => c.removeChannel(devicesChannel));
     };
   }, [user, isOpen]);
 

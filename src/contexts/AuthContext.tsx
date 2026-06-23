@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { getDeviceInfo } from '@/lib/webauthn';
 import {
   validateSession,
@@ -100,29 +100,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getStoredToken();
     if (!user || !token) return;
 
-    // Listen for changes to app_sessions where our token matches
-    const channel = supabase
-      .channel(`session-revoke-${DEVICE_ID}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'app_sessions',
-          filter: `token=eq.${token}`,
-        },
-        (payload) => {
-          if (payload.new?.is_active === false) {
-            console.warn('[Auth] Session revoked remotely → signing out');
-            clearToken();
-            setUser(null);
+    let channel: any;
+    getSupabase().then(client => {
+      channel = client
+        .channel(`session-revoke-${DEVICE_ID}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'app_sessions',
+            filter: `token=eq.${token}`,
+          },
+          (payload) => {
+            if (payload.new?.is_active === false) {
+              console.warn('[Auth] Session revoked remotely → signing out');
+              clearToken();
+              setUser(null);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) getSupabase().then(client => client.removeChannel(channel));
     };
   }, [user]);
 
