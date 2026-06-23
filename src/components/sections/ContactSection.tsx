@@ -6,6 +6,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Mail, Globe, Phone, Calendar, Twitter, Linkedin,
 };
 
+function obfuscateEmail(email: string): string {
+  return email.split('').map(c => `&#${c.charCodeAt(0)};`).join('');
+}
+
 export function ContactSection() {
   const { data } = usePortfolio();
   return (
@@ -14,6 +18,7 @@ export function ContactSection() {
       <div className="space-y-2">
         {data.contacts.map((contact) => {
           const IconComponent = iconMap[contact.icon] || Mail;
+          const isEmail = contact.type === 'email';
           return (
             <a
               key={contact.id}
@@ -23,7 +28,11 @@ export function ContactSection() {
               <div className="w-8 h-8 rounded-[8px] bg-surface-variant flex items-center justify-center">
                 <IconComponent className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span className="truncate">{contact.value}</span>
+              {isEmail ? (
+                <span className="truncate" dangerouslySetInnerHTML={{ __html: obfuscateEmail(contact.value) }} />
+              ) : (
+                <span className="truncate">{contact.value}</span>
+              )}
             </a>
           );
         })}

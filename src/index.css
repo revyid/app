@@ -244,6 +244,13 @@
     -webkit-mask-image: radial-gradient(white, white);
     outline: none;
   }
+  .squircle-sm:focus-visible,
+  .squircle-md:focus-visible,
+  .squircle-lg:focus-visible,
+  .squircle-xl:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
 
   /* True squircle for cards that need the Pixel OS feel */
   .squircle-card {

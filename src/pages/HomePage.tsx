@@ -36,26 +36,26 @@ export function HomePage() {
       <IntroSection />
       <SectionDivider />
 
-      <div id="skills" className="scroll-mt-24 content-visibility-auto">
+      <div id="skills" className="scroll-mt-24">
         <SkillsSection />
       </div>
       <SectionDivider />
 
-      <div id="projects" className="scroll-mt-24 content-visibility-auto-lg">
+      <div id="projects" className="scroll-mt-24">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <ProjectsSection />
         </Suspense>
       </div>
       <SectionDivider />
 
-      <div id="analytic" className="scroll-mt-24 content-visibility-auto-lg">
+      <div id="analytic" className="scroll-mt-24">
         <Suspense fallback={<div className="mb-10 h-96 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <PublicAnalytics />
         </Suspense>
       </div>
       <SectionDivider />
 
-      <div id="experience" className="scroll-mt-24 content-visibility-auto-xl">
+      <div id="experience" className="scroll-mt-24">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <ExperienceSection />
           <TestimonialsSection />
@@ -63,14 +63,14 @@ export function HomePage() {
       </div>
       <SectionDivider />
 
-      <div id="education" className="scroll-mt-24 content-visibility-auto">
+      <div id="education" className="scroll-mt-24">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <EducationSection />
         </Suspense>
       </div>
       <SectionDivider />
 
-      <div id="contact" className="scroll-mt-24 content-visibility-auto-sm">
+      <div id="contact" className="scroll-mt-24">
         <Suspense fallback={<div className="mb-10 h-40 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <ContactFullSection />
         </Suspense>
