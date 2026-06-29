@@ -216,7 +216,7 @@ export const modalBackdrop: Variants = {
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.15, ease: [0.4, 0, 1, 1] },
+    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] },
   },
 };
 
@@ -232,8 +232,8 @@ export const bottomSheetContent: Variants = {
     },
   },
   exit: {
-    opacity: 0,
-    transition: { duration: 0.15, ease: [0.4, 0, 1, 1] },
+    y: '100%',
+    transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
   },
 };
 

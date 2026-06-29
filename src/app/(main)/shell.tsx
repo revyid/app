@@ -98,27 +98,11 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (anyPopupOpen) {
-      const scrollY = window.scrollY;
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.position = 'fixed';
-      document.body.style.inset = `-${scrollY}px 0 0 0`;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = 'hidden';
     } else {
-      const top = document.body.style.top;
-      const scrollY = top ? -parseInt(top) : 0;
-      document.body.style.position = '';
-      document.body.style.inset = '';
-      document.body.style.paddingRight = '';
-      window.scrollTo(0, scrollY);
+      document.body.style.overflow = '';
     }
-    return () => {
-      const top = document.body.style.top;
-      const scrollY = top ? -parseInt(top) : 0;
-      document.body.style.position = '';
-      document.body.style.inset = '';
-      document.body.style.paddingRight = '';
-      window.scrollTo(0, scrollY);
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [anyPopupOpen]);
 
   const closeAllModals = useCallback(() => {
@@ -174,19 +158,17 @@ function ShellInner({ children }: { children: React.ReactNode }) {
       </LayoutGroup>
 
       <PopupPortal>
-        {isChatOpen && <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => setIsLoginOpen(true)} />}
-        {isCommandPaletteOpen && (
-          <CommandPalette
-            isOpen={isCommandPaletteOpen}
-            onClose={() => setIsCommandPaletteOpen(false)}
-            onLoginClick={() => { setIsCommandPaletteOpen(false); setIsLoginOpen(true); }}
-            onProfileClick={() => { setIsCommandPaletteOpen(false); setIsProfileOpen(true); }}
-            onChatClick={() => setIsChatOpen(true)}
-          />
-        )}
-        {isProfileOpen && <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => { setIsProfileOpen(false); setIsLoginOpen(true); }} />}
-        {isAdminOpen && <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />}
-        {isShortcutHelpOpen && <ShortcutHelp isOpen={isShortcutHelpOpen} onClose={() => setIsShortcutHelpOpen(false)} />}
+        <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => setIsLoginOpen(true)} />
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onLoginClick={() => { setIsCommandPaletteOpen(false); setIsLoginOpen(true); }}
+          onProfileClick={() => { setIsCommandPaletteOpen(false); setIsProfileOpen(true); }}
+          onChatClick={() => setIsChatOpen(true)}
+        />
+        <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => { setIsProfileOpen(false); setIsLoginOpen(true); }} />
+        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+        <ShortcutHelp isOpen={isShortcutHelpOpen} onClose={() => setIsShortcutHelpOpen(false)} />
         <CustomLogin isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       </PopupPortal>
     </>
