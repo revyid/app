@@ -93,28 +93,16 @@ function ShellInner({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
-  // Block scroll when any popup is open
+  // Block scroll when any popup is open — no body position tricks, just overflow
   const anyPopupOpen = isChatOpen || isCommandPaletteOpen || isProfileOpen || isAdminOpen || isShortcutHelpOpen || isLoginOpen;
-  const scrollYRef = useRef(0);
 
   useEffect(() => {
     if (anyPopupOpen) {
-      scrollYRef.current = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollYRef.current}px`;
-      document.body.style.width = '100%';
+      document.documentElement.style.overflow = 'hidden';
     } else {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, scrollYRef.current);
+      document.documentElement.style.overflow = '';
     }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, scrollYRef.current);
-    };
+    return () => { document.documentElement.style.overflow = ''; };
   }, [anyPopupOpen]);
 
   const closeAllModals = useCallback(() => {
@@ -146,15 +134,13 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 overflow-x-clip ${nawaMode ? 'nawa-mode' : ''}`}>
           {isLoading && <WelcomePreloader onComplete={() => setIsLoading(false)} />}
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">
               Skip to content
             </a>
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-14">
-              <div>
-                <Sidebar ready={!isLoading} />
-              </div>
-              <main id="main-content" className="flex-1 min-w-0">
+            <div className="flex flex-col gap-8 lg:gap-14">
+              <Sidebar ready={!isLoading} />
+              <main id="main-content">
                 <ErrorBoundary>{children}</ErrorBoundary>
               </main>
             </div>

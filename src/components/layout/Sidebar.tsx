@@ -9,29 +9,59 @@ interface SidebarProps {
 
 export function Sidebar(_props: SidebarProps) {
   return (
-    <aside className="w-full lg:w-72 lg:sticky lg:top-1/2 lg:-translate-y-1/2 h-[fit-content]">
-      <div className="hidden lg:block">
-        <div className="squircle-card bg-surface border border-outline/20 p-5 space-y-3 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden scrollbar-thin">
-          <ProfileHeader />
-          <div className="h-px bg-outline/20" />
-          <AboutSection />
-          <div className="h-px bg-outline/20" />
-          <LanguagesSection />
-          <div className="h-px bg-outline/20" />
-          <SocialLinks />
-          <div className="h-px bg-outline/20" />
-          <p className="text-label-sm text-muted-foreground/50 text-center pt-1">
-            © 2026 revyid
-          </p>
+    <>
+      {/* Desktop — fixed left, centered vertically */}
+      <aside className="hidden lg:block fixed left-0 top-0 h-screen w-72 z-10">
+        <div className="h-full flex items-center pl-4 pr-2">
+          <div className="squircle-card bg-surface border border-outline/20 p-5 space-y-3 noise-grain shadow-fluid w-full max-h-[80vh] overflow-y-auto overflow-x-hidden scrollbar-thin">
+            <ProfileHeader />
+            <div className="h-px bg-outline/20" />
+            <AboutSection />
+            <div className="h-px bg-outline/20" />
+            <LanguagesSection />
+            <div className="h-px bg-outline/20" />
+            <SocialLinks />
+            <div className="h-px bg-outline/20" />
+            <div className="text-center space-y-1.5 pt-1">
+              <p className="text-label-sm text-muted-foreground/50">
+                Built with React & Next.js
+              </p>
+              <div className="flex items-center justify-center gap-3 text-label-sm">
+                <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
+                <span className="w-1 h-1 rounded-full bg-outline/40" />
+                <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
+              </div>
+              <p className="text-label-sm text-muted-foreground/50">
+                © 2026 revyid
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </aside>
 
+      {/* Spacer for desktop so content doesn't overlap */}
+      <div className="hidden lg:block w-72 flex-shrink-0" />
+
+      {/* Mobile */}
       <div className="lg:hidden space-y-4">
         <ProfileHeader />
         <AboutSection />
         <LanguagesSection />
         <SocialLinks />
+        <div className="text-center space-y-1.5 pt-2 border-t border-outline/20">
+          <p className="text-label-sm text-muted-foreground/50">
+            Built with React & Next.js
+          </p>
+          <div className="flex items-center justify-center gap-3 text-label-sm">
+            <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
+            <span className="w-1 h-1 rounded-full bg-outline/40" />
+            <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
+          </div>
+          <p className="text-label-sm text-muted-foreground/50">
+            © 2026 revyid
+          </p>
+        </div>
       </div>
-    </aside>
+    </>
   );
 }
