@@ -15,7 +15,7 @@ export function Footer() {
       whileInView="visible"
       viewport={viewportOnce}
       variants={itemVariants}
-      className="pt-8 pb-6 border-t border-outline/20"
+      className="pt-8 pb-28 border-t border-outline/20"
     >
       <div className="text-center space-y-3">
         <p className="text-body-sm text-muted-foreground">
