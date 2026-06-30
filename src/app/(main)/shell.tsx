@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { LayoutGroup } from 'framer-motion';
 import { Providers } from '@/app/providers';
@@ -95,28 +95,25 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 
   // Block scroll when any popup is open
   const anyPopupOpen = isChatOpen || isCommandPaletteOpen || isProfileOpen || isAdminOpen || isShortcutHelpOpen || isLoginOpen;
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
     if (anyPopupOpen) {
-      const scrollY = window.scrollY;
+      scrollYRef.current = window.scrollY;
       document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
+      document.body.style.top = `-${scrollYRef.current}px`;
       document.body.style.width = '100%';
     } else {
-      const top = document.body.style.top;
-      const scrollY = top ? Math.abs(parseInt(top)) : 0;
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.width = '';
-      window.scrollTo(0, scrollY);
+      window.scrollTo(0, scrollYRef.current);
     }
     return () => {
-      const top = document.body.style.top;
-      const scrollY = top ? Math.abs(parseInt(top)) : 0;
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.width = '';
-      window.scrollTo(0, scrollY);
+      window.scrollTo(0, scrollYRef.current);
     };
   }, [anyPopupOpen]);
 

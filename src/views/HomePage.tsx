@@ -10,7 +10,6 @@ const TestimonialsSection = lazy(() => import('@/components/sections/Testimonial
 const EducationSection = lazy(() => import('@/components/sections/EducationSection').then(m => ({ default: m.EducationSection })));
 const ContactFullSection = lazy(() => import('@/components/sections/ContactFullSection').then(m => ({ default: m.ContactFullSection })));
 const PublicAnalytics = lazy(() => import('@/components/shared/PublicAnalytics').then(m => ({ default: m.PublicAnalytics })));
-const Footer = lazy(() => import('@/components/sections/Footer').then(m => ({ default: m.Footer })));
 
 const SECTION_IDS = ['skills', 'projects', 'stats', 'experience', 'education', 'contact'];
 
@@ -75,10 +74,6 @@ export function HomePage() {
           <ContactFullSection />
         </Suspense>
       </div>
-
-      <Suspense fallback={null}>
-        <Footer />
-      </Suspense>
     </div>
   );
 }

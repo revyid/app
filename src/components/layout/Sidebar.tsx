@@ -19,6 +19,10 @@ export function Sidebar(_props: SidebarProps) {
           <LanguagesSection />
           <div className="h-px bg-outline/20" />
           <SocialLinks />
+          <div className="h-px bg-outline/20" />
+          <p className="text-label-sm text-muted-foreground/50 text-center pt-1">
+            © 2026 revyid
+          </p>
         </div>
       </div>
 
