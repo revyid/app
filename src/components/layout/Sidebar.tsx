@@ -9,7 +9,7 @@ interface SidebarProps {
 
 export function Sidebar(_props: SidebarProps) {
   return (
-    <aside className="w-full lg:w-72 lg:sticky lg:top-8 h-[fit-content]">
+    <aside className="w-full lg:w-72 lg:sticky lg:top-1/2 lg:-translate-y-1/2 h-[fit-content]">
       <div className="hidden lg:block">
         <div className="squircle-card bg-surface border border-outline/20 p-5 space-y-3 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden scrollbar-thin">
           <ProfileHeader />
