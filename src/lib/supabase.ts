@@ -1,37 +1,23 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 let _supabase: SupabaseClient | null = null;
-let _configPromise: Promise<{ url: string; key: string }> | null = null;
-
-async function getConfig(): Promise<{ url: string; key: string }> {
-  if (!_configPromise) {
-    _configPromise = fetch('/api/config')
-      .then(r => r.json())
-      .then(data => ({
-        url: data.supabaseUrl,
-        key: data.supabaseAnonKey,
-      }));
-  }
-  return _configPromise;
-}
 
 export async function getSupabase(): Promise<SupabaseClient> {
   if (_supabase) return _supabase;
-  const { url, key } = await getConfig();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error('Supabase env vars not configured');
   _supabase = createClient(url, key);
   return _supabase;
 }
 
-// Sync getter for backward compat — returns client if already initialized
 export function supabase(): SupabaseClient {
   if (!_supabase) throw new Error('Supabase not initialized. Call getSupabase() first.');
   return _supabase;
 }
 
-// Initialize eagerly in background
 getSupabase().catch(() => {});
 
-// Chat message type
 export interface ChatMessage {
   id: string;
   user_id: string;
@@ -87,12 +73,15 @@ export async function sendMessage(
   userImage: string | null,
   message: string
 ): Promise<boolean> {
+  const trimmed = message.trim();
+  if (!trimmed || trimmed.length > 500) return false;
+
   const client = await getSupabase();
   const { error } = await client.from('chat_messages').insert({
     user_id: userId,
     user_name: userName,
     user_image: userImage,
-    message: message.trim(),
+    message: trimmed,
   });
 
   if (error) {
@@ -113,6 +102,21 @@ export async function deleteMessage(messageId: string, userId: string): Promise<
 
   if (error) {
     console.error('Error deleting message:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function deleteMessageAdmin(messageId: string): Promise<boolean> {
+  const client = await getSupabase();
+  const { error } = await client
+    .from('chat_messages')
+    .delete()
+    .eq('id', messageId);
+
+  if (error) {
+    console.error('Error deleting message (admin):', error);
     return false;
   }
 

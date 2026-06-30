@@ -1,10 +1,5 @@
 import { useEffect } from 'react';
 
-/**
- * Handles the Google OAuth implicit flow callback.
- * Parses the id_token from the URL hash, decodes user info, and sends it
- * back to the opener window via postMessage.
- */
 export function GoogleCallback() {
   useEffect(() => {
     try {
@@ -14,9 +9,8 @@ export function GoogleCallback() {
       const savedState = localStorage.getItem('google_oauth_state');
 
       if (!idToken) throw new Error('No id_token in response.');
-      if (state !== savedState) throw new Error('Invalid state parameter (potential CSRF).');
+      if (state !== savedState) throw new Error('Invalid state parameter.');
 
-      // Cleanup the state immediately to prevent replay attacks
       localStorage.removeItem('google_oauth_state');
 
       const payload = JSON.parse(atob(idToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
@@ -29,14 +23,16 @@ export function GoogleCallback() {
       }
       window.close();
     } catch (err: any) {
-      // Safe error display — no raw user input, only our own error message
       document.body.textContent = `Google auth error: ${err.message || 'Unknown error'}`;
     }
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <div className="text-center space-y-4">
+        <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
+        <p className="text-sm text-muted-foreground">Signing in with Google...</p>
+      </div>
     </div>
   );
 }

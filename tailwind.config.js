@@ -4,9 +4,7 @@ module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      // Material 3 Color System (HCT-based, High Contrast)
       colors: {
-        // Core M3 Colors
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -25,7 +23,6 @@ module.exports = {
           container: "hsl(var(--tertiary-container))",
           "container-foreground": "hsl(var(--tertiary-container-foreground))",
         },
-        // Surface & Background
         surface: {
           DEFAULT: "hsl(var(--surface))",
           variant: "hsl(var(--surface-variant))",
@@ -41,7 +38,6 @@ module.exports = {
         },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        // M3 Semantic Colors
         error: {
           DEFAULT: "hsl(var(--error))",
           foreground: "hsl(var(--error-foreground))",
@@ -60,19 +56,16 @@ module.exports = {
           container: "hsl(var(--warning-container))",
           "container-foreground": "hsl(var(--warning-container-foreground))",
         },
-        // Neutral Scale (M3)
         neutral: {
           DEFAULT: "hsl(var(--neutral))",
           foreground: "hsl(var(--neutral-foreground))",
           variant: "hsl(var(--neutral-variant))",
           "variant-foreground": "hsl(var(--neutral-variant-foreground))",
         },
-        // Outline
         outline: {
           DEFAULT: "hsl(var(--outline))",
           variant: "hsl(var(--outline-variant))",
         },
-        // Shadcn compatibility
         border: "hsl(var(--outline))",
         input: "hsl(var(--surface-variant))",
         ring: "hsl(var(--primary))",
@@ -96,16 +89,7 @@ module.exports = {
           DEFAULT: "hsl(var(--error))",
           foreground: "hsl(var(--error-foreground))",
         },
-        // Gopix Vibrant Accents
-        gopix: {
-          lime: "#A3E635",
-          cyan: "#22D3EE",
-          magenta: "#E879F9",
-          amber: "#FBBF24",
-          rose: "#FB7185",
-        },
       },
-      // Squircle Border Radius System
       borderRadius: {
         none: "0px",
         xs: "4px",
@@ -117,19 +101,16 @@ module.exports = {
         "3xl": "28px",
         "4xl": "36px",
         full: "9999px",
-        // M3 Shape Tokens
         "extra-small": "4px",
         "small": "8px",
         "medium": "12px",
         "large": "16px",
         "extra-large": "28px",
         "extra-large-top": "28px 28px 0 0",
-        // Squircle tokens
         "squircle": "24px",
         "squircle-sm": "12px",
         "squircle-lg": "32px",
       },
-      // Material 3 Elevation (Soft Depth)
       boxShadow: {
         "elevation-0": "none",
         "elevation-1": "0px 1px 2px 0px rgba(0,0,0,0.3), 0px 1px 3px 1px rgba(0,0,0,0.15)",
@@ -137,17 +118,13 @@ module.exports = {
         "elevation-3": "0px 1px 3px 0px rgba(0,0,0,0.3), 0px 4px 8px 3px rgba(0,0,0,0.15)",
         "elevation-4": "0px 2px 3px 0px rgba(0,0,0,0.3), 0px 6px 10px 4px rgba(0,0,0,0.15)",
         "elevation-5": "0px 4px 4px 0px rgba(0,0,0,0.3), 0px 8px 12px 6px rgba(0,0,0,0.15)",
-        // Gopix Glow
         "glow-lime": "0 0 20px rgba(163, 230, 53, 0.4), 0 0 40px rgba(163, 230, 53, 0.2)",
         "glow-cyan": "0 0 20px rgba(34, 211, 238, 0.4), 0 0 40px rgba(34, 211, 238, 0.2)",
         "glow-magenta": "0 0 20px rgba(232, 121, 249, 0.4), 0 0 40px rgba(232, 121, 249, 0.2)",
-        // Glass
         glass: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-        // Fluid Surface
         "fluid": "0px 2px 6px 0px rgba(0,0,0,0.08), 0px 4px 12px 2px rgba(0,0,0,0.04)",
         "fluid-hover": "0px 4px 12px 0px rgba(0,0,0,0.12), 0px 8px 24px 4px rgba(0,0,0,0.06)",
       },
-      // Typography (M3 Type Scale)
       fontSize: {
         "display-lg": ["57px", { lineHeight: "64px", letterSpacing: "-0.25px", fontWeight: "400" }],
         "display-md": ["45px", { lineHeight: "52px", letterSpacing: "0px", fontWeight: "400" }],
@@ -165,33 +142,13 @@ module.exports = {
         "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.25px", fontWeight: "400" }],
         "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.4px", fontWeight: "400" }],
       },
-      // Spacing (M3 Grid)
       spacing: {
-        "0": "0px",
-        "1": "4px",
-        "2": "8px",
-        "3": "12px",
-        "4": "16px",
-        "5": "20px",
-        "6": "24px",
-        "7": "28px",
-        "8": "32px",
-        "9": "36px",
-        "10": "40px",
-        "11": "44px",
-        "12": "48px",
-        "13": "52px",
-        "14": "56px",
-        "15": "60px",
-        "16": "64px",
-        "17": "68px",
-        "18": "72px",
-        "19": "76px",
-        "20": "80px",
+        "0": "0px", "1": "4px", "2": "8px", "3": "12px", "4": "16px",
+        "5": "20px", "6": "24px", "7": "28px", "8": "32px", "9": "36px",
+        "10": "40px", "11": "44px", "12": "48px", "13": "52px", "14": "56px",
+        "15": "60px", "16": "64px", "17": "68px", "18": "72px", "19": "76px", "20": "80px",
       },
-      // Keyframes
       keyframes: {
-        // M3 Motion
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -204,7 +161,6 @@ module.exports = {
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
-        // Gopix Effects
         "float": {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" },
@@ -218,7 +174,6 @@ module.exports = {
           "50%": { backgroundPosition: "100% 50%" },
           "100%": { backgroundPosition: "0% 50%" },
         },
-        // Gemini AI Glow
         "gemini-rotate": {
           "0%": { "--gemini-angle": "0deg" },
           "100%": { "--gemini-angle": "360deg" },
@@ -265,12 +220,10 @@ module.exports = {
         "slide-up-fade": "slide-up-fade 0.4s cubic-bezier(0.2, 0, 0, 1)",
         "scale-in": "scale-in 0.3s cubic-bezier(0.2, 0, 0, 1)",
       },
-      // Backdrop Blur
       backdropBlur: {
         glass: "20px",
         frosted: "40px",
       },
-      // Transition Timing Functions
       transitionTimingFunction: {
         "m3-standard": "cubic-bezier(0.2, 0, 0, 1)",
         "m3-emphasized": "cubic-bezier(0.4, 0, 0.2, 1)",
@@ -278,7 +231,6 @@ module.exports = {
         "m3-accelerate": "cubic-bezier(0.4, 0, 1, 1)",
         "bounce": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
       },
-      // Transition Durations
       transitionDuration: {
         "m3-short": "150ms",
         "m3-medium": "300ms",

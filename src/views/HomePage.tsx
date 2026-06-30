@@ -12,7 +12,7 @@ const ContactFullSection = lazy(() => import('@/components/sections/ContactFullS
 const PublicAnalytics = lazy(() => import('@/components/shared/PublicAnalytics').then(m => ({ default: m.PublicAnalytics })));
 const Footer = lazy(() => import('@/components/sections/Footer').then(m => ({ default: m.Footer })));
 
-const SECTION_IDS = ['about', 'projects', 'experience', 'education', 'contact'];
+const SECTION_IDS = ['skills', 'projects', 'stats', 'experience', 'education', 'contact'];
 
 const SectionDivider = memo(function SectionDivider() {
   return (
@@ -48,7 +48,7 @@ export function HomePage() {
       </div>
       <SectionDivider />
 
-      <div id="analytic" className="scroll-mt-24">
+      <div id="stats" className="scroll-mt-24">
         <Suspense fallback={<div className="mb-10 h-96 animate-pulse bg-surface-container/20 rounded-3xl" />}>
           <PublicAnalytics />
         </Suspense>

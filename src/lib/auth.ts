@@ -121,8 +121,6 @@ export async function validateSession(token?: string): Promise<AuthResult> {
     p_token: t,
   });
 
-
-
   if (error) return { error: error.message };
   if (data?.error) return { error: data.error };
 
@@ -365,12 +363,15 @@ export async function deleteTheme(themeId: string): Promise<{ error?: string }> 
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await (await getSupabase()).rpc('delete_theme', {
-    p_id: themeId,
-    p_user_id: token
-  });
+  const client = await getSupabase();
+  const { data: session } = await client.from('app_sessions').select('user_id').eq('token', token).eq('is_active', true).single();
+  if (!session) return { error: 'Invalid session' };
 
+  // Verify admin
+  const { data: user } = await client.from('app_users').select('is_admin').eq('id', session.user_id).single();
+  if (!user?.is_admin) return { error: 'Admin access required' };
+
+  const { error } = await client.from('themes').delete().eq('id', themeId);
   if (error) return { error: error.message };
-  if (!result) return { error: 'Failed to delete theme or insufficient permissions' };
   return {};
 }

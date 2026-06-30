@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { getSupabase } from '@/lib/supabase';
+import { generateId } from '@/lib/utils';
 import { getDeviceInfo } from '@/lib/webauthn';
 import {
   validateSession,
@@ -13,16 +14,10 @@ import {
 // ─── Persistent Device ID ───────────────────────────────────────────
 function getDeviceId(): string {
   if (typeof window === 'undefined') return 'unknown';
-  let id = localStorage.getItem('resumx_device_id');
+  let id = localStorage.getItem('revy_device_id');
   if (!id) {
-    if (window.crypto?.randomUUID) {
-      id = window.crypto.randomUUID();
-    } else {
-      id = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c: any) =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-      );
-    }
-    localStorage.setItem('resumx_device_id', id);
+    id = generateId();
+    localStorage.setItem('revy_device_id', id);
   }
   return id;
 }

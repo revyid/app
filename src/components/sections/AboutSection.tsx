@@ -4,7 +4,7 @@ import { usePortfolio } from '@/contexts/PortfolioContext';
 export function AboutSection() {
   const { data } = usePortfolio();
   return (
-    <div className="mb-6">
+    <div>
       <SectionLabel text="About" />
       <p className="text-body-sm text-muted-foreground leading-relaxed break-words">
         {data.profile.about}

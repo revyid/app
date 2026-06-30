@@ -80,7 +80,7 @@ export function ProfileHeader() {
                 initial={{ scale: 0, rotate: -180, opacity: 0 }}
                 animate={{ scale: [1, 1.2, 1], rotate: 0, opacity: 1 }}
                 exit={{ scale: 0, rotate: 180, opacity: 0 }}
-                transition={{ duration: 0.5, type: 'spring', bounce: 0.4 }}
+                transition={{ duration: 0.5, type: 'tween', ease: [0.34, 1.56, 0.64, 1] }}
                 className="absolute inset-0"
               >
                 <Heart className="w-5 h-5 text-tertiary fill-tertiary drop-shadow-sm" />

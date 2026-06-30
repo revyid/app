@@ -27,7 +27,7 @@ export function ShortcutHelp({ isOpen, onClose }: ShortcutHelpProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 popup-backdrop"
           />
           
           <motion.div
@@ -35,7 +35,7 @@ export function ShortcutHelp({ isOpen, onClose }: ShortcutHelpProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-            className="relative w-full max-w-md bg-surface/98 backdrop-blur-[60px] rounded-[24px] border border-outline/20 shadow-2xl"
+            className="relative w-full max-w-md bg-surface dark:bg-surface rounded-[24px] border border-outline/20 shadow-2xl"
           >
             <div className="flex items-center justify-between p-6 border-b border-outline/10">
               <div className="flex items-center gap-2">
@@ -47,7 +47,7 @@ export function ShortcutHelp({ isOpen, onClose }: ShortcutHelpProps) {
               </IconButton>
             </div>
             
-            <div className="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div className="p-6 space-y-3 max-h-96 overflow-y-auto" data-lenis-prevent>
               {defaultShortcuts.filter(s => s.id !== 'escape').map((shortcut) => (
                 <div key={shortcut.id} className="flex items-center justify-between">
                   <div>

@@ -159,15 +159,7 @@ export const education: Education[] = [
   },
 ];
 
-export const testimonials: Testimonial[] = [
-  {
-    id: '1',
-    name: 'Unknown',
-    role: 'Unknown',
-    quote: "Unknown",
-    avatar: '',
-  },
-];
+export const testimonials: Testimonial[] = [];
 
 export const fullContacts: Contact[] = [
   { id: '1', type: 'email', label: 'Email', value: 'revy8k@gmail.com', href: 'mailto:revy8k@gmail.com', icon: 'Mail' },

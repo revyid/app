@@ -41,7 +41,7 @@ function ProfileCard({
       transition={SPRING_BOUNCY}
       className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-colors duration-150 text-left overflow-hidden ${
         isActive
-          ? 'bg-secondary-container text-secondary-container-foreground'
+          ? 'bg-secondary-container text-secondary-container-foreground ring-2 ring-primary'
           : 'bg-surface hover:bg-surface-variant text-foreground'
       }`}
     >
@@ -119,7 +119,7 @@ export function ThemeSelector({ className = '' }: ThemeSelectorProps) {
                 onClick={() => setTheme(option.id)}
                 className={`relative flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full transition-colors duration-150 overflow-hidden focus-ring ${
                   isActive
-                    ? 'text-secondary-container-foreground'
+                    ? 'text-secondary-container-foreground ring-2 ring-primary'
                     : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant'
                 }`}
               >

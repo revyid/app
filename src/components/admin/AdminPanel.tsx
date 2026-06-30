@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, ChevronDown, ChevronUp, Loader2, Shield, Plus, Trash2, Palette, BarChart3 } from 'lucide-react';
+import { generateId } from '@/lib/utils';
+import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { upsertPortfolioSection } from '@/lib/auth';
@@ -12,6 +13,7 @@ import { ThemeBuilder } from './ThemeBuilder';
 import { SiteSettings } from './SiteSettings';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { ImageUpload } from '@/components/shared/ImageUpload';
+import { M3ExpressiveIndicator } from '@/components/shared/M3ExpressiveIndicator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -55,7 +57,7 @@ function SaveButton({ saving, saved, onSave }: { saving: boolean; saved: boolean
   return (
     <div className="flex justify-end pt-2">
       <Button size="sm" onClick={onSave} disabled={saving} className="gap-2">
-        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+        {saving ? <M3ExpressiveIndicator className="w-4 h-4" /> : <Save className="w-3.5 h-3.5" />}
         {saved ? 'Saved!' : 'Save'}
       </Button>
     </div>
@@ -292,7 +294,7 @@ function ContactsSectionEditor({ initial, onSaved }: { initial: Contact[]; onSav
           </div>
         </div>
       ))}
-      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), type: 'email', label: '', value: '', href: '', icon: 'Mail' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: generateId(), type: 'email', label: '', value: '', href: '', icon: 'Mail' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Contact
       </Button>
     </Section>
@@ -361,7 +363,7 @@ function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSav
           </Field>
         </div>
       ))}
-      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), title: '', date: '', role: '', category: '', color: '#6750A4', icon: 'Globe', href: '', thumbnail: '', description: '', techStack: [], features: [], status: 'live' as const, repoUrl: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: generateId(), title: '', date: '', role: '', category: '', color: '#6750A4', icon: 'Globe', href: '', thumbnail: '', description: '', techStack: [], features: [], status: 'live' as const, repoUrl: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Project
       </Button>
     </Section>
@@ -396,7 +398,7 @@ function ExperiencesSectionEditor({ initial, onSaved }: { initial: Experience[];
           <Field label="Description"><Textarea value={exp.description} onChange={(v) => update(i, 'description', v)} rows={3} /></Field>
         </div>
       ))}
-      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), title: '', company: '', location: '', dateRange: '', description: '', logoColor: '#6750A4' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: generateId(), title: '', company: '', location: '', dateRange: '', description: '', logoColor: '#6750A4' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Experience
       </Button>
     </Section>
@@ -426,7 +428,7 @@ function EducationSectionEditor({ initial, onSaved }: { initial: Education[]; on
           <Field label="Year"><Input value={edu.year} onChange={(v) => update(i, 'year', v)} /></Field>
         </div>
       ))}
-      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), institution: '', degree: '', year: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: generateId(), institution: '', degree: '', year: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Education
       </Button>
     </Section>
@@ -459,7 +461,7 @@ function TestimonialsSectionEditor({ initial, onSaved }: { initial: Testimonial[
           <Field label="Quote"><Textarea value={t.quote} onChange={(v) => update(i, 'quote', v)} rows={3} /></Field>
         </div>
       ))}
-      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: crypto.randomUUID(), name: '', role: '', quote: '', avatar: '' }])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setItems((arr) => [...arr, { id: generateId(), name: '', role: '', quote: '', avatar: '' }])} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Testimonial
       </Button>
     </Section>
@@ -477,12 +479,10 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { data, refresh } = usePortfolio();
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics'>('portfolio');
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
           {/* Backdrop — identical to CustomLogin */}
           <motion.div
             variants={modalBackdrop}
@@ -490,26 +490,8 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             animate="visible"
             exit="exit"
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          >
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <motion.div
-                animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl"
-              />
-              <motion.div
-                animate={{ x: [0, -80, 0], y: [0, 60, 0], scale: [1, 1.3, 1] }}
-                transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-tertiary/15 rounded-full blur-3xl"
-              />
-              <motion.div
-                animate={{ x: [0, 60, 0], y: [0, 80, 0], scale: [1, 0.8, 1] }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute top-1/2 right-1/3 w-48 h-48 bg-secondary/20 rounded-full blur-3xl"
-              />
-            </div>
-          </motion.div>
+            className="absolute inset-0 popup-backdrop"
+          />
 
           {/* Bottom sheet — identical structure to CustomLogin */}
           <motion.div
@@ -520,8 +502,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
             className="relative w-full max-w-2xl mx-0 sm:mx-4"
             style={{ maxHeight: '92vh' }}
           >
-            <div className="relative rounded-t-[32px] sm:rounded-t-[36px] overflow-hidden" style={{ maxHeight: '92vh' }}>
-              <div className="absolute inset-0 bg-surface/95 dark:bg-surface/95 backdrop-blur-[40px]" />
+            <div className="relative rounded-t-[32px] sm:rounded-t-[36px] overflow-hidden bg-surface dark:bg-surface">
 
               <div className="relative flex flex-col" style={{ maxHeight: '92vh' }}>
                 {/* Drag handle */}
@@ -564,7 +545,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 )}
 
                 {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6" data-lenis-prevent>
                   {!user?.is_admin ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />

@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { itemVariants, viewportOnce } from '@/lib/animations';
-import { SPRING_BOUNCY } from '@/lib/motion-presets';
+import { itemVariants, viewportOnce, SPRING_BOUNCY } from '@/lib/motion-presets';
 
 /**
  * M3 Footer
@@ -34,16 +33,15 @@ export function Footer() {
           </motion.a>
           {' & '}
           <motion.a
-            href="https://vite.dev"
+            href="https://nextjs.org"
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={SPRING_BOUNCY}
-            className="font-medium hover:underline transition-colors"
-            style={{ color: '#646cff' }}
+            className="font-medium hover:underline transition-colors text-primary"
           >
-            Vite
+            Next.js
           </motion.a>
         </p>
         

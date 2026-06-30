@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { getThemes } from '@/lib/auth';
+import { generateId } from '@/lib/utils';
 
 // ==========================================
 // HEX → HSL Utility
@@ -210,62 +211,82 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'system';
     return (localStorage.getItem('theme') as ThemeMode) || 'system';
   });
 
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('light');
 
-  const [profiles, setProfiles] = useState<ThemeColorProfile[]>(() => {
-    try {
-      const stored = localStorage.getItem('themeProfiles');
-      if (stored) {
-        const userProfiles = JSON.parse(stored) as ThemeColorProfile[];
-        return [defaultProfile, ...userProfiles];
-      }
-    } catch { /* ignore */ }
-    return [defaultProfile];
-  });
+  const [profiles, setProfiles] = useState<ThemeColorProfile[]>([defaultProfile]);
 
-  // Load themes from DB
+  // Load themes from DB + realtime subscription
   useEffect(() => {
+    let channel: any;
     const loadThemes = async () => {
       try {
         const themes = await getThemes();
-        const themeProfiles: ThemeColorProfile[] = themes.map(theme => ({
-          id: theme.id || crypto.randomUUID(),
-          name: theme.name,
-          description: theme.description,
-          seed: theme.seed_color,
-          schemes: {
-            light: theme.light_scheme,
-            dark: theme.dark_scheme
-          }
-        }));
-        
-        setProfiles(prev => {
-          const existingIds = new Set(prev.map(p => p.id));
-          const newOnes = themeProfiles.filter(t => !existingIds.has(t.id));
-          if (newOnes.length === 0) return prev;
-          return [...prev, ...newOnes];
+        const themeProfiles: ThemeColorProfile[] = themes.map(theme => {
+          const parseScheme = (s: any): Record<string, string> => {
+            if (typeof s === 'string') { try { return JSON.parse(s); } catch { return {}; } }
+            return s || {};
+          };
+          return {
+            id: theme.id || generateId(),
+            name: theme.name,
+            description: theme.description,
+            seed: theme.seed_color,
+            schemes: {
+              light: parseScheme(theme.light_scheme),
+              dark: parseScheme(theme.dark_scheme),
+            }
+          };
         });
+        
+        setProfiles([defaultProfile, ...themeProfiles]);
+
+        // If selected theme was deleted, fallback to default
+        const currentId = localStorage.getItem('colorProfileId') || defaultProfile.id;
+        const exists = currentId === defaultProfile.id || themeProfiles.some(t => t.id === currentId);
+        if (!exists) {
+          localStorage.setItem('colorProfileId', defaultProfile.id);
+          setColorProfileIdState(defaultProfile.id);
+        }
       } catch (error) {
         console.error('Failed to load themes:', error);
       }
     };
     
     loadThemes();
+
+    // Realtime: refetch when themes table changes
+    import('@/lib/supabase').then(({ getSupabase }) => {
+      getSupabase().then(client => {
+        channel = client.channel('themes-changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'themes' }, () => {
+            loadThemes();
+          })
+          .subscribe();
+      });
+    });
+
+    return () => { if (channel) import('@/lib/supabase').then(({ getSupabase }) => getSupabase().then(c => c.removeChannel(channel))); };
   }, []);
 
   const [colorProfileId, setColorProfileIdState] = useState<string>(() => {
+    if (typeof window === 'undefined') return defaultProfile.id;
     return localStorage.getItem('colorProfileId') || defaultProfile.id;
   });
 
-  const currentProfile = profiles.find(p => p.id === colorProfileId) || defaultProfile;
+  const currentProfile = useMemo(
+    () => profiles.find(p => p.id === colorProfileId) || defaultProfile,
+    [profiles, colorProfileId]
+  );
 
   // Apply theme colors to :root
   const applyColors = useCallback((activeTheme: EffectiveTheme, profile: ThemeColorProfile) => {
     const root = window.document.documentElement;
     const scheme = activeTheme === 'dark' ? profile.schemes.dark : profile.schemes.light;
+    const vars: Record<string, string> = {};
 
     Object.entries(colorMapping).forEach(([jsonKey, cssKeys]) => {
       const hex = scheme[jsonKey as keyof typeof scheme];
@@ -273,9 +294,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const hsl = hexToHsl(hex);
         cssKeys.forEach(cssKey => {
           root.style.setProperty(`--${cssKey}`, hsl);
+          vars[cssKey] = hsl;
         });
       }
     });
+
+    // Cache for next visit (so inline script can apply before React hydrates)
+    try { localStorage.setItem('themeVars', JSON.stringify(vars)); } catch {}
   }, []);
 
   // Main effect: apply theme mode + color profile
@@ -304,12 +329,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return () => mediaQuery.removeEventListener('change', handler);
     }
   }, [theme, currentProfile, applyColors]);
-
-  // Persist user-added profiles to localStorage
-  useEffect(() => {
-    const userOnly = profiles.filter(p => p.id !== 'default');
-    localStorage.setItem('themeProfiles', JSON.stringify(userOnly));
-  }, [profiles]);
 
   const setColorProfile = useCallback((id: string) => {
     setColorProfileIdState(id);

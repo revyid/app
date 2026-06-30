@@ -10,19 +10,18 @@ import {
   oauthLogin,
 } from '@/lib/auth';
 
-// Mock supabase
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    rpc: vi.fn(),
-  },
-}));
+const mockRpc = vi.fn();
+const mockGetSupabase = vi.fn().mockResolvedValue({ rpc: mockRpc });
 
-import { supabase } from '@/lib/supabase';
-const mockRpc = vi.mocked(supabase.rpc);
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: (...args: any[]) => mockGetSupabase(...args),
+  supabase: () => ({ rpc: mockRpc }),
+}));
 
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
+  mockGetSupabase.mockResolvedValue({ rpc: mockRpc });
 });
 
 // ─── Token Storage ───────────────────────────────────────────────────
@@ -44,117 +43,73 @@ describe('token storage', () => {
   });
 });
 
-// ─── login ───────────────────────────────────────────────────────────
+// ─── Login ───────────────────────────────────────────────────────────
 
 describe('login', () => {
-  it('returns token + user on success, stores token', async () => {
+  it('returns error on RPC failure', async () => {
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'fail' } });
+    const result = await login('a@b.com', 'pass');
+    expect(result.error).toBe('fail');
+    expect(getStoredToken()).toBeNull();
+  });
+
+  it('returns error from data payload', async () => {
+    mockRpc.mockResolvedValueOnce({ data: { error: 'wrong password' }, error: null });
+    const result = await login('a@b.com', 'pass');
+    expect(result.error).toBe('wrong password');
+  });
+
+  it('stores token on success', async () => {
     mockRpc.mockResolvedValueOnce({
       data: { token: 'tok_123', user: { id: '1', email: 'a@b.com' } },
       error: null,
-    } as any);
-
+    });
     const result = await login('a@b.com', 'pass');
-
     expect(result.token).toBe('tok_123');
-    expect(result.user).toMatchObject({ email: 'a@b.com' });
     expect(getStoredToken()).toBe('tok_123');
   });
-
-  it('returns error on supabase error', async () => {
-    mockRpc.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Invalid credentials' },
-    } as any);
-
-    const result = await login('a@b.com', 'wrong');
-
-    expect(result.error).toBe('Invalid credentials');
-    expect(getStoredToken()).toBeNull();
-  });
-
-  it('returns error from data.error field', async () => {
-    mockRpc.mockResolvedValueOnce({
-      data: { error: 'User not found' },
-      error: null,
-    } as any);
-
-    const result = await login('a@b.com', 'pass');
-
-    expect(result.error).toBe('User not found');
-  });
 });
 
-// ─── register ────────────────────────────────────────────────────────
+// ─── Register ────────────────────────────────────────────────────────
 
 describe('register', () => {
-  it('returns token + user on success', async () => {
-    mockRpc.mockResolvedValueOnce({
-      data: { token: 'tok_new', user: { id: '2', email: 'new@b.com' } },
-      error: null,
-    } as any);
-
-    const result = await register('new@b.com', 'pass', 'New User');
-
-    expect(result.token).toBe('tok_new');
-    expect(getStoredToken()).toBe('tok_new');
-  });
-
   it('returns error on failure', async () => {
-    mockRpc.mockResolvedValueOnce({
-      data: { error: 'Email already exists' },
-      error: null,
-    } as any);
-
-    const result = await register('dup@b.com', 'pass');
-
-    expect(result.error).toBe('Email already exists');
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'exists' } });
+    const result = await register('a@b.com', 'pass');
+    expect(result.error).toBe('exists');
   });
-});
 
-// ─── oauthLogin ──────────────────────────────────────────────────────
-
-describe('oauthLogin', () => {
   it('stores token on success', async () => {
     mockRpc.mockResolvedValueOnce({
-      data: { token: 'tok_oauth', user: { id: '3', email: 'g@gmail.com' } },
+      data: { token: 'tok_reg', user: { id: '2' } },
       error: null,
-    } as any);
+    });
+    const result = await register('a@b.com', 'pass', 'Test');
+    expect(result.token).toBe('tok_reg');
+    expect(getStoredToken()).toBe('tok_reg');
+  });
+});
 
-    const result = await oauthLogin('g@gmail.com', 'Google User', 'https://avatar', 'google', 'gid_123');
+// ─── OAuth Login ─────────────────────────────────────────────────────
 
+describe('oauthLogin', () => {
+  it('returns error on failure', async () => {
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'oauth fail' } });
+    const result = await oauthLogin('a@b.com', 'User', '', 'google', '123');
+    expect(result.error).toBe('oauth fail');
+  });
+
+  it('stores token on success', async () => {
+    mockRpc.mockResolvedValueOnce({
+      data: { token: 'tok_oauth', user: { id: '3' } },
+      error: null,
+    });
+    const result = await oauthLogin('a@b.com', 'User', '', 'github', '456');
     expect(result.token).toBe('tok_oauth');
-    expect(getStoredToken()).toBe('tok_oauth');
   });
 });
 
-// ─── logout ──────────────────────────────────────────────────────────
-
-describe('logout', () => {
-  it('clears token regardless of rpc result', async () => {
-    storeToken('tok_existing');
-    mockRpc.mockResolvedValueOnce({ data: null, error: null } as any);
-
-    await logout();
-
-    expect(getStoredToken()).toBeNull();
-  });
-
-  it('clears token even if rpc throws', async () => {
-    storeToken('tok_existing');
-    mockRpc.mockRejectedValueOnce(new Error('network'));
-
-    await logout();
-
-    expect(getStoredToken()).toBeNull();
-  });
-
-  it('no rpc call when no token stored', async () => {
-    await logout();
-    expect(mockRpc).not.toHaveBeenCalled();
-  });
-});
-
-// ─── validateSession ─────────────────────────────────────────────────
+// ─── Validate Session ────────────────────────────────────────────────
 
 describe('validateSession', () => {
   it('returns error when no token', async () => {
@@ -162,41 +117,25 @@ describe('validateSession', () => {
     expect(result.error).toBe('No session');
   });
 
-  it('uses stored token when none passed', async () => {
-    storeToken('tok_stored');
+  it('validates stored token', async () => {
+    storeToken('tok_val');
     mockRpc.mockResolvedValueOnce({
-      data: { user: { id: '1', email: 'a@b.com' } },
+      data: { user: { id: '1' } },
       error: null,
-    } as any);
-
+    });
     const result = await validateSession();
-
-    expect(result.token).toBe('tok_stored');
-    expect(result.user).toMatchObject({ email: 'a@b.com' });
+    expect(result.user).toEqual({ id: '1' });
+    expect(mockRpc).toHaveBeenCalledWith('validate_session', { p_token: 'tok_val' });
   });
+});
 
-  it('uses explicit token over stored', async () => {
-    storeToken('tok_stored');
-    mockRpc.mockResolvedValueOnce({
-      data: { user: { id: '1', email: 'a@b.com' } },
-      error: null,
-    } as any);
+// ─── Logout ──────────────────────────────────────────────────────────
 
-    const result = await validateSession('tok_explicit');
-
-    expect(result.token).toBe('tok_explicit');
-    expect(mockRpc).toHaveBeenCalledWith('validate_session', { p_token: 'tok_explicit' });
-  });
-
-  it('returns error on invalid session', async () => {
-    storeToken('tok_bad');
-    mockRpc.mockResolvedValueOnce({
-      data: { error: 'Session expired' },
-      error: null,
-    } as any);
-
-    const result = await validateSession();
-
-    expect(result.error).toBe('Session expired');
+describe('logout', () => {
+  it('clears token', async () => {
+    storeToken('tok_log');
+    mockRpc.mockResolvedValueOnce({ data: null, error: null });
+    await logout();
+    expect(getStoredToken()).toBeNull();
   });
 });

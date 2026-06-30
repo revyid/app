@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { SPRING_SNAPPY } from '@/lib/motion-presets';
 
 interface WelcomePreloaderProps {
@@ -9,17 +9,24 @@ interface WelcomePreloaderProps {
 import { M3ExpressiveIndicator } from './M3ExpressiveIndicator';
 
 export function WelcomePreloader({ onComplete }: WelcomePreloaderProps) {
-  const [isExiting] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Simulate loading time
-    const timer = setTimeout(() => {
-      setTimeout(() => {
-        onComplete();
-      }, 500); 
-    }, 2800); // Longer loading time to simulate booting up
+    // Block scroll during loading
+    document.body.style.overflow = 'hidden';
 
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      setIsExiting(true);
+      setTimeout(() => {
+        document.body.style.overflow = '';
+        onComplete();
+      }, 500);
+    }, 2800);
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = '';
+    };
   }, [onComplete]);
 
   return (
@@ -30,23 +37,7 @@ export function WelcomePreloader({ onComplete }: WelcomePreloaderProps) {
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface"
     >
       <div className="relative z-10 flex flex-col items-center gap-10 w-full max-w-sm px-8">
-        
-
-
-        {/* Expressive Indicator */}
-        <AnimatePresence>
-          {!isExiting && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={SPRING_SNAPPY}
-            >
-              <M3ExpressiveIndicator className="w-14 h-14" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+        <M3ExpressiveIndicator className="w-14 h-14" />
       </div>
     </motion.div>
   );

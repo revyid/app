@@ -25,7 +25,7 @@ create policy "chat_read" on public.chat_messages for select to public using (tr
 drop policy if exists "chat_insert" on public.chat_messages;
 create policy "chat_insert" on public.chat_messages for insert to public with check (true);
 drop policy if exists "chat_delete" on public.chat_messages;
-create policy "chat_delete" on public.chat_messages for delete to public using (true);
+create policy "chat_delete" on public.chat_messages for delete to public using (user_id = current_setting('request.jwt.claims', true)::json->>'sub');
 do $$ begin alter publication supabase_realtime add table chat_messages; exception when others then null; end $$;
 
 -- App users

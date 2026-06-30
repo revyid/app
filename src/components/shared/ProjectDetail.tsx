@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import type { Project } from '@/types';
 import { IconButton } from '@/components/ui/button';
 import { modalBackdrop, bottomSheetContent } from '@/lib/motion-presets';
+import { BottomSheet } from '@/components/shared/BottomSheet';
 
 interface ProjectDetailProps {
   project: Project | null;
@@ -29,7 +30,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
             animate="visible"
             exit="exit"
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+            className="fixed inset-0 popup-backdrop z-[60]"
           />
 
           {/* Corner floating panel — same as ChatPopup */}
@@ -38,11 +39,12 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[460px] sm:max-w-[calc(100vw-2rem)] z-50"
+            className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[460px] sm:max-w-[calc(100vw-2rem)] z-[60]"
           >
+            <BottomSheet onClose={onClose}>
             <div className="bg-surface dark:bg-surface rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 border border-outline/20 overflow-hidden noise-grain max-h-[85vh] flex flex-col">
               {/* Drag handle */}
-              <div className="pt-3 pb-0 flex-shrink-0">
+              <div className="pt-3 pb-0 flex-shrink-0 cursor-grab active:cursor-grabbing">
                 <div className="sheet-handle" />
               </div>
 
@@ -84,7 +86,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
               )}
 
               {/* Scrollable content */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              <div className="flex-1 overflow-y-auto p-5 space-y-4" data-lenis-prevent>
                 {/* Title + status */}
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-xl font-bold text-foreground">{project.title}</h2>
@@ -173,6 +175,7 @@ export function ProjectDetail({ project, onClose }: ProjectDetailProps) {
                 </div>
               )}
             </div>
+            </BottomSheet>
           </motion.div>
         </>
       )}

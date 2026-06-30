@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 /**
  * M3 Expressive Loading Indicator
@@ -17,13 +17,13 @@ const POINTS = 180;
 
 /** Generic polar-coordinate SVG path generator */
 const makePath = (fn: (angle: number) => { x: number; y: number }) => {
-  let path = '';
+  let path = "";
   for (let i = 0; i <= POINTS; i++) {
     const angle = (i / POINTS) * Math.PI * 2;
     const { x, y } = fn(angle);
-    path += `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)} `;
+    path += `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)} `;
   }
-  return path + 'Z';
+  return path + "Z";
 };
 
 /**
@@ -32,8 +32,13 @@ const makePath = (fn: (angle: number) => { x: number; y: number }) => {
  * innerRadius: ratio of inner to outer radius (0-1)
  * rounding: corner rounding amount (0-1)
  */
-const makeStar = (numVertices: number, outerR: number, innerR: number, rounding: number) => {
-  return makePath(a => {
+const makeStar = (
+  numVertices: number,
+  outerR: number,
+  innerR: number,
+  rounding: number,
+) => {
+  return makePath((a) => {
     const totalPoints = numVertices * 2;
     const segAngle = (Math.PI * 2) / totalPoints;
     const idx = a / segAngle;
@@ -45,9 +50,8 @@ const makeStar = (numVertices: number, outerR: number, innerR: number, rounding:
 
     // Smooth interpolation with rounding
     const t = frac;
-    const smoothT = rounding > 0
-      ? t * t * (3 - 2 * t) * (1 - rounding) + t * rounding
-      : t;
+    const smoothT =
+      rounding > 0 ? t * t * (3 - 2 * t) * (1 - rounding) + t * rounding : t;
     const r = r0 + (r1 - r0) * smoothT;
 
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
@@ -67,13 +71,13 @@ const makeCookie = (numVertices: number, innerRadiusFactor: number) =>
 
 const shapes = {
   // Circle — ShapesKt.circle(numVertices=10)
-  circle: makePath(a => ({
+  circle: makePath((a) => ({
     x: 50 + 45 * Math.cos(a),
     y: 50 + 45 * Math.sin(a),
   })),
 
   // Oval — circle scaled to 64% Y, rotated -45°
-  oval: makePath(a => {
+  oval: makePath((a) => {
     const rot = -Math.PI / 4;
     const cx = 45 * Math.cos(a);
     const cy = 45 * 0.64 * Math.sin(a);
@@ -90,7 +94,7 @@ const shapes = {
   cookie9: makeCookie(9, 0.8),
 
   // Cookie 4 — 4-vertex cookie
-  cookie4: makePath(a => {
+  cookie4: makePath((a) => {
     // Android uses custom polygon with specific vertices
     const r = 40 + 10 * Math.cos(4 * a) * (0.5 + 0.5 * Math.cos(8 * a));
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
@@ -106,7 +110,7 @@ const shapes = {
   cookie12: makeCookie(12, 0.8),
 
   // Pentagon — 5-sided polygon with rounding=0.172
-  pentagon: makePath(a => {
+  pentagon: makePath((a) => {
     const n = 5;
     const segAngle = (Math.PI * 2) / n;
     const idx = a / segAngle;
@@ -121,12 +125,16 @@ const shapes = {
 
     // Smooth corners
     const t = frac;
-    const smoothT = t < rounding ? t / rounding * 0.5
-      : t > (1 - rounding) ? 0.5 + (t - (1 - rounding)) / rounding * 0.5
-      : 0.5;
+    const smoothT =
+      t < rounding
+        ? (t / rounding) * 0.5
+        : t > 1 - rounding
+          ? 0.5 + ((t - (1 - rounding)) / rounding) * 0.5
+          : 0.5;
 
     const angle = a0 + (a1 - a0) * smoothT;
-    const radiusAdj = r - 4 * Math.pow(Math.sin(Math.PI * frac), 0.3) * rounding;
+    const radiusAdj =
+      r - 4 * Math.pow(Math.sin(Math.PI * frac), 0.3) * rounding;
 
     return {
       x: 50 + radiusAdj * Math.cos(angle),
@@ -135,13 +143,21 @@ const shapes = {
   }),
 
   // Pill — rounded rectangle shape
-  pill: makePath(a => {
+  pill: makePath((a) => {
     const power = 0.65;
     const stretchX = 45;
     const stretchY = 30;
     return {
-      x: 50 + stretchX * Math.sign(Math.cos(a)) * Math.pow(Math.abs(Math.cos(a)), power),
-      y: 50 + stretchY * Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), power),
+      x:
+        50 +
+        stretchX *
+          Math.sign(Math.cos(a)) *
+          Math.pow(Math.abs(Math.cos(a)), power),
+      y:
+        50 +
+        stretchY *
+          Math.sign(Math.sin(a)) *
+          Math.pow(Math.abs(Math.sin(a)), power),
     };
   }),
 
@@ -152,40 +168,48 @@ const shapes = {
   verySunny: makeStar(8, 48, 34, 0.085),
 
   // Clover 4 — 4-leaf clover shape
-  clover4: makePath(a => {
+  clover4: makePath((a) => {
     const r = 38 + 12 * Math.pow(Math.abs(Math.cos(2 * a)), 0.6);
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
   }),
 
   // Clover 8 — 8-leaf clover
-  clover8: makePath(a => {
+  clover8: makePath((a) => {
     const r = 36 + 10 * Math.pow(Math.abs(Math.cos(4 * a)), 0.5);
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
   }),
 
   // Flower — 8-petal flower shape
-  flower: makePath(a => {
+  flower: makePath((a) => {
     const r = 32 + 14 * Math.pow(Math.abs(Math.cos(4 * a)), 0.7);
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
   }),
 
   // Diamond — 4-sided with pointed top/bottom
-  diamond: makePath(a => {
+  diamond: makePath((a) => {
     const power = 0.55;
     const r = 46;
     return {
-      x: 50 + r * 0.75 * Math.sign(Math.cos(a)) * Math.pow(Math.abs(Math.cos(a)), power),
-      y: 50 + r * Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), power),
+      x:
+        50 +
+        r *
+          0.75 *
+          Math.sign(Math.cos(a)) *
+          Math.pow(Math.abs(Math.cos(a)), power),
+      y:
+        50 +
+        r * Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), power),
     };
   }),
 
   // Triangle — 3-sided with rounding=0.2
-  triangle: makePath(a => {
+  triangle: makePath((a) => {
     const n = 3;
     const rot = -Math.PI / 2;
     const segAngle = (Math.PI * 2) / n;
     const rotatedA = a + rot;
-    const idx = ((rotatedA % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / segAngle;
+    const idx =
+      (((rotatedA % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / segAngle;
     const idxFloor = Math.floor(idx);
     const frac = idx - idxFloor;
     const a0 = idxFloor * segAngle - rot;
@@ -199,20 +223,23 @@ const shapes = {
   }),
 
   // Heart — heart-shaped polar curve
-  heart: makePath(a => {
+  heart: makePath((a) => {
     const t = a - Math.PI / 2;
-    const r = 20 * (1 + 0.6 * Math.abs(Math.cos(t))) *
+    const r =
+      20 *
+      (1 + 0.6 * Math.abs(Math.cos(t))) *
       (1 + 0.2 * Math.cos(2 * t)) *
       (0.9 + 0.1 * Math.cos(4 * t));
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
   }),
 
   // Gem — asymmetric faceted shape (rotated -90°)
-  gem: makePath(a => {
+  gem: makePath((a) => {
     const n = 6;
     const segAngle = (Math.PI * 2) / n;
     const radii = [44, 38, 42, 44, 38, 42];
-    const idx = ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / segAngle;
+    const idx =
+      (((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / segAngle;
     const idxFloor = Math.floor(idx) % n;
     const frac = idx - Math.floor(idx);
     const r0 = radii[idxFloor];
@@ -228,7 +255,7 @@ const shapes = {
   burst: makeStar(12, 48, 30, 0.006),
 
   // Ghostish — rounded ghost silhouette
-  ghostish: makePath(a => {
+  ghostish: makePath((a) => {
     const normA = ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
     if (normA < Math.PI) {
       // Top half — round
@@ -243,31 +270,36 @@ const shapes = {
   }),
 
   // Pixel Circle — stepped/pixelated circle
-  pixelCircle: makePath(a => {
+  pixelCircle: makePath((a) => {
     const step = 8;
     const segAngle = (Math.PI * 2) / step;
-    const idx = Math.floor(((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / segAngle);
+    const idx = Math.floor(
+      (((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / segAngle,
+    );
     const r = [43, 45, 44, 46, 43, 45, 44, 46][idx % step];
     return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
   }),
 
   // Puffy Diamond — 4-sided puffed diamond
-  puffyDiamond: makePath(a => {
+  puffyDiamond: makePath((a) => {
     const r = 42 + 6 * Math.pow(Math.abs(Math.sin(2 * a)), 0.8);
     const power = 0.6;
     return {
-      x: 50 + r * Math.sign(Math.cos(a)) * Math.pow(Math.abs(Math.cos(a)), power),
-      y: 50 + r * Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), power),
+      x:
+        50 +
+        r * Math.sign(Math.cos(a)) * Math.pow(Math.abs(Math.cos(a)), power),
+      y:
+        50 +
+        r * Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), power),
     };
   }),
 
   // Bun — double-bulge bun shape
-  bun: makePath(a => {
+  bun: makePath((a) => {
     const normA = ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
     const baseR = 42;
-    const bulge = normA < Math.PI
-      ? 5 * Math.sin(normA)
-      : 5 * Math.sin(normA) * 0.7;
+    const bulge =
+      normA < Math.PI ? 5 * Math.sin(normA) : 5 * Math.sin(normA) * 0.7;
     return {
       x: 50 + (baseR + bulge) * Math.cos(a),
       y: 50 + (baseR + bulge) * Math.sin(a),
@@ -298,11 +330,17 @@ const ROTATION_PER_SHAPE = 140; // 50° constant + 90° spring
 
 interface M3ExpressiveIndicatorProps {
   className?: string;
+  duration?: number;
 }
 
-export function M3ExpressiveIndicator({ className = 'w-16 h-16' }: M3ExpressiveIndicatorProps) {
-  // Build rotation keyframes: 0, 140, 280, ... for each shape transition
-  const rotations = Array.from({ length: TOTAL_SHAPES + 1 }, (_, i) => i * ROTATION_PER_SHAPE);
+export function M3ExpressiveIndicator({
+  className = "w-16 h-16",
+  duration = TOTAL_DURATION_S,
+}: M3ExpressiveIndicatorProps) {
+  const rotations = Array.from(
+    { length: TOTAL_SHAPES + 1 },
+    (_, i) => i * ROTATION_PER_SHAPE,
+  );
 
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
@@ -311,16 +349,17 @@ export function M3ExpressiveIndicator({ className = 'w-16 h-16' }: M3ExpressiveI
         className="w-full h-full fill-primary drop-shadow-sm"
         animate={{ rotate: rotations }}
         transition={{
-          duration: TOTAL_DURATION_S,
-          ease: 'linear',
+          duration: duration,
+          ease: "linear",
           repeat: Infinity,
         }}
       >
         <motion.path
+          d={morphSequence[0]}
           animate={{ d: morphSequence }}
           transition={{
-            duration: TOTAL_DURATION_S,
-            ease: [0.2, 0.0, 0, 1.0], // M3 emphasized decelerate
+            duration: duration,
+            ease: [0.2, 0.0, 0, 1.0],
             repeat: Infinity,
           }}
         />

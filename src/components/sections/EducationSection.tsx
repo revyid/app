@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { EducationCard } from '@/components/shared/EducationCard';
 import { usePortfolio } from '@/contexts/PortfolioContext';
-import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
+import { containerVariants, itemVariants, viewportOnce } from '@/lib/motion-presets';
 
 export function EducationSection() {
   const { data } = usePortfolio();

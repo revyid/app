@@ -12,6 +12,10 @@ node_modules
 .pnp
 .pnp.js
 
+# Next.js
+.next/
+out/
+
 # Build output
 dist
 dist-ssr
@@ -26,6 +30,7 @@ coverage
 .env.development.local
 .env.test.local
 .env.production.local
+.env*.local
 
 # Editor directories and files
 .vscode/*
@@ -39,7 +44,8 @@ coverage
 *.sw?
 .trash
 
-# Vite specific
-eslint.config.js
+# Vercel
 .vercel
-.env*.local
+
+.vercel
+.env*

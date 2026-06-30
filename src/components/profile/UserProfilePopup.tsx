@@ -17,6 +17,7 @@ import {
   MonitorSmartphone,
 } from 'lucide-react';
 import { bottomSheetContent, modalBackdrop, SPRING_DEFAULT } from '@/lib/motion-presets';
+import { BottomSheet } from '@/components/shared/BottomSheet';
 import { ThemeSelector } from '@/components/shared/ThemeSelector';
 import { Button, IconButton } from '@/components/ui/button';
 import { MorphIcon } from '@/components/ui/morph-icon';
@@ -71,9 +72,12 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
     // -------- Realtime Subscriptions --------
     let passkeysChannel: any;
     let devicesChannel: any;
+    let cancelled = false;
+
     getSupabase().then(client => {
-      passkeysChannel = client
-        .channel('profile-passkeys-rt')
+      if (cancelled) return;
+
+      passkeysChannel = client.channel(`profile-passkeys-rt-${user.id}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'user_passkeys', filter: `user_id=eq.${user.id}` },
@@ -83,18 +87,19 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
         )
         .subscribe();
 
-      devicesChannel = client
-        .channel('profile-devices-rt')
+      devicesChannel = client.channel(`profile-devices-rt-${user.id}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'app_sessions', filter: `user_id=eq.${user.id}` },
           () => {
-          getUserSessions().then(s => setDbDevices(s || []));
-        }
-      )
-      .subscribe();
+            getUserSessions().then(s => setDbDevices(s || []));
+          }
+        )
+        .subscribe();
+    });
 
     return () => {
+      cancelled = true;
       if (passkeysChannel) getSupabase().then(c => c.removeChannel(passkeysChannel));
       if (devicesChannel) getSupabase().then(c => c.removeChannel(devicesChannel));
     };
@@ -208,7 +213,7 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
             animate="visible"
             exit="exit"
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+            className="fixed inset-0 popup-backdrop z-[60]"
           />
 
           {/* Bottom Sheet Profile */}
@@ -217,13 +222,11 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-50"
+            className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60]"
           >
-            <div className="bg-surface dark:bg-surface border border-outline/20 rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 overflow-hidden noise-grain max-h-[85vh] overflow-y-auto scrollbar-thin">
-              {/* Drag Handle */}
-              <div className="pt-3 pb-0">
-                <div className="sheet-handle" />
-              </div>
+            <BottomSheet onClose={onClose}>
+              <div className="bg-surface dark:bg-surface border border-outline/20 rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 overflow-hidden noise-grain max-h-[85vh] overflow-y-auto scrollbar-thin" data-lenis-prevent>
+                <div className="pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing"><div className="sheet-handle" /></div>
 
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-outline/20">
@@ -544,7 +547,8 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
                   Sign Out
                 </Button>
               </div>
-            </div>
+              </div>
+            </BottomSheet>
           </motion.div>
         </>
       )}

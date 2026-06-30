@@ -1,6 +1,5 @@
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
-import { ContactSection } from '@/components/sections/ContactSection';
 import { LanguagesSection } from '@/components/sections/LanguagesSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
 
@@ -10,29 +9,24 @@ interface SidebarProps {
 
 export function Sidebar(_props: SidebarProps) {
   return (
-    <aside className="w-full lg:w-80 lg:sticky lg:top-8 lg:self-start h-fit">
-      <ProfileHeader />
-
-      {/* Desktop card wrapper */}
+    <aside className="w-full lg:w-72 lg:sticky lg:top-8 h-[fit-content]">
       <div className="hidden lg:block">
-        <div className="squircle-card bg-surface border border-outline/20 p-6 space-y-2 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-surface-variant scrollbar-track-transparent hover:scrollbar-thumb-outline/30">
+        <div className="squircle-card bg-surface border border-outline/20 p-5 space-y-3 noise-grain shadow-fluid max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden scrollbar-thin">
+          <ProfileHeader />
+          <div className="h-px bg-outline/20" />
           <AboutSection />
-          <ContactSection />
+          <div className="h-px bg-outline/20" />
           <LanguagesSection />
-          <div className="pt-4 pb-2">
-            <SocialLinks />
-          </div>
+          <div className="h-px bg-outline/20" />
+          <SocialLinks />
         </div>
       </div>
 
-      {/* Mobile: sections flow naturally */}
-      <div className="lg:hidden space-y-6">
+      <div className="lg:hidden space-y-4">
+        <ProfileHeader />
         <AboutSection />
         <LanguagesSection />
-        <ContactSection />
-        <div className="pt-2">
-          <SocialLinks />
-        </div>
+        <SocialLinks />
       </div>
     </aside>
   );

@@ -159,7 +159,7 @@ export async function registerPasskey(
     const createOptionsJSON: PublicKeyCredentialCreationOptionsJSON = {
       challenge,
       rp: {
-        name: 'ResumX App',
+        name: 'Revy Portfolio',
         id: window.location.hostname,
       },
       user: {

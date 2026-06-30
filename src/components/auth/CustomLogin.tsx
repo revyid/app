@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { generateId } from '@/lib/utils';
 import {
   Mail,
   Lock,
@@ -25,11 +26,11 @@ import { Button, IconButton } from '@/components/ui/button';
 import {
   bottomSheetContent,
   modalBackdrop,
-  shakeError,
   SPRING_BOUNCY,
   SPRING_SNAPPY,
   SPRING_DEFAULT,
 } from '@/lib/motion-presets';
+import { BottomSheet } from '@/components/shared/BottomSheet';
 
 const FloatingInput = ({
   id,
@@ -123,7 +124,6 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   const [error, setError] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const controls = useAnimation();
   const formRef = useRef<HTMLFormElement>(null);
   const { refreshUser, user } = useAuth();
 
@@ -155,7 +155,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
       if (result.error) {
         setError(result.error);
-        controls.start('shake');
+        // shake removed;
       } else {
         await refreshUser();
         onClose();
@@ -163,7 +163,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       }
     } catch (err: any) {
       setError(err.message || 'Login failed');
-      controls.start('shake');
+      // shake removed;
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +183,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
       if (result.error) {
         setError(result.error);
-        controls.start('shake');
+        // shake removed;
       } else {
         await refreshUser();
         // Account created + logged in → offer passkey setup
@@ -196,7 +196,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       }
     } catch (err: any) {
       setError(err.message || 'Sign up failed');
-      controls.start('shake');
+      // shake removed;
     } finally {
       setIsLoading(false);
     }
@@ -210,16 +210,16 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     setError('');
 
     try {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
       if (!clientId) {
         setError('Google Client ID not configured.');
-        controls.start('shake');
+        // shake removed;
         setIsLoading(false);
         return;
       }
 
       const redirectUri = `${window.location.origin}/auth/google/callback`;
-      const state = crypto.randomUUID();
+      const state = generateId();
       localStorage.setItem('google_oauth_state', state);
 
       const params = new URLSearchParams({
@@ -228,7 +228,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         response_type: 'token id_token',
         scope: 'openid email profile',
         state,
-        nonce: crypto.randomUUID(),
+        nonce: generateId(),
       });
 
       const popup = window.open(
@@ -239,7 +239,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
       if (!popup) {
         setError('Popup blocked. Please allow popups for this site.');
-        controls.start('shake');
+        // shake removed;
         setIsLoading(false);
         return;
       }
@@ -269,7 +269,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
           if (result.error) {
             setError(result.error);
-            controls.start('shake');
+            // shake removed;
           } else {
             await refreshUser();
             onClose();
@@ -278,7 +278,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         } catch (err: any) {
           console.error('[GoogleLogin] OAuth flow error');
           setError('Google login failed');
-          controls.start('shake');
+          // shake removed;
         } finally {
           setIsLoading(false);
         }
@@ -296,10 +296,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       }, 500);
     } catch (err: any) {
       setError(err.message || 'Google login failed');
-      controls.start('shake');
+      // shake removed;
       setIsLoading(false);
     }
-  }, [controls, refreshUser, onClose]);
+  }, [refreshUser, onClose]);
 
   // ==========================================
   // GITHUB OAUTH (Popup window)
@@ -309,10 +309,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     setError('');
 
     try {
-      const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+      const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
       if (!clientId) {
         setError('GitHub Client ID not configured in .env');
-        controls.start('shake');
+        // shake removed;
         setIsLoading(false);
         return;
       }
@@ -320,7 +320,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       // Open GitHub OAuth popup
       const redirectUri = window.location.origin + '/auth/github/callback';
       const scope = 'read:user user:email';
-      const state = crypto.randomUUID();
+      const state = generateId();
       localStorage.setItem('github_oauth_state', state);
 
       const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
@@ -347,7 +347,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
           if (result.error) {
             setError(result.error);
-            controls.start('shake');
+            // shake removed;
           } else {
             await refreshUser();
             onClose();
@@ -366,10 +366,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
       }, 120000);
     } catch (err: any) {
       setError(err.message || 'GitHub login failed');
-      controls.start('shake');
+      // shake removed;
       setIsLoading(false);
     }
-  }, [controls, refreshUser, onClose, isLoading]);
+  }, [refreshUser, onClose, isLoading]);
 
   // ==========================================
   // SOCIAL LOGIN DISPATCHER
@@ -389,7 +389,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
     try {
       if (!isWebAuthnSupported()) {
         setError('Passkeys require a secure context (HTTPS) or localhost.');
-        controls.start('shake');
+        // shake removed;
         return;
       }
 
@@ -405,7 +405,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
         if (loginResult.error) {
           setError(loginResult.error);
-          controls.start('shake');
+          // shake removed;
         } else {
           await refreshUser();
           onClose();
@@ -414,12 +414,12 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         }
       } else {
         setError(result.error || 'Passkey authentication failed.');
-        controls.start('shake');
+        // shake removed;
       }
     } catch (err: any) {
       console.error('Passkey error:', err);
       setError('Passkey authentication failed.');
-      controls.start('shake');
+      // shake removed;
     } finally {
       setIsLoading(false);
     }
@@ -450,12 +450,12 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
         resetForm();
       } else {
         setError(result.error || 'Failed to register passkey.');
-        controls.start('shake');
+        // shake removed;
       }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Registration failed.');
-      controls.start('shake');
+      // shake removed;
     } finally {
       setIsLoading(false);
     }
@@ -471,7 +471,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   // ==========================================
 
   const renderLoginForm = () => (
-    <form ref={formRef} onSubmit={handleLogin} className="space-y-5">
+    <form ref={formRef} onSubmit={handleLogin} className="space-y-3">
       <FloatingInput
         id="login-email"
         type="email"
@@ -678,53 +678,32 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-[60]">
           <motion.div
             variants={modalBackdrop}
             initial="hidden"
             animate="visible"
             exit="exit"
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          >
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <motion.div
-                animate={{ x: [0, 100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl"
-              />
-              <motion.div
-                animate={{ x: [0, -80, 0], y: [0, 60, 0], scale: [1, 1.3, 1] }}
-                transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-tertiary/15 rounded-full blur-3xl"
-              />
-              <motion.div
-                animate={{ x: [0, 60, 0], y: [0, 80, 0], scale: [1, 0.8, 1] }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute top-1/2 right-1/3 w-48 h-48 bg-secondary/20 rounded-full blur-3xl"
-              />
-            </div>
-          </motion.div>
+            className="absolute inset-0 popup-backdrop"
+          />
 
           {/* Bottom Sheet Login Panel */}
-          <motion.div
-            variants={bottomSheetContent}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="relative w-full max-w-lg mx-0 sm:mx-4"
-            style={{ maxHeight: '92vh' }}
-          >
-            <div className="relative rounded-t-[32px] sm:rounded-t-[36px] overflow-hidden overflow-y-auto" style={{ maxHeight: '92vh' }}>
-              <div className="absolute inset-0 bg-surface/95 dark:bg-surface/95 backdrop-blur-[40px]" />
+          <div className="absolute bottom-0 left-0 right-0 sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] pointer-events-none">
+            <motion.div
+              variants={bottomSheetContent}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="pointer-events-auto"
+            >
+            <BottomSheet onClose={onClose}>
+            <div className="relative rounded-t-[28px] sm:rounded-[28px] overflow-hidden max-h-[85vh] overflow-y-auto scrollbar-thin bg-surface dark:bg-surface" data-lenis-prevent>
+              <div className="pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing"><div className="sheet-handle" /></div>
 
               <motion.div
-                animate={controls}
-                variants={shakeError}
-                className="relative p-8 pb-10"
+                className="relative px-5 pb-6"
               >
-                {/* Drag handle */}
-                <div className="sheet-handle" />
 
                 <motion.button
                   onClick={onClose}
@@ -737,23 +716,23 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                 </motion.button>
 
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-5">
                   <motion.div
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={SPRING_BOUNCY}
-                    className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-container mb-4"
+                    className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-container mb-3"
                   >
                     {mode === 'passkey-setup' ? (
-                      <Fingerprint className="w-8 h-8 text-primary" />
+                      <Fingerprint className="w-6 h-6 text-primary" />
                     ) : (
-                      <Sparkles className="w-8 h-8 text-primary" />
+                      <Sparkles className="w-6 h-6 text-primary" />
                     )}
                   </motion.div>
-                  <h2 className="text-headline-md font-medium text-foreground mb-2">
+                  <h2 className="text-headline-sm font-medium text-foreground mb-1">
                     {header.title}
                   </h2>
-                  <p className="text-body-md text-muted-foreground">
+                  <p className="text-body-sm text-muted-foreground">
                     {header.subtitle}
                   </p>
                 </div>
@@ -761,13 +740,13 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                 {/* Social Login — only in login/signup */}
                 {(mode === 'login' || mode === 'signup') && (
                   <>
-                    <div className="flex gap-3 mb-6">
+                    <div className="flex gap-3 mb-4">
                       <motion.button
-                        whileHover={{ scale: 1.02, y: -3 }}
+                        whileHover={{ scale: 1.02, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                         transition={SPRING_BOUNCY}
                         onClick={() => handleSocialLogin('google')}
-                        className="flex-1 flex items-center justify-center gap-2 py-3.5 squircle-md bg-surface-variant border border-outline/50 hover:border-primary/50 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 squircle-md bg-surface-variant border border-outline/50 hover:border-primary/50 transition-colors"
                       >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -778,18 +757,18 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                         <span className="text-body-sm font-medium">Google</span>
                       </motion.button>
                       <motion.button
-                        whileHover={{ scale: 1.02, y: -3 }}
+                        whileHover={{ scale: 1.02, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                         transition={SPRING_BOUNCY}
                         onClick={() => handleSocialLogin('github')}
-                        className="flex-1 flex items-center justify-center gap-2 py-3.5 squircle-md bg-surface-variant border border-outline/50 hover:border-primary/50 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 squircle-md bg-surface-variant border border-outline/50 hover:border-primary/50 transition-colors"
                       >
                         <Github className="w-5 h-5" />
                         <span className="text-body-sm font-medium">GitHub</span>
                       </motion.button>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-6">
+                    <div className="flex items-center gap-3 mb-4">
                       <div className="flex-1 h-px bg-outline/50" />
                       <span className="text-label-sm text-muted-foreground">
                         or continue with email
@@ -849,7 +828,7 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
 
                 {/* Footer — toggle between login/signup */}
                 {(mode === 'login' || mode === 'signup') && (
-                  <div className="mt-6 text-center">
+                  <div className="mt-4 text-center">
                     <p className="text-body-sm text-muted-foreground">
                       {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                       <motion.button
@@ -870,10 +849,10 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                     type="button"
                     disabled={isLoading}
                     onClick={handleBiometricLogin}
-                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                     transition={SPRING_BOUNCY}
-                    className="mt-4 w-full flex items-center justify-center gap-2 py-3 squircle-md border border-outline/50 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 squircle-md border border-outline/50 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
                   >
                     <Fingerprint className="w-5 h-5 text-primary" />
                     <span className="text-body-sm font-medium">Use Passkey / Biometric</span>
@@ -881,7 +860,9 @@ export function CustomLogin({ isOpen, onClose }: CustomLoginProps) {
                 )}
               </motion.div>
             </div>
+            </BottomSheet>
           </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>

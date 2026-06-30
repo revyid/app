@@ -22,38 +22,31 @@ export function MorphIcon({ type, isActive, className = "w-5 h-5", strokeWidth =
   const getPaths = () => {
     switch (type) {
       case 'menu-close':
-        // Menu (Hamburger) to Close (X)
         return (
           <>
             <motion.path
-              d="M4 6h16"
-              initial={false}
+              d={isActive ? "M6 6l12 12" : "M4 6h16"}
               animate={{ d: isActive ? "M6 6l12 12" : "M4 6h16", opacity: 1 }}
               transition={SPRING_BOUNCY}
             />
             <motion.path
               d="M4 12h16"
-              initial={false}
               animate={{ opacity: isActive ? 0 : 1 }}
               transition={SPRING_BOUNCY}
             />
             <motion.path
-              d="M4 18h16"
-              initial={false}
+              d={isActive ? "M6 18L18 6" : "M4 18h16"}
               animate={{ d: isActive ? "M6 18L18 6" : "M4 18h16", opacity: 1 }}
               transition={SPRING_BOUNCY}
             />
           </>
         );
       case 'plus-minus':
-        // Plus to Minus
         return (
           <>
             <motion.path
               d="M12 5v14"
-              initial={false}
               animate={{
-                // Rotate to flat line and spin 90deg, or scale down Y
                 rotate: isActive ? 90 : 0,
                 scaleY: isActive ? 0 : 1,
                 opacity: isActive ? 0 : 1
@@ -63,8 +56,7 @@ export function MorphIcon({ type, isActive, className = "w-5 h-5", strokeWidth =
             />
             <motion.path
               d="M5 12h14"
-              initial={false}
-              animate={{ rotate: isActive ? 180 : 0 }} // Smooth continuous rotation spin
+              animate={{ rotate: isActive ? 180 : 0 }}
               style={{ transformOrigin: "center" }}
               transition={SPRING_BOUNCY}
             />
@@ -72,12 +64,9 @@ export function MorphIcon({ type, isActive, className = "w-5 h-5", strokeWidth =
         );
       case 'chevron-down-up':
       default:
-        // Chevron Down: M6 9l6 6 6-6
-        // Chevron Up: M18 15l-6-6-6 6
         return (
           <motion.path
-            d="M6 9l6 6 6-6"
-            initial={false}
+            d={isActive ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"}
             animate={{ d: isActive ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6" }}
             transition={SPRING_BOUNCY}
           />

@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { ProjectCard } from '@/components/shared/ProjectCard';
 import { ProjectDetail } from '@/components/shared/ProjectDetail';
 import { usePortfolio } from '@/contexts/PortfolioContext';
-import { containerVariants, itemVariants, viewportOnce } from '@/lib/animations';
+import { containerVariants, itemVariants, viewportOnce } from '@/lib/motion-presets';
 import { IconButton } from '@/components/ui/button';
 import type { Project } from '@/types';
 
@@ -13,6 +13,7 @@ export function ProjectsSection() {
   const { data } = usePortfolio();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const didDrag = useRef(false);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -43,7 +44,13 @@ export function ProjectsSection() {
 
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none"
+          onPointerDown={() => { didDrag.current = false; }}
+          onPointerMove={(e) => {
+            if (!scrollRef.current) return;
+            if (Math.abs(e.movementX) > 3) didDrag.current = true;
+            scrollRef.current.scrollLeft -= e.movementX;
+          }}
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none touch-pan-x"
         >
           {data.projects.map((project) => (
             <motion.div
@@ -51,7 +58,9 @@ export function ProjectsSection() {
               variants={itemVariants}
               className="w-[85vw] max-w-[320px] sm:w-[350px] sm:max-w-none md:w-[400px] flex-shrink-0 snap-center sm:snap-start"
             >
-              <ProjectCard project={project} onClick={() => setSelectedProject(project)} />
+              <ProjectCard project={project} onClick={() => {
+                if (!didDrag.current) setSelectedProject(project);
+              }} />
             </motion.div>
           ))}
         </div>
