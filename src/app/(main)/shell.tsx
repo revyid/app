@@ -146,6 +146,21 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
+          {/* Mobile footer */}
+          <div className="lg:hidden text-center space-y-2 py-8 pb-24 border-t border-outline/20 mx-4">
+            <p className="text-label-sm text-muted-foreground/50">
+              Built with React & Next.js
+            </p>
+            <div className="flex items-center justify-center gap-3 text-label-sm">
+              <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
+              <span className="w-1 h-1 rounded-full bg-outline/40" />
+              <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
+            </div>
+            <p className="text-label-sm text-muted-foreground/50">
+              © 2026 revyid
+            </p>
+          </div>
+
           <FloatingNavbar
             onChatClick={() => setIsChatOpen(true)}
             onCommandPaletteClick={() => setIsCommandPaletteOpen(true)}

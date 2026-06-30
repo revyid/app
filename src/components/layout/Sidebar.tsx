@@ -11,9 +11,9 @@ export function Sidebar(_props: SidebarProps) {
   return (
     <>
       {/* Desktop — fixed left, centered vertically */}
-      <aside className="hidden lg:block fixed left-0 top-0 h-screen w-72 z-10">
-        <div className="h-full flex items-center pl-4 pr-2">
-          <div className="squircle-card bg-surface border border-outline/20 p-5 space-y-3 noise-grain shadow-fluid w-full max-h-[80vh] overflow-y-auto overflow-x-hidden scrollbar-thin">
+      <aside className="hidden lg:block fixed left-8 top-0 h-screen w-72 z-10">
+        <div className="h-full flex items-center">
+          <div className="squircle-card bg-surface border border-outline/20 p-5 space-y-3 noise-grain shadow-fluid w-full max-h-[85vh] overflow-y-auto overflow-x-hidden scrollbar-thin">
             <ProfileHeader />
             <div className="h-px bg-outline/20" />
             <AboutSection />
@@ -22,7 +22,7 @@ export function Sidebar(_props: SidebarProps) {
             <div className="h-px bg-outline/20" />
             <SocialLinks />
             <div className="h-px bg-outline/20" />
-            <div className="text-center space-y-1.5 pt-1">
+            <div className="text-center space-y-2 pt-2 pb-1">
               <p className="text-label-sm text-muted-foreground/50">
                 Built with React & Next.js
               </p>
@@ -40,27 +40,14 @@ export function Sidebar(_props: SidebarProps) {
       </aside>
 
       {/* Spacer for desktop so content doesn't overlap */}
-      <div className="hidden lg:block w-72 flex-shrink-0" />
+      <div className="hidden lg:block w-80 flex-shrink-0" />
 
-      {/* Mobile */}
+      {/* Mobile — profile only, footer at bottom of page */}
       <div className="lg:hidden space-y-4">
         <ProfileHeader />
         <AboutSection />
         <LanguagesSection />
         <SocialLinks />
-        <div className="text-center space-y-1.5 pt-2 border-t border-outline/20">
-          <p className="text-label-sm text-muted-foreground/50">
-            Built with React & Next.js
-          </p>
-          <div className="flex items-center justify-center gap-3 text-label-sm">
-            <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
-            <span className="w-1 h-1 rounded-full bg-outline/40" />
-            <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
-          </div>
-          <p className="text-label-sm text-muted-foreground/50">
-            © 2026 revyid
-          </p>
-        </div>
       </div>
     </>
   );
