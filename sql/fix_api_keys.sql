@@ -91,3 +91,37 @@ declare v_key api_keys%rowtype; begin
   if not found then return json_build_object('valid', false); end if;
   return json_build_object('valid', true, 'user_id', v_key.user_id, 'rate_limit', v_key.rate_limit);
 end; $$;
+
+-- 5. Admin User Management RPCs
+create or replace function public.admin_list_users(p_token text) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; v_result json; begin
+  v_admin := public.verify_admin_internal(p_token);
+  select json_agg(row_to_json(u)) into v_result from (
+    select id, email, display_name, avatar_url, provider, is_admin, created_at
+    from public.app_users order by created_at desc
+  ) u;
+  return json_build_object('users', coalesce(v_result, '[]'::json));
+end; $$;
+
+create or replace function public.admin_toggle_user_admin(p_user_id uuid, p_is_admin boolean) returns void
+language plpgsql security definer as $$
+begin
+  update public.app_users set is_admin = p_is_admin where id = p_user_id;
+end; $$;
+
+create or replace function public.admin_set_user_rate_limit(p_user_id uuid, p_rate_limit int) returns void
+language plpgsql security definer as $$
+begin
+  update public.api_keys set rate_limit = p_rate_limit where user_id = p_user_id;
+end; $$;
+
+create or replace function public.admin_get_user_keys(p_user_id uuid) returns json
+language plpgsql security definer as $$
+declare v_result json; begin
+  select json_agg(row_to_json(k)) into v_result from (
+    select id, name, key_prefix, rate_limit, is_active, created_at, last_used_at
+    from public.api_keys where user_id = p_user_id order by created_at desc
+  ) k;
+  return json_build_object('keys', coalesce(v_result, '[]'::json));
+end; $$;

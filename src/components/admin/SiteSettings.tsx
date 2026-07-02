@@ -6,7 +6,6 @@ import { ImageUpload } from '@/components/shared/ImageUpload';
 
 export function SiteSettings() {
   const [siteLogo, setSiteLogo] = useState('');
-  const [profileHeader, setProfileHeader] = useState('');
   const [githubUsername, setGithubUsername] = useState('');
   const [unlimitedApiKeys, setUnlimitedApiKeys] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -15,12 +14,10 @@ export function SiteSettings() {
   useEffect(() => {
     Promise.all([
       getSiteSetting('site_logo'),
-      getSiteSetting('profile_header'),
       getSiteSetting('github_username'),
       getSiteSetting('unlimited_api_keys'),
-    ]).then(([logo, header, github, unlimited]) => {
+    ]).then(([logo, github, unlimited]) => {
       setSiteLogo(logo || '');
-      setProfileHeader(header || '');
       setGithubUsername(github || '');
       setUnlimitedApiKeys(unlimited === 'true');
     }).catch(console.error).finally(() => setLoading(false));
@@ -31,7 +28,6 @@ export function SiteSettings() {
     try {
       await Promise.all([
         updateSiteSetting('site_logo', siteLogo),
-        updateSiteSetting('profile_header', profileHeader),
         updateSiteSetting('github_username', githubUsername),
         updateSiteSetting('unlimited_api_keys', unlimitedApiKeys ? 'true' : 'false'),
       ]);
@@ -57,12 +53,6 @@ export function SiteSettings() {
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-on-surface-variant">Profile Header / Banner</label>
-        <ImageUpload value={profileHeader} onChange={setProfileHeader} previewClass="aspect-[4/1]" placeholder="Header image URL" />
-        <p className="text-xs text-on-surface-variant">Recommended: 1920×400px</p>
-      </div>
-
-      <div className="space-y-1">
         <label className="text-xs font-medium text-on-surface-variant">Site Icon</label>
         <ImageUpload value={siteLogo} onChange={setSiteLogo} previewClass="aspect-square max-w-[48px]" placeholder="Icon URL" />
       </div>
@@ -82,7 +72,7 @@ export function SiteSettings() {
       <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface-container">
         <div>
           <p className="text-sm font-medium text-on-surface">Unlimited API Keys</p>
-          <p className="text-xs text-on-surface-variant">Bypass rate limits for all API key users</p>
+          <p className="text-xs text-on-surface-variant">Bypass rate limits for all users</p>
         </div>
         <button
           onClick={() => setUnlimitedApiKeys(!unlimitedApiKeys)}

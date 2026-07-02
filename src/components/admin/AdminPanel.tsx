@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateId } from '@/lib/utils';
-import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3 } from 'lucide-react';
+import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { upsertPortfolioSection } from '@/lib/auth';
@@ -12,6 +12,7 @@ import type { ProfileData, IntroData } from '@/contexts/PortfolioContext';
 import { ThemeBuilder } from './ThemeBuilder';
 import { SiteSettings } from './SiteSettings';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { UserManagement } from './UserManagement';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { M3ExpressiveIndicator } from '@/components/shared/M3ExpressiveIndicator';
 
@@ -477,7 +478,7 @@ interface AdminPanelProps {
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
   const { data, refresh } = usePortfolio();
-  const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics'>('portfolio');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
   return (
     <AnimatePresence>
@@ -524,7 +525,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                 {/* Tabs */}
                 {user?.is_admin && (
                   <div className="flex border-b border-outline/10 flex-shrink-0">
-                    {(['portfolio', 'themes', 'analytics', 'settings'] as const).map((tab) => (
+                    {(['portfolio', 'themes', 'analytics', 'users', 'settings'] as const).map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -537,6 +538,10 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         ) : tab === 'analytics' ? (
                           <span className="flex items-center justify-center gap-1">
                             <BarChart3 className="w-3.5 h-3.5" />Analytics
+                          </span>
+                        ) : tab === 'users' ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <Users className="w-3.5 h-3.5" />Users
                           </span>
                         ) : tab === 'portfolio' ? 'Portfolio' : 'Settings'}
                       </button>
@@ -569,6 +574,8 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
                     <AnalyticsDashboard />
+                  ) : activeTab === 'users' ? (
+                    <UserManagement />
                   ) : (
                     <SiteSettings />
                   )}
