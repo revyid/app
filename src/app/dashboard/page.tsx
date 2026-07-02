@@ -21,9 +21,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 glass border-b border-outline/20">
+      <header className="border-b border-outline/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <span className="text-title-sm font-semibold text-foreground">Dashboard</span>
+          {user?.is_admin && (
+            <button onClick={() => document.dispatchEvent(new CustomEvent('open-admin'))} className="flex items-center gap-1.5 text-body-sm text-primary hover:text-primary/80 transition-colors">
+              <Shield className="w-4 h-4" /> Admin
+            </button>
+          )}
         </div>
       </header>
 

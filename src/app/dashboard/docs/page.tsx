@@ -84,7 +84,7 @@ export default function DocsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 glass border-b border-outline/20">
+      <header className="border-b border-outline/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <span className="text-title-sm font-semibold text-foreground">API Documentation</span>
         </div>

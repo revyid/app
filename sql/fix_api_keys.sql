@@ -82,3 +82,12 @@ $$;
 create or replace function public.cleanup_old_api_usage() returns void language sql security definer as $$
   delete from public.api_key_usage where used_at < now() - interval '24 hours';
 $$;
+
+-- 4. Validate API key (bypasses RLS via SECURITY DEFINER)
+create or replace function public.validate_api_key(p_key_hash text)
+returns json language plpgsql security definer as $$
+declare v_key api_keys%rowtype; begin
+  select * into v_key from public.api_keys where key_hash = p_key_hash and is_active = true;
+  if not found then return json_build_object('valid', false); end if;
+  return json_build_object('valid', true, 'user_id', v_key.user_id, 'rate_limit', v_key.rate_limit);
+end; $$;

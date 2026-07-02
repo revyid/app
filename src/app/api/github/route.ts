@@ -5,7 +5,6 @@ export const runtime = 'edge';
 
 const CACHE_TTL = 300;
 const ALLOWED_ORIGINS = ['https://revy.my.id', 'https://dev.revy.my.id'];
-const RATE_LIMIT = 100; // per hour per user
 
 function getCorsHeaders(origin: string) {
   return {
@@ -48,40 +47,6 @@ export async function GET(request: Request) {
   const path = url.searchParams.get('path');
   const apiKey = request.headers.get('x-api-key');
 
-  // Require API key
-  if (!apiKey) {
-    return NextResponse.json({ error: 'API key required. Get one at https://revy.my.id/dashboard/api-keys' }, { status: 401, headers: cors });
-  }
-
-  // Validate API key
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  const keyHash = await sha256Hex(apiKey);
-  const { data: keyData } = await supabase.from('api_keys').select('id, user_id, rate_limit, is_active').eq('key_hash', keyHash).single();
-
-  if (!keyData || !keyData.is_active) {
-    return NextResponse.json({ error: 'Invalid or inactive API key' }, { status: 401, headers: cors });
-  }
-
-  // Check rate limit (per user, 100 req/hour) — skip if unlimited is enabled
-  const { data: unlimitedSetting } = await supabase.from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
-  const isUnlimited = unlimitedSetting?.value === 'true';
-
-  if (!isUnlimited) {
-    const { count } = await supabase.from('api_key_usage').select('id', { count: 'exact', head: true }).eq('user_id', keyData.user_id).gte('used_at', new Date(Date.now() - 3600000).toISOString());
-
-    if ((count || 0) >= RATE_LIMIT) {
-      return NextResponse.json({ error: 'Rate limit exceeded. Max 100 requests per hour.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
-    }
-  }
-
-  // Record usage
-  await supabase.from('api_key_usage').insert({ user_id: keyData.user_id });
-  await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyData.id);
-
   // Validate path
   if (!path) {
     return NextResponse.json({ error: 'Missing ?path= parameter' }, { status: 400, headers: cors });
@@ -90,6 +55,38 @@ export async function GET(request: Request) {
   const allowed = /^(users\/[\w.-]+(?:\/repos|\/events)?|repos\/[\w.-]+\/[\w.-]+)(\?.*)?$/;
   if (!allowed.test(path)) {
     return NextResponse.json({ error: 'Path not allowed' }, { status: 403, headers: cors });
+  }
+
+  // If API key provided, validate it via RPC (bypasses RLS)
+  if (apiKey) {
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const keyHash = await sha256Hex(apiKey);
+      const { data: keyResult } = await supabase.rpc('validate_api_key', { p_key_hash: keyHash });
+
+      if (keyResult?.valid) {
+        // Check unlimited setting
+        const { data: unlimitedSetting } = await supabase.from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
+        const isUnlimited = unlimitedSetting?.value === 'true';
+
+        if (!isUnlimited) {
+          const { count } = await supabase.from('api_key_usage').select('id', { count: 'exact', head: true }).eq('user_id', keyResult.user_id).gte('used_at', new Date(Date.now() - 3600000).toISOString());
+
+          if ((count || 0) >= (keyResult.rate_limit || 100)) {
+            return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
+          }
+        }
+
+        // Record usage
+        await supabase.from('api_key_usage').insert({ user_id: keyResult.user_id });
+        await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
+      }
+    } catch {
+      // If key validation fails, continue without tracking (public access)
+    }
   }
 
   try {
