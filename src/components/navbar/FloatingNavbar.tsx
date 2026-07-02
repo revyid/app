@@ -187,7 +187,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
 
           <div className="w-px h-6 sm:h-8 bg-outline/40 mx-0.5 sm:mx-1" />
 
-          <IconButton onClick={onCommandPaletteClick} variant="ghost" aria-label="Command Palette (Ctrl+K)" className="flex-shrink-0">
+          <IconButton onClick={onCommandPaletteClick} variant="ghost" aria-label="Command Palette (Ctrl+K)" className="hidden sm:flex flex-shrink-0">
             <Command className="w-5 h-5" />
           </IconButton>
 
