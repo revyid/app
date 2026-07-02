@@ -12,11 +12,18 @@ export default function DashboardPage() {
   const [keyCount, setKeyCount] = useState(0);
   const [usageToday, setUsageToday] = useState(0);
 
-  useEffect(() => {
+  const refreshData = () => {
     if (user) {
       listApiKeys().then(keys => setKeyCount(keys.length));
       getApiUsageToday().then(count => setUsageToday(count));
     }
+  };
+
+  useEffect(() => {
+    refreshData();
+    const handleVisible = () => { if (document.visibilityState === 'visible') refreshData(); };
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => document.removeEventListener('visibilitychange', handleVisible);
   }, [user]);
 
   return (

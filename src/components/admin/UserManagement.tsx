@@ -44,7 +44,7 @@ export function UserManagement() {
     try {
       const token = getStoredToken();
       if (!token) return;
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       const data = await rpcCall(supabase, 'admin_list_users', { p_token: token });
       if (data?.users) setUsers(data.users);
     } catch (e) {
@@ -58,7 +58,7 @@ export function UserManagement() {
 
   const fetchUserKeys = async (userId: string) => {
     try {
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       const data = await rpcCall(supabase, 'admin_get_user_keys', { p_user_id: userId });
       if (data?.keys) setUserKeys(prev => ({ ...prev, [userId]: data.keys }));
     } catch (e) {
@@ -68,7 +68,7 @@ export function UserManagement() {
 
   const toggleAdmin = async (userId: string, current: boolean) => {
     try {
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       await rpcCall(supabase, 'admin_toggle_user_admin', { p_user_id: userId, p_is_admin: !current });
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_admin: !current } : u));
     } catch (e) {
@@ -78,7 +78,7 @@ export function UserManagement() {
 
   const updateUserRateLimit = async (userId: string, limit: number) => {
     try {
-      const supabase = getSupabase();
+      const supabase = await getSupabase();
       await rpcCall(supabase, 'admin_set_user_rate_limit', { p_user_id: userId, p_rate_limit: limit });
       setUserKeys(prev => ({
         ...prev,
