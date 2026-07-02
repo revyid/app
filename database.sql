@@ -37,6 +37,7 @@ create table if not exists public.app_users (
   avatar_url text,
   provider text not null default 'email',
   provider_id text,
+  linked_providers jsonb not null default '[]'::jsonb,
   is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -213,7 +214,7 @@ declare v_user app_users%rowtype; v_token text; begin
   insert into app_sessions (user_id, expires_at) values (v_user.id, now() + interval '30 days') returning token into v_token;
   return json_build_object('token', v_token, 'user', json_build_object('id', v_user.id, 'email', v_user.email,
     'display_name', v_user.display_name, 'avatar_url', v_user.avatar_url, 'provider', v_user.provider,
-    'is_admin', v_user.is_admin, 'created_at', v_user.created_at));
+    'linked_providers', coalesce(v_user.linked_providers, '[]'::jsonb), 'is_admin', v_user.is_admin, 'created_at', v_user.created_at));
 end; $$;
 
 create or replace function public.login_user(p_email text, p_password text)
@@ -228,7 +229,7 @@ declare v_user app_users%rowtype; v_token text; begin
   insert into app_sessions (user_id, expires_at) values (v_user.id, now() + interval '30 days') returning token into v_token;
   return json_build_object('token', v_token, 'user', json_build_object('id', v_user.id, 'email', v_user.email,
     'display_name', v_user.display_name, 'avatar_url', v_user.avatar_url, 'provider', v_user.provider,
-    'is_admin', v_user.is_admin, 'created_at', v_user.created_at));
+    'linked_providers', coalesce(v_user.linked_providers, '[]'::jsonb), 'is_admin', v_user.is_admin, 'created_at', v_user.created_at));
 end; $$;
 
 create or replace function public.validate_session(p_token text) returns json
@@ -240,7 +241,7 @@ declare v_session app_sessions%rowtype; v_user app_users%rowtype; begin
   select * into v_user from app_users where id = v_session.user_id;
   return json_build_object('user', json_build_object('id', v_user.id, 'email', v_user.email,
     'display_name', v_user.display_name, 'avatar_url', v_user.avatar_url, 'provider', v_user.provider,
-    'is_admin', v_user.is_admin, 'created_at', v_user.created_at),
+    'linked_providers', coalesce(v_user.linked_providers, '[]'::jsonb), 'is_admin', v_user.is_admin, 'created_at', v_user.created_at),
     'session_id', v_session.id, 'device_id', v_session.device_id);
 end; $$;
 
@@ -249,20 +250,27 @@ begin update app_sessions set is_active = false where token = p_token; return js
 
 create or replace function public.oauth_login(p_email text, p_display_name text, p_avatar_url text, p_provider text, p_provider_id text)
 returns json language plpgsql security definer as $$
-declare v_user app_users%rowtype; v_token text; begin
+declare v_user app_users%rowtype; v_token text; v_linked jsonb; v_already_linked boolean; begin
   select * into v_user from app_users where email = lower(trim(p_email));
   if not found then
-    insert into app_users (email, display_name, avatar_url, provider, provider_id)
-    values (lower(trim(p_email)), p_display_name, p_avatar_url, p_provider, p_provider_id) returning * into v_user;
+    insert into app_users (email, display_name, avatar_url, provider, provider_id, linked_providers)
+    values (lower(trim(p_email)), p_display_name, p_avatar_url, p_provider, p_provider_id,
+      jsonb_build_array(jsonb_build_object('provider', p_provider, 'provider_id', p_provider_id)))
+    returning * into v_user;
   else
+    v_linked := coalesce(v_linked, v_user.linked_providers, '[]'::jsonb);
+    select exists(select 1 from jsonb_array_elements(v_linked) e where e->>'provider' = p_provider) into v_already_linked;
+    if not v_already_linked then
+      v_linked := v_linked || jsonb_build_object('provider', p_provider, 'provider_id', p_provider_id);
+    end if;
     update app_users set display_name = coalesce(p_display_name, display_name),
-      avatar_url = coalesce(p_avatar_url, avatar_url), provider_id = coalesce(p_provider_id, provider_id)
+      avatar_url = coalesce(p_avatar_url, avatar_url), linked_providers = v_linked
     where id = v_user.id returning * into v_user;
   end if;
   insert into app_sessions (user_id, expires_at) values (v_user.id, now() + interval '30 days') returning token into v_token;
   return json_build_object('token', v_token, 'user', json_build_object('id', v_user.id, 'email', v_user.email,
     'display_name', v_user.display_name, 'avatar_url', v_user.avatar_url, 'provider', v_user.provider,
-    'is_admin', v_user.is_admin, 'created_at', v_user.created_at));
+    'linked_providers', v_user.linked_providers, 'is_admin', v_user.is_admin, 'created_at', v_user.created_at));
 end; $$;
 
 create or replace function public.register_passkey(p_token text, p_credential_id text, p_public_key text, p_device_name text, p_browser_name text)

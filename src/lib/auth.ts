@@ -13,6 +13,7 @@ export interface AppUser {
   display_name: string | null;
   avatar_url: string | null;
   provider: string;
+  linked_providers: Array<{ provider: string; provider_id: string }>;
   is_admin: boolean;
   created_at: string;
 }
