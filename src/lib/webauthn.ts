@@ -248,7 +248,36 @@ export async function registerPasskey(
       return { success: false, error: 'Security error — this feature requires HTTPS.' };
     }
     if (err.name === 'InvalidStateError') {
-      return { success: false, error: 'A passkey is already registered for this account on this device.' };
+      // Credential exists in browser but might not be in database (e.g. after DB reset)
+      // Clear local credentials and retry
+      saveCredentials([]);
+      try {
+        const cred = await navigator.credentials.create({ publicKey: options });
+        if (!cred) return { success: false, error: 'Passkey creation was cancelled.' };
+
+        const credentialIdStr = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+        const publicKeyJWK = cred.response.getPublicKey();
+        const publicKeyStr = btoa(JSON.stringify(publicKeyJWK));
+
+        const token = getStoredToken();
+        if (!token) return { success: false, error: 'Not authenticated. Please log in first.' };
+
+        const { browser_name, device_name } = getDeviceInfo();
+        const { data: retryData } = await (await getSupabase()).rpc('register_passkey', {
+          p_token: token,
+          p_credential_id: credentialIdStr,
+          p_public_key: publicKeyStr,
+          p_device_name: device_name,
+          p_browser_name: browser_name,
+        });
+
+        if (retryData?.error) return { success: false, error: retryData.error };
+
+        saveCredentials([{ id: credentialIdStr, userId: userId, ...storedCred }]);
+        return { success: true };
+      } catch (retryErr: any) {
+        return { success: false, error: retryErr.message || 'Failed to create passkey.' };
+      }
     }
     return { success: false, error: err.message || 'Failed to create passkey.' };
   }
