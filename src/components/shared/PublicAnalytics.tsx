@@ -522,6 +522,13 @@ export function PublicAnalytics() {
     return () => observer.disconnect();
   }, []);
 
+  const refreshStats = useRef(async () => {
+    try {
+      const { data } = await (await getSupabase()).rpc('get_public_analytics');
+      if (data) setAnalytics(data);
+    } catch (e) { console.error('Stats refresh error:', e); }
+  });
+
   useEffect(() => {
     if (!inView || fetched.current) return;
     fetched.current = true;
@@ -536,6 +543,21 @@ export function PublicAnalytics() {
       setGithubUsername(username || '');
     }).catch((e) => { console.error('Stats fetch error:', e); setError(e.message); })
       .finally(() => setLoading(false));
+  }, [inView]);
+
+  // Realtime: subscribe to new analytics events and refresh stats
+  useEffect(() => {
+    if (!inView) return;
+    let channel: any;
+    getSupabase().then(client => {
+      channel = client
+        .channel('analytics-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'analytics_events' }, () => {
+          refreshStats.current();
+        })
+        .subscribe();
+    });
+    return () => { if (channel) getSupabase().then(client => client.removeChannel(channel)); };
   }, [inView]);
 
   if (!inView) return (
