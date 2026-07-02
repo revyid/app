@@ -376,3 +376,39 @@ export async function deleteTheme(themeId: string): Promise<{ error?: string }> 
   if (error) return { error: error.message };
   return {};
 }
+
+// ─── API Keys ─────────────────────────────────────────────────────
+
+export async function createApiKey(name: string): Promise<{ key?: string; id?: string; key_prefix?: string; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+  const { data, error } = await (await getSupabase()).rpc('create_api_key', { p_token: token, p_name: name });
+  if (error) return { error: error.message };
+  if (data?.error) return { error: data.error };
+  return { key: data.key, id: data.id, key_prefix: data.key_prefix };
+}
+
+export async function listApiKeys(): Promise<Array<{ id: string; name: string; key_prefix: string; rate_limit: number; is_active: boolean; created_at: string; last_used_at: string }>> {
+  const token = getStoredToken();
+  if (!token) return [];
+  const { data, error } = await (await getSupabase()).rpc('list_api_keys', { p_token: token });
+  if (error || data?.error) return [];
+  return data?.keys || [];
+}
+
+export async function deleteApiKey(keyId: string): Promise<boolean> {
+  const token = getStoredToken();
+  if (!token) return false;
+  const { data, error } = await (await getSupabase()).rpc('delete_api_key', { p_token: token, p_key_id: keyId });
+  if (error) return false;
+  return data === true;
+}
+
+export async function getApiUsageToday(): Promise<number> {
+  const token = getStoredToken();
+  if (!token) return 0;
+  const user = await validateSession(token);
+  if (!user.user) return 0;
+  const { data } = await (await getSupabase()).rpc('get_api_usage_today', { p_user_id: user.user.id });
+  return data || 0;
+}

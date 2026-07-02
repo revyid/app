@@ -13,6 +13,9 @@ import {
   Mail,
   Layers,
   BarChart3,
+  LayoutDashboard,
+  Key,
+  FileText,
 } from 'lucide-react';
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,12 +34,18 @@ interface FloatingNavbarProps {
   unreadCount?: number;
 }
 
-const navItems = [
+const portfolioNavItems = [
   { id: 'home', icon: Home, label: 'Home' },
   { id: 'projects', icon: Layers, label: 'Works', sections: ['projects', 'testimonials'] },
   { id: 'stats', icon: BarChart3, label: 'Stats', sections: ['stats'] },
   { id: 'experience', icon: Briefcase, label: 'Resume', sections: ['experience', 'education'] },
   { id: 'contact', icon: Mail, label: 'Contact' },
+];
+
+const dashboardNavItems = [
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
+  { id: 'api-keys', icon: Key, label: 'API Keys', href: '/dashboard/api-keys' },
+  { id: 'docs', icon: FileText, label: 'Docs', href: '/dashboard/docs' },
 ];
 
 export const FloatingNavbar = memo(function FloatingNavbar({
@@ -65,15 +74,29 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   const { activeSection } = useActiveSection();
   const lenis = useLenis();
 
+  const isDashboard = pathname.startsWith('/dashboard');
+  const navItems = isDashboard ? dashboardNavItems : portfolioNavItems;
+
   const activeItem = useMemo(() => {
+    if (isDashboard) {
+      if (pathname === '/dashboard') return 'dashboard';
+      if (pathname === '/dashboard/api-keys') return 'api-keys';
+      if (pathname === '/dashboard/docs') return 'docs';
+      return 'dashboard';
+    }
     if (!activeSection) return 'home';
-    const item = navItems.find(item =>
+    const item = portfolioNavItems.find(item =>
       item.id === activeSection || (item.sections && item.sections.includes(activeSection))
     );
     return item ? item.id : 'home';
-  }, [activeSection]);
+  }, [activeSection, pathname, isDashboard]);
 
   const scrollToSection = useCallback((sectionId: string) => {
+    if (isDashboard) {
+      const item = dashboardNavItems.find(i => i.id === sectionId);
+      if (item) router.push(item.href);
+      return;
+    }
     if (pathname !== '/') {
       router.push('/');
       setTimeout(() => {
@@ -92,7 +115,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
       const el = document.getElementById(sectionId);
       if (el) lenis?.scrollTo(el, { duration: 1.2, offset: 80 });
     }
-  }, [pathname, router, lenis]);
+  }, [pathname, router, lenis, isDashboard]);
 
   const [isHovered, setIsHovered] = useState(false);
   const [isSectionHovered, setIsSectionHovered] = useState(false);
@@ -155,7 +178,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {isHome ? (
+                  {isHome && !isDashboard ? (
                     siteLogo ? (
                       <motion.img layoutId="logo" src={siteLogo} alt="Site Logo" className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20" />
                     ) : (
@@ -187,6 +210,20 @@ export const FloatingNavbar = memo(function FloatingNavbar({
 
           <div className="w-px h-6 sm:h-8 bg-outline/40 mx-0.5 sm:mx-1" />
 
+          {/* Dashboard icon — only when logged in and not on dashboard */}
+          {isSignedIn && !isDashboard && (
+            <IconButton onClick={() => router.push('/dashboard')} variant="ghost" aria-label="Dashboard" className="flex-shrink-0">
+              <LayoutDashboard className="w-5 h-5" />
+            </IconButton>
+          )}
+
+          {/* Back to Home — only on dashboard */}
+          {isDashboard && (
+            <IconButton onClick={() => router.push('/')} variant="ghost" aria-label="Back to Home" className="flex-shrink-0">
+              <Home className="w-5 h-5" />
+            </IconButton>
+          )}
+
           <IconButton onClick={onCommandPaletteClick} variant="ghost" aria-label="Command Palette (Ctrl+K)" className="hidden sm:flex flex-shrink-0">
             <Command className="w-5 h-5" />
           </IconButton>
@@ -208,7 +245,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
             </AnimatePresence>
           </div>
 
-          {/* Theme Toggle — with circle animation */}
+          {/* Theme Toggle */}
           <button
             ref={ref}
             onClick={toggleSwitchTheme}
@@ -261,6 +298,6 @@ export const FloatingNavbar = memo(function FloatingNavbar({
           </button>
         </motion.div>
       </div>
-    </motion.nav>
+    </motion.nav  >
   );
 });
