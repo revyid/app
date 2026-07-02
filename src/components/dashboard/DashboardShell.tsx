@@ -25,7 +25,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
         <FloatingNavbar
           onChatClick={() => setIsChatOpen(true)}
-          onCommandPaletteClick={() => {}}
           onProfileClick={() => setIsProfileOpen(true)}
         />
 

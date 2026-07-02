@@ -6,8 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
   Briefcase,
-  MessageCircle,
-  Command,
   User,
   Shield,
   Mail,
@@ -16,22 +14,20 @@ import {
   LayoutDashboard,
   Key,
   FileText,
+  MessageCircle,
 } from 'lucide-react';
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { floatingNavbar, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_DEFAULT } from '@/lib/motion-presets';
-import { IconButton } from '@/components/ui/button';
+import { floatingNavbar, SPRING_SNAPPY, SPRING_DEFAULT } from '@/lib/motion-presets';
 import { getSiteSetting } from '@/lib/auth';
 import { useActiveSection } from '@/contexts/ActiveSectionContext';
 import { useLenis } from '@/components/shared/SmoothScroll';
 
 interface FloatingNavbarProps {
   onChatClick: () => void;
-  onCommandPaletteClick: () => void;
   onProfileClick: () => void;
   onAdminClick?: () => void;
-  unreadCount?: number;
 }
 
 const portfolioNavItems = [
@@ -50,10 +46,8 @@ const dashboardNavItems = [
 
 export const FloatingNavbar = memo(function FloatingNavbar({
   onChatClick,
-  onCommandPaletteClick,
   onProfileClick,
   onAdminClick,
-  unreadCount = 0
 }: FloatingNavbarProps) {
   const { effectiveTheme, toggleTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -62,9 +56,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
-    onDarkModeChange: () => {
-      toggleTheme();
-    },
+    onDarkModeChange: () => { toggleTheme(); },
   });
 
   const { user } = useAuth();
@@ -85,9 +77,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
       return 'dashboard';
     }
     if (!activeSection) return 'home';
-    const item = portfolioNavItems.find(item =>
-      item.id === activeSection || (item.sections && item.sections.includes(activeSection))
-    );
+    const item = portfolioNavItems.find(i => i.id === activeSection || (i.sections && i.sections.includes(activeSection)));
     return item ? item.id : 'home';
   }, [activeSection, pathname, isDashboard]);
 
@@ -100,42 +90,27 @@ export const FloatingNavbar = memo(function FloatingNavbar({
     if (pathname !== '/') {
       router.push('/');
       setTimeout(() => {
-        if (sectionId === 'home') {
-          lenis?.scrollTo(0, { duration: 1.2 });
-        } else {
-          const el = document.getElementById(sectionId);
-          if (el) lenis?.scrollTo(el, { duration: 1.2, offset: 80 });
-        }
+        if (sectionId === 'home') lenis?.scrollTo(0, { duration: 1.2 });
+        else { const el = document.getElementById(sectionId); if (el) lenis?.scrollTo(el, { duration: 1.2, offset: 80 }); }
       }, 100);
       return;
     }
-    if (sectionId === 'home') {
-      lenis?.scrollTo(0, { duration: 1.2 });
-    } else {
-      const el = document.getElementById(sectionId);
-      if (el) lenis?.scrollTo(el, { duration: 1.2, offset: 80 });
-    }
+    if (sectionId === 'home') lenis?.scrollTo(0, { duration: 1.2 });
+    else { const el = document.getElementById(sectionId); if (el) lenis?.scrollTo(el, { duration: 1.2, offset: 80 }); }
   }, [pathname, router, lenis, isDashboard]);
 
-  const [isHovered, setIsHovered] = useState(false);
   const [isSectionHovered, setIsSectionHovered] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [siteLogo, setSiteLogo] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 100);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    const h = () => setIsScrolled(window.scrollY > 100);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
   }, []);
 
   useEffect(() => {
-    const loadLogo = async () => {
-      try {
-        const logo = await getSiteSetting('site_logo');
-        if (logo) setSiteLogo(logo);
-      } catch { /* ignore */ }
-    };
-    loadLogo();
+    getSiteSetting('site_logo').then(l => { if (l) setSiteLogo(l); }).catch(() => {});
   }, []);
 
   return (
@@ -144,16 +119,15 @@ export const FloatingNavbar = memo(function FloatingNavbar({
       initial="hidden"
       animate="visible"
       className="fixed bottom-6 left-4 right-4 lg:left-auto lg:right-8 z-40 flex justify-center lg:justify-end w-auto pointer-events-none"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="pointer-events-auto px-1 py-2">
         <motion.div
           layout
           animate={{ scale: isScrolled && !isSectionHovered ? 0.92 : 1 }}
           transition={SPRING_SNAPPY}
-          className="flex items-center justify-center gap-0.5 sm:gap-2 px-1.5 py-1.5 sm:px-2.5 sm:py-2.5 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
+          className="flex items-center justify-center gap-0.5 sm:gap-1.5 px-1.5 py-1.5 sm:px-2 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
         >
+          {/* Nav Items */}
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem === item.id;
@@ -172,15 +146,13 @@ export const FloatingNavbar = memo(function FloatingNavbar({
                 <button
                   onClick={() => scrollToSection(item.id)}
                   aria-label={item.label}
-                  className={`relative flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base ${
-                    isActive
-                      ? 'text-secondary-container-foreground font-medium'
-                      : 'text-muted-foreground hover:text-foreground'
+                  className={`relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base ${
+                    isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {isHome && !isDashboard ? (
                     siteLogo ? (
-                      <motion.img layoutId="logo" src={siteLogo} alt="Site Logo" className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20" />
+                      <motion.img layoutId="logo" src={siteLogo} alt="Logo" className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20" />
                     ) : (
                       <motion.div layoutId="logo" className="w-5 h-5 bg-surface text-foreground font-bold rounded-md flex items-center justify-center text-[10px] shadow-sm ring-1 ring-border/20">R</motion.div>
                     )
@@ -208,51 +180,47 @@ export const FloatingNavbar = memo(function FloatingNavbar({
             );
           })}
 
-          <div className="w-px h-6 sm:h-8 bg-outline/40 mx-0.5 sm:mx-1" />
+          {/* Divider */}
+          <div className="w-px h-6 sm:h-7 bg-outline/30 mx-0.5" />
 
-          {/* Dashboard icon — only when logged in and not on dashboard */}
-          {isSignedIn && !isDashboard && (
-            <IconButton onClick={() => router.push('/dashboard')} variant="ghost" aria-label="Dashboard" className="flex-shrink-0">
-              <LayoutDashboard className="w-5 h-5" />
-            </IconButton>
+          {/* Utility Buttons */}
+          {/* Dashboard / Portfolio switch */}
+          <button
+            onClick={() => router.push(isDashboard ? '/' : '/dashboard')}
+            aria-label={isDashboard ? 'Portfolio' : 'Dashboard'}
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            {isDashboard ? <Home className="w-[18px] h-[18px]" /> : <LayoutDashboard className="w-[18px] h-[18px]" />}
+          </button>
+
+          {/* Admin — only for admins */}
+          {user?.is_admin && onAdminClick && (
+            <button
+              onClick={onAdminClick}
+              aria-label="Admin Panel"
+              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-primary"
+            >
+              <Shield className="w-[18px] h-[18px]" />
+            </button>
           )}
 
-          {/* Back to Home — only on dashboard */}
-          {isDashboard && (
-            <IconButton onClick={() => router.push('/')} variant="ghost" aria-label="Back to Home" className="flex-shrink-0">
-              <Home className="w-5 h-5" />
-            </IconButton>
-          )}
-
-          <IconButton onClick={onCommandPaletteClick} variant="ghost" aria-label="Command Palette (Ctrl+K)" className="hidden sm:flex flex-shrink-0">
-            <Command className="w-5 h-5" />
-          </IconButton>
-
-          <div className="relative flex-shrink-0">
-            <IconButton onClick={onChatClick} variant="ghost" aria-label="Open Chat" className="relative">
-              <MessageCircle className="w-5 h-5" />
-            </IconButton>
-            <AnimatePresence>
-              {unreadCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                  transition={SPRING_BOUNCY}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-tertiary text-tertiary-foreground text-label-sm font-bold rounded-full flex items-center justify-center pointer-events-none z-10"
-                >
-                  {unreadCount}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Chat */}
+          <button
+            onClick={onChatClick}
+            aria-label="Chat"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <MessageCircle className="w-[18px] h-[18px]" />
+          </button>
 
           {/* Theme Toggle */}
           <button
             ref={ref}
             onClick={toggleSwitchTheme}
             aria-label="Toggle theme"
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {isDark ? (
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               ) : (
@@ -271,16 +239,11 @@ export const FloatingNavbar = memo(function FloatingNavbar({
             </svg>
           </button>
 
-          {user?.is_admin && onAdminClick && (
-            <IconButton onClick={onAdminClick} variant="ghost" aria-label="Admin Panel" className="flex-shrink-0 text-primary">
-              <Shield className="w-5 h-5" />
-            </IconButton>
-          )}
-
+          {/* Profile Avatar */}
           <button
             onClick={onProfileClick}
-            aria-label="Open Profile"
-            className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-1"
+            aria-label="Profile"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-0.5"
           >
             {isSignedIn && user ? (
               <img
@@ -292,12 +255,12 @@ export const FloatingNavbar = memo(function FloatingNavbar({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-surface-variant text-muted-foreground">
-                <User className="w-5 h-5" />
+                <User className="w-[18px] h-[18px]" />
               </div>
             )}
           </button>
         </motion.div>
       </div>
-    </motion.nav  >
+    </motion.nav>
   );
 });

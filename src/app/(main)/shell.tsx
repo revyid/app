@@ -161,7 +161,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 
           <FloatingNavbar
             onChatClick={() => setIsChatOpen(true)}
-            onCommandPaletteClick={() => setIsCommandPaletteOpen(true)}
             onProfileClick={() => setIsProfileOpen(true)}
             onAdminClick={() => setIsAdminOpen(true)}
           />
