@@ -66,11 +66,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid or inactive API key' }, { status: 401, headers: cors });
   }
 
-  // Check rate limit (per user, 100 req/hour)
-  const { count } = await supabase.from('api_key_usage').select('id', { count: 'exact', head: true }).eq('user_id', keyData.user_id).gte('used_at', new Date(Date.now() - 3600000).toISOString());
+  // Check rate limit (per user, 100 req/hour) — skip if unlimited is enabled
+  const { data: unlimitedSetting } = await supabase.from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
+  const isUnlimited = unlimitedSetting?.value === 'true';
 
-  if ((count || 0) >= RATE_LIMIT) {
-    return NextResponse.json({ error: 'Rate limit exceeded. Max 100 requests per hour.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
+  if (!isUnlimited) {
+    const { count } = await supabase.from('api_key_usage').select('id', { count: 'exact', head: true }).eq('user_id', keyData.user_id).gte('used_at', new Date(Date.now() - 3600000).toISOString());
+
+    if ((count || 0) >= RATE_LIMIT) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Max 100 requests per hour.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
+    }
   }
 
   // Record usage
