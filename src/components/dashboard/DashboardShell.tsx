@@ -1,0 +1,40 @@
+'use client';
+
+import { useState } from 'react';
+import { ActiveSectionProvider } from '@/contexts/ActiveSectionContext';
+import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
+import { ChatPopup } from '@/components/chat/ChatPopup';
+import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
+import { CustomLogin } from '@/components/auth/CustomLogin';
+import { createPortal } from 'react-dom';
+
+function PopupPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === 'undefined') return null;
+  return createPortal(children, document.body);
+}
+
+export function DashboardShell({ children }: { children: React.ReactNode }) {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  return (
+    <ActiveSectionProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        {children}
+
+        <FloatingNavbar
+          onChatClick={() => setIsChatOpen(true)}
+          onCommandPaletteClick={() => {}}
+          onProfileClick={() => setIsProfileOpen(true)}
+        />
+
+        <PopupPortal>
+          <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => setIsLoginOpen(true)} />
+          <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => { setIsProfileOpen(false); setIsLoginOpen(true); }} />
+          <CustomLogin isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+        </PopupPortal>
+      </div>
+    </ActiveSectionProvider>
+  );
+}
