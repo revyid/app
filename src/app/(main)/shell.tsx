@@ -138,12 +138,10 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">
               Skip to content
             </a>
-            <div className="flex flex-col gap-8 lg:gap-14">
-              <Sidebar ready={!isLoading} />
-              <main id="main-content">
-                <ErrorBoundary>{children}</ErrorBoundary>
-              </main>
-            </div>
+            <Sidebar ready={!isLoading} />
+            <main id="main-content">
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </main>
           </div>
 
           {/* Mobile footer */}
