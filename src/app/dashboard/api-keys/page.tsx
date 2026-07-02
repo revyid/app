@@ -111,9 +111,7 @@ export default function ApiKeysPage() {
               exit={{ opacity: 0, y: -10 }}
               className="p-4 bg-success/10 border border-success/30 rounded-2xl"
             >
-              <p className="text-body-sm text-success font-medium mb-2">
-                API key created! Copy and save it — it won&apos;t be shown again after you leave this page.
-              </p>
+              <p className="text-body-sm text-success font-medium mb-2">New API key created!</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 p-3 bg-surface rounded-xl text-body-sm font-mono text-foreground break-all select-all">
                   {generatedKey}
@@ -122,9 +120,6 @@ export default function ApiKeysPage() {
                   {copied ? <><Check className="w-4 h-4" /> Copied</> : <><Copy className="w-4 h-4" /> Copy</>}
                 </button>
               </div>
-              <p className="text-label-sm text-muted-foreground/60 mt-2">
-                This key won&apos;t be displayed again. If you lose it, delete and create a new one.
-              </p>
             </motion.div>
           )}
         </AnimatePresence>
