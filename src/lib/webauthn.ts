@@ -249,34 +249,9 @@ export async function registerPasskey(
     }
     if (err.name === 'InvalidStateError') {
       // Credential exists in browser but not in database (e.g. after DB reset)
-      // Clear local credentials and retry
+      // Clear local credentials so user can retry
       saveCredentials([]);
-      try {
-        const retryAttestation = await startRegistration({ optionsJSON: createOptionsJSON });
-        if (!retryAttestation) return { success: false, error: 'Passkey creation was cancelled.' };
-
-        const credentialIdStr = retryAttestation.id;
-        const publicKeyStr = JSON.stringify(retryAttestation.response.getPublicKey());
-
-        const token = getStoredToken();
-        if (!token) return { success: false, error: 'Not authenticated. Please log in first.' };
-
-        const { browser_name, device_name } = getDeviceInfo();
-        const { data: retryData } = await (await getSupabase()).rpc('register_passkey', {
-          p_token: token,
-          p_credential_id: credentialIdStr,
-          p_public_key: publicKeyStr,
-          p_device_name: device_name,
-          p_browser_name: browser_name,
-        });
-
-        if (retryData?.error) return { success: false, error: retryData.error };
-
-        saveCredentials([{ id: credentialIdStr, userId: userId, ...storedCred }]);
-        return { success: true };
-      } catch (retryErr: any) {
-        return { success: false, error: retryErr.message || 'Failed to create passkey.' };
-      }
+      return { success: false, error: 'Old passkey cleared. Please try registering again.' };
     }
     return { success: false, error: err.message || 'Failed to create passkey.' };
   }
