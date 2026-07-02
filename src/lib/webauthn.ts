@@ -248,16 +248,15 @@ export async function registerPasskey(
       return { success: false, error: 'Security error — this feature requires HTTPS.' };
     }
     if (err.name === 'InvalidStateError') {
-      // Credential exists in browser but might not be in database (e.g. after DB reset)
+      // Credential exists in browser but not in database (e.g. after DB reset)
       // Clear local credentials and retry
       saveCredentials([]);
       try {
-        const cred = await navigator.credentials.create({ publicKey: options });
-        if (!cred) return { success: false, error: 'Passkey creation was cancelled.' };
+        const retryAttestation = await startRegistration({ optionsJSON: createOptionsJSON });
+        if (!retryAttestation) return { success: false, error: 'Passkey creation was cancelled.' };
 
-        const credentialIdStr = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
-        const publicKeyJWK = cred.response.getPublicKey();
-        const publicKeyStr = btoa(JSON.stringify(publicKeyJWK));
+        const credentialIdStr = retryAttestation.id;
+        const publicKeyStr = JSON.stringify(retryAttestation.response.getPublicKey());
 
         const token = getStoredToken();
         if (!token) return { success: false, error: 'Not authenticated. Please log in first.' };
