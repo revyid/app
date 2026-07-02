@@ -69,11 +69,7 @@ export default function ApiKeysPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 glass border-b border-outline/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-body-sm">
-            <ArrowLeft className="w-4 h-4" /> Dashboard
-          </Link>
           <span className="text-title-sm font-semibold text-foreground">API Keys</span>
-          <div className="w-20" />
         </div>
       </header>
 

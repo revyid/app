@@ -23,13 +23,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 glass border-b border-outline/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors text-body-sm">
-              ← Back to Portfolio
-            </Link>
-          </div>
           <span className="text-title-sm font-semibold text-foreground">Dashboard</span>
-          <div className="w-20" />
         </div>
       </header>
 
