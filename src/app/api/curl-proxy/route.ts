@@ -24,7 +24,11 @@ class CurlParser {
   parse(): CurlOptions {
     const options: CurlOptions = { url: '', headers: {} };
     const args = this.split(this.command);
-    let i = 0;
+
+    let start = 0;
+    if (args.length > 0 && (args[0] === 'curl' || args[0].endsWith('/curl'))) start = 1;
+
+    let i = start;
     while (i < args.length) {
       const arg = args[i];
       switch (arg) {
