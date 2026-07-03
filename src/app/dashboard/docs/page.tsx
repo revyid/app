@@ -46,7 +46,7 @@ function sdkCode(lang: Lang, p: string): string {
   const k = 'rv_your_key';
   switch (lang) {
     case 'JavaScript':
-      return `const API_KEY = '${k}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path: string) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`;
+      return `const API_KEY = '${k}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`;
     case 'Python':
       return `import requests\n\nAPI_KEY = "${k}"\nBASE = "https://revy.my.id/api/github"\n\nres = requests.get(\n    f"{BASE}?path=${p}",\n    headers={"x-api-key": API_KEY},\n    timeout=10,\n)\nres.raise_for_status()\nprint(res.status_code)\nprint(res.json())`;
     case 'TypeScript':
@@ -168,7 +168,7 @@ async function getTsCompiler(): Promise<any> {
   if (tsCompiler) return tsCompiler;
   if (!(window as any).ts) {
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/typescript@5.4.5/lib/typescript.min.js';
+    s.src = 'https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/typescript.min.js';
     document.head.appendChild(s);
     await new Promise<void>((res, rej) => { s.onload = () => res(); s.onerror = () => rej(new Error('Failed to load TypeScript compiler')); });
   }
@@ -188,10 +188,17 @@ async function runTypeScript(code: string, log: LogFn): Promise<void> {
 
 async function runCurl(code: string, log: LogFn): Promise<void> {
   try {
+    const { CurlParser } = await import('@/lib/curl-browser');
+    const parsed = new CurlParser(code).parse();
+    const url = new URL(parsed.url);
+    log(`* Connecting to ${url.hostname}...`);
+    log(`> ${parsed.method || 'GET'} ${url.pathname + url.search} HTTP/1.1`);
+    log(`> Host: ${url.hostname}`);
+    if (parsed.headers) for (const [k, v] of Object.entries(parsed.headers)) log(`> ${k}: ${v}`);
+    log('');
+
     const { browserCurl } = await import('@/lib/curl-browser');
     const res = await browserCurl(code);
-    log(`> ${res.curlCommand}`);
-    log('');
     log(`< HTTP/1.1 ${res.status} ${res.statusText}`);
     for (const [k, v] of Object.entries(res.headers)) log(`< ${k}: ${v}`);
     if (res.duration) log(`< time: ${res.duration}ms`);
