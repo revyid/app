@@ -163,7 +163,7 @@ async function runPython(code: string, log: LogFn): Promise<void> {
 // Languages that can't run in browser — execute equivalent fetch
 async function runViaFetch(code: string, lang: string, log: LogFn): Promise<void> {
   const url = (code.match(/"(https?:\/\/[^"]+)"/) || code.match(/`(https?:\/\/[^`]+)`/))?.[1];
-  if (!url) { log(`Error: Could not parse URL from ${lang} code`); return; }
+  if (!url) { log(`Error: No URL found in code. For pure computation, use JavaScript or Python.`); return; }
   const headers: Record<string, string> = {};
   if (code.includes('x-api-key')) headers['x-api-key'] = 'rv_your_key';
   log(`# Executing equivalent fetch (browser)...\n`);
@@ -184,6 +184,29 @@ async function runViaFetch(code: string, lang: string, log: LogFn): Promise<void
     const body = await res.json();
     log(JSON.stringify(body, null, 2));
     if (res.ok) log(`\n# ${ms}ms`);
+  } catch (e: any) {
+    log(`Error: ${e.message}`);
+  }
+}
+
+// Go Playground — runs Go code on go.dev servers
+async function runGo(code: string, log: LogFn): Promise<void> {
+  log('# Sending to Go Playground (go.dev)...\n');
+  try {
+    const body = new URLSearchParams({ version: '2', body: code, withVet: 'true' });
+    const res = await fetch('https://go.dev/_/compile', { method: 'POST', body });
+    const data = await res.json();
+    if (data.Errors) {
+      log('Compile error:');
+      data.Errors.forEach((e: string) => log('  ' + e));
+    } else {
+      if (data.Events?.length) {
+        data.Events.forEach((e: any) => log(e.Message.replace(/\n$/, '')));
+      } else {
+        log('(no output)');
+      }
+      if (data.BuildFailed) log('\nBuild failed');
+    }
   } catch (e: any) {
     log(`Error: ${e.message}`);
   }
@@ -409,8 +432,9 @@ function SDKsTab() {
     try {
       if (lang === 'JavaScript') await runJS(code, addLine);
       else if (lang === 'Python') await runPython(code, addLine);
+      else if (lang === 'Go') await runGo(code, addLine);
       else if (lang === 'cURL') await runCurl(code, addLine);
-      else await runViaFetch(code, lang, addLine); // Go, Rust, PHP
+      else await runViaFetch(code, lang, addLine); // Rust, PHP
     } catch (e: any) { addLine(`Error: ${e.message}`); }
     setRunning(false);
   };
@@ -418,7 +442,7 @@ function SDKsTab() {
   const desc: Record<string, string> = {
     JavaScript: 'Runs natively in browser via JS engine.',
     Python: 'Runs real Python via Pyodide (WebAssembly). First run loads ~10MB.',
-    Go: 'Go code shown for reference. Run executes equivalent HTTP request.',
+    Go: 'Runs real Go code via Go Playground (go.dev). Any Go code works.',
     Rust: 'Rust code shown for reference. Run executes equivalent HTTP request.',
     PHP: 'PHP code shown for reference. Run executes equivalent HTTP request.',
     cURL: 'Runs real HTTP request, output formatted like curl -v.',
