@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Play, Send, RotateCcw, Key, Shield, Zap, Globe, Terminal, Code as CodeIcon, Lock, Server, BookOpen, Square } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Play, Send, RotateCcw, Key, Shield, Zap, Globe, Terminal, Code as CodeIcon, Lock, Server, BookOpen, Square, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 /* ─── Primitives ──────────────────────────────────────────────────── */
@@ -16,25 +16,13 @@ function CopyBtn({ text }: { text: string }) {
   );
 }
 
-function CodeBlock({ children, lang = 'bash' }: { children: string; lang?: string }) {
-  return (
-    <div className="my-2 rounded-xl border border-outline/20 overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-surface-variant/80 border-b border-outline/20">
-        <span className="text-label-sm text-muted-foreground font-mono">{lang}</span>
-        <CopyBtn text={children} />
-      </div>
-      <pre className="p-3 bg-surface-variant/50 overflow-x-auto"><code className="text-body-sm font-mono text-foreground whitespace-pre">{children}</code></pre>
-    </div>
-  );
-}
-
 function Badge({ color, children }: { color: string; children: React.ReactNode }) {
   return <span className={`px-2 py-0.5 rounded text-label-sm font-mono font-medium shrink-0 ${color}`}>{children}</span>;
 }
 
 /* ─── Accordion (one open at a time) ──────────────────────────────── */
 
-function Accordion({ items, id }: { items: { key: string; title: string; subtitle?: string; badge?: { color: string; text: string }; content: React.ReactNode }[]; id: string }) {
+function Accordion({ items }: { items: { key: string; title: string; subtitle?: string; badge?: { color: string; text: string }; content: React.ReactNode }[] }) {
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="space-y-2">
@@ -55,7 +43,7 @@ function Accordion({ items, id }: { items: { key: string; title: string; subtitl
   );
 }
 
-/* ─── Tabs (left sidebar) ─────────────────────────────────────────── */
+/* ─── Tabs (sidebar) ──────────────────────────────────────────────── */
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: BookOpen },
@@ -72,18 +60,7 @@ const ENDPOINTS = [
     key: 'user-profile', method: 'GET', title: 'User Profile',
     subtitle: '/api/github?path=users/{username}',
     desc: 'Get public profile information for any GitHub user.',
-    example: { path: 'users/torvalds', response: `{
-  "login": "torvalds",
-  "id": 1024025,
-  "name": "Linus Torvalds",
-  "bio": "Some people war over ideology. I war over code.",
-  "blog": "https://github.com/torvalds",
-  "location": "Portland, OR",
-  "public_repos": 7,
-  "followers": 234000,
-  "following": 0,
-  "created_at": "2011-09-03T15:26:22Z"
-}` },
+    example: { path: 'users/torvalds', response: `{\n  "login": "torvalds",\n  "id": 1024025,\n  "name": "Linus Torvalds",\n  "bio": "Some people war over ideology. I war over code.",\n  "blog": "https://github.com/torvalds",\n  "location": "Portland, OR",\n  "public_repos": 7,\n  "followers": 234000,\n  "following": 0,\n  "created_at": "2011-09-03T15:26:22Z"\n}` },
     fields: [
       ['login', 'string', 'GitHub username'], ['name', 'string | null', 'Display name'],
       ['bio', 'string | null', 'User biography'], ['public_repos', 'number', 'Public repos count'],
@@ -94,334 +71,173 @@ const ENDPOINTS = [
     key: 'user-repos', method: 'GET', title: 'User Repositories',
     subtitle: '/api/github?path=users/{username}/repos',
     desc: 'List all public repositories, sorted by last updated.',
-    example: { path: 'users/revyid/repos', response: `[
-  {
-    "name": "app",
-    "full_name": "revyid/app",
-    "description": "Portfolio & API",
-    "stargazers_count": 2,
-    "forks_count": 0,
-    "language": "TypeScript",
-    "updated_at": "2026-07-02T10:00:00Z"
-  }
-]` },
+    example: { path: 'users/revyid/repos', response: `[\n  {\n    "name": "app",\n    "full_name": "revyid/app",\n    "stargazers_count": 2,\n    "language": "TypeScript",\n    "updated_at": "2026-07-02T10:00:00Z"\n  }\n]` },
     fields: [
       ['name', 'string', 'Repository name'], ['full_name', 'string', 'owner/name'],
       ['stargazers_count', 'number', 'Stars'], ['language', 'string | null', 'Primary language'],
-      ['updated_at', 'string', 'ISO 8601 date'],
     ],
   },
   {
     key: 'user-events', method: 'GET', title: 'User Events',
     subtitle: '/api/github?path=users/{username}/events',
-    desc: 'Recent public activity: pushes, issues, PRs, forks, stars.',
-    example: { path: 'users/revyid/events', response: `[
-  {
-    "id": "40123456789",
-    "type": "PushEvent",
-    "actor": { "login": "revyid" },
-    "repo": { "name": "revyid/app" },
-    "payload": { "size": 3, "commits": [{ "message": "fix: API key" }] },
-    "created_at": "2026-07-02T14:30:00Z"
-  }
-]` },
+    desc: 'Recent public activity: pushes, issues, PRs, forks.',
+    example: { path: 'users/revyid/events', response: `[\n  {\n    "id": "40123456789",\n    "type": "PushEvent",\n    "actor": { "login": "revyid" },\n    "repo": { "name": "revyid/app" },\n    "created_at": "2026-07-02T14:30:00Z"\n  }\n]` },
     fields: [
       ['type', 'string', 'PushEvent, IssuesEvent, PullRequestEvent, etc.'],
-      ['actor', 'object', '{ login, avatar_url }'], ['payload', 'object', 'Event-specific data'],
-      ['created_at', 'string', 'ISO 8601 timestamp'],
+      ['actor', 'object', '{ login, avatar_url }'], ['created_at', 'string', 'ISO 8601 timestamp'],
     ],
   },
   {
     key: 'repo-details', method: 'GET', title: 'Repository Details',
     subtitle: '/api/github?path=repos/{owner}/{repo}',
     desc: 'Full info about a specific repository.',
-    example: { path: 'repos/facebook/react', response: `{
-  "name": "react",
-  "full_name": "facebook/react",
-  "description": "The library for web and native user interfaces.",
-  "stargazers_count": 234000,
-  "forks_count": 47000,
-  "language": "JavaScript",
-  "topics": ["javascript", "ui"],
-  "license": { "name": "MIT License" }
-}` },
+    example: { path: 'repos/facebook/react', response: `{\n  "name": "react",\n  "full_name": "facebook/react",\n  "stargazers_count": 234000,\n  "forks_count": 47000,\n  "language": "JavaScript"\n}` },
     fields: [
       ['name', 'string', 'Repository name'], ['stargazers_count', 'number', 'Stars'],
       ['forks_count', 'number', 'Forks'], ['language', 'string | null', 'Primary language'],
-      ['topics', 'string[]', 'Repository tags'],
     ],
   },
 ];
 
 /* ─── SDK snippets ────────────────────────────────────────────────── */
 
-const SDK_SNIPPETS = [
-  {
-    key: 'js', lang: 'JavaScript / TypeScript', sub: 'Fetch API — works in Node.js, Bun, Deno, browsers',
-    code: `const API_KEY = 'rv_your_key';
-const BASE = 'https://revy.my.id/api/github';
-
-async function getUser(username) {
-  const res = await fetch(
-    \`\${BASE}?path=users/\${username}\`,
-    { headers: { 'x-api-key': API_KEY } }
-  );
-  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
-  return res.json();
+function sdkCode(lang: string, path: string) {
+  const url = `https://revy.my.id/api/github?path=${path}`;
+  const key = 'rv_your_key';
+  switch (lang) {
+    case 'JavaScript': return `const API_KEY = '${key}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getUser(username) {\n  const res = await fetch(\n    \`\${BASE}?path=users/\${username}\`,\n    { headers: { 'x-api-key': API_KEY } }\n  );\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst user = await getUser('revyid');\nconsole.log(user);`;
+    case 'Python': return `import requests\n\nAPI_KEY = "${key}"\nBASE = "${url}"\n\nres = requests.get(\n    f"{BASE}?path=users/revyid",\n    headers={"x-api-key": API_KEY}\n)\nprint(res.json())`;
+    case 'cURL': return `curl -H "x-api-key: ${key}" \\\n  "${url}"`;
+    default: return `// ${lang} example\nfetch("${url}", {\n  headers: { "x-api-key": "${key}" }\n}).then(r => r.json()).then(console.log);`;
+  }
 }
 
-const user = await getUser('revyid');
-console.log(\`\${user.name} — \${user.public_repos} repos\`);`,
-    example: 'users/revyid',
-  },
-  {
-    key: 'python', lang: 'Python', sub: 'requests library',
-    code: `import requests
-
-API_KEY = "rv_your_key"
-BASE = "https://revy.my.id/api/github"
-
-def get_user(username):
-    res = requests.get(
-        f"{BASE}?path=users/{username}",
-        headers={"x-api-key": API_KEY}
-    )
-    res.raise_for_status()
-    return res.json()
-
-user = get_user("revyid")
-print(f"{user['name']} — {user['public_repos']} repos")`,
-    example: 'users/revyid',
-  },
-  {
-    key: 'go', lang: 'Go', sub: 'net/http standard library',
-    code: `package main
-
-import (
-    "encoding/json"
-    "fmt"
-    "io"
-    "net/http"
-)
-
-func getUser(username string) (map[string]any, error) {
-    req, _ := http.NewRequest("GET",
-        "https://revy.my.id/api/github?path=users/"+username, nil)
-    req.Header.Set("x-api-key", "rv_your_key")
-    resp, err := http.DefaultClient.Do(req)
-    if err != nil { return nil, err }
-    defer resp.Body.Close()
-    body, _ := io.ReadAll(resp.Body)
-    var result map[string]any
-    json.Unmarshal(body, &result)
-    return result, nil
-}
-
-func main() {
-    user, _ := getUser("revyid")
-    fmt.Printf("%s — %.0f repos\\n", user["name"], user["public_repos"])
-}`,
-    example: 'users/revyid',
-  },
-  {
-    key: 'rust', lang: 'Rust', sub: 'reqwest + serde',
-    code: `use serde::Deserialize;
-use reqwest::Client;
-
-#[derive(Deserialize)]
-struct User { login: String, name: Option<String>, public_repos: u32 }
-
-async fn get_user(u: &str) -> Result<User, Box<dyn std::error::Error>> {
-    let user: User = Client::new()
-        .get(format!("https://revy.my.id/api/github?path=users/{u}"))
-        .header("x-api-key", "rv_your_key")
-        .send().await?.json().await?;
-    Ok(user)
-}
-
-#[tokio::main]
-async fn main() {
-    let u = get_user("revyid").await.unwrap();
-    println!("{} — {} repos", u.name.unwrap_or_default(), u.public_repos);
-}`,
-    example: 'users/revyid',
-  },
-  {
-    key: 'php', lang: 'PHP', sub: 'cURL',
-    code: `<?php
-$apiKey = 'rv_your_key';
-$base = 'https://revy.my.id/api/github';
-
-function getUser(string $username): array {
-    global $apiKey, $base;
-    $ch = curl_init("{$base}?path=users/{$username}");
-    curl_setopt_array($ch, [
-        CURLOPT_HTTPHEADER => ["x-api-key: {$apiKey}"],
-        CURLOPT_RETURNTRANSFER => true,
-    ]);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    return json_decode($response, true);
-}
-
-$user = getUser('revyid');
-echo "{$user['name']} — {$user['public_repos']} repos\\n";`,
-    example: 'users/revyid',
-  },
-  {
-    key: 'curl', lang: 'cURL', sub: 'Command line',
-    code: `# User profile
-curl -H "x-api-key: rv_your_key" \\
-  "https://revy.my.id/api/github?path=users/revyid"
-
-# User repos
-curl -H "x-api-key: rv_your_key" \\
-  "https://revy.my.id/api/github?path=users/revyid/repos"
-
-# Repo details
-curl -H "x-api-key: rv_your_key" \\
-  "https://revy.my.id/api/github?path=repos/facebook/react"`,
-    example: 'users/revyid',
-  },
+const SDK_LANGS = [
+  { key: 'JavaScript', sub: 'Fetch API — Node.js, Bun, Deno, browsers' },
+  { key: 'Python', sub: 'requests library' },
+  { key: 'cURL', sub: 'Command line' },
 ];
 
-/* ─── Terminal Try-It ─────────────────────────────────────────────── */
+/* ─── Sandbox editor (left) + Console (right) ─────────────────────── */
 
-function TerminalSimulator() {
-  const [lines, setLines] = useState<string[]>([
-    '> Welcome to Revvy API Terminal',
-    '> Type a command or click "Auto" to run a demo.',
-    '',
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const termRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+function SandboxEditor({ code, onRun, running }: { code: string; onRun: (code: string) => void; running: boolean }) {
+  const [src, setSrc] = useState(code);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Sync when code prop changes (language switch)
+  useEffect(() => { setSrc(code); }, [code]);
+
+  // Auto-resize textarea
   useEffect(() => {
-    if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight;
-  }, [lines]);
-
-  const run = useCallback(async (cmd?: string) => {
-    const line = cmd || input.trim();
-    if (!line) return;
-    setInput('');
-    setLoading(true);
-
-    const parts = line.split(/\s+/);
-    let path = '';
-    let key = '';
-
-    // Parse: "path users/revyid" or "key rv_xxx path users/revyid"
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i] === 'path' && parts[i + 1]) path = parts[++i];
-      if (parts[i] === 'key' && parts[i + 1]) key = parts[++i];
-    }
-    if (!path) {
-      setLines(p => [...p, `$ ${line}`, '  Error: usage: path <github-path> [key <api-key>]', '']);
-      setLoading(false);
-      return;
-    }
-
-    const cmdStr = `path ${path}` + (key ? ` key ${key.slice(0, 8)}...` : '');
-    setLines(p => [...p, `$ ${cmdStr}`, '  Loading...']);
-
-    try {
-      const headers: Record<string, string> = {};
-      if (key) headers['x-api-key'] = key;
-      const res = await fetch(`/api/github?path=${encodeURIComponent(path)}`, { headers });
-      const body = await res.json();
-
-      setLines(p => {
-        const next = [...p];
-        next.pop(); // remove "Loading..."
-        if (res.ok) {
-          next.push(`  [${res.status} OK]`);
-          const formatted = JSON.stringify(body, null, 2).split('\n');
-          formatted.forEach(l => next.push('  ' + l));
-        } else {
-          next.push(`  [${res.status}] ${body.error || 'Unknown error'}`);
-        }
-        next.push('');
-        return next;
-      });
-    } catch (e: any) {
-      setLines(p => [...p.slice(0, -1), `  Error: ${e.message}`, '']);
-    }
-    setLoading(false);
-  }, [input]);
-
-  const autoDemo = async () => {
-    const demos = [
-      'path users/revyid key rv_your_key',
-      'path users/torvalds key rv_your_key',
-      'path users/revyid/repos key rv_your_key',
-      'path repos/facebook/react key rv_your_key',
-      'path users/revyid/events key rv_your_key',
-    ];
-    for (const d of demos) {
-      await run(d);
-      await new Promise(r => setTimeout(r, 600));
-    }
-  };
-
-  const clear = () => setLines(['> Terminal cleared.', '']);
+    const el = textareaRef.current;
+    if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+  }, [src]);
 
   return (
-    <div className="rounded-xl border border-outline/20 overflow-hidden bg-[#1a1b26]">
-      {/* Title bar */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-[#13141c] border-b border-outline/10">
-        <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-error/80" />
-          <div className="w-3 h-3 rounded-full bg-warning/80" />
-          <div className="w-3 h-3 rounded-full bg-success/80" />
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#13141c] border-b border-outline/10 shrink-0">
+        <div className="flex items-center gap-2">
+          <Pencil className="w-3 h-3 text-muted-foreground/50" />
+          <span className="text-label-sm text-muted-foreground/60 font-mono">editor.js</span>
         </div>
-        <span className="text-label-sm text-muted-foreground/60 font-mono ml-2">revvy-api ~ terminal</span>
-        <div className="ml-auto flex gap-2">
-          <button onClick={autoDemo} disabled={loading} className="flex items-center gap-1 px-2.5 py-1 text-label-sm font-mono rounded-md bg-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50">
-            {loading ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-            {loading ? 'Stop' : 'Auto'}
-          </button>
-          <button onClick={clear} className="flex items-center gap-1 px-2.5 py-1 text-label-sm font-mono rounded-md bg-surface-variant/50 text-muted-foreground hover:text-foreground transition-colors">
-            <RotateCcw className="w-3 h-3" /> Clear
-          </button>
-        </div>
-      </div>
-
-      {/* Output */}
-      <div ref={termRef} className="p-4 h-80 overflow-y-auto font-mono text-body-sm text-[#a9b1d6]">
-        {lines.map((l, i) => (
-          <div key={i} className={`whitespace-pre-wrap leading-relaxed ${l.startsWith('$') ? 'text-[#7aa2f7]' : l.startsWith('  [') && l.includes('OK]') ? 'text-[#9ece6a]' : l.startsWith('  [') && l.includes('4') ? 'text-[#f7768e]' : l.startsWith('  >') ? 'text-[#bb9af7]' : ''}`}>
-            {l}
-          </div>
-        ))}
-        {loading && <span className="animate-pulse">_</span>}
-      </div>
-
-      {/* Input */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#13141c] border-t border-outline/10">
-        <span className="text-[#7aa2f7] font-mono text-body-sm">$</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !loading && run()}
-          placeholder='path users/revyid key rv_your_key'
-          disabled={loading}
-          className="flex-1 bg-transparent text-[#a9b1d6] font-mono text-body-sm outline-none placeholder:text-muted-foreground/30"
-        />
-        <button onClick={() => run()} disabled={loading || !input.trim()} className="p-1.5 rounded-md hover:bg-surface-variant/50 transition-colors disabled:opacity-30">
-          <Send className="w-4 h-4 text-muted-foreground" />
+        <button onClick={() => onRun(src)} disabled={running} className="flex items-center gap-1.5 px-3 py-1 text-label-sm font-mono rounded-md bg-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50">
+          {running ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+          {running ? 'Stop' : 'Run'}
         </button>
       </div>
+      <textarea
+        ref={textareaRef}
+        value={src}
+        onChange={e => setSrc(e.target.value)}
+        spellCheck={false}
+        className="flex-1 w-full p-3 bg-[#1a1b26] text-[#a9b1d6] font-mono text-[13px] leading-relaxed resize-none outline-none"
+      />
+    </div>
+  );
+}
 
-      {/* Help */}
-      <div className="px-4 py-2 bg-[#13141c] border-t border-outline/10 text-label-sm font-mono text-muted-foreground/40">
-        Usage: <span className="text-muted-foreground/60">path</span> {'<github-path>'} <span className="text-muted-foreground/60">[key</span> {'<api-key>'}<span className="text-muted-foreground/60">]</span> &middot; Try: path users/revyid key rv_your_key
+function ConsoleOutput({ lines }: { lines: string[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight; }, [lines]);
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#13141c] border-b border-outline/10 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-error/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-warning/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-success/80" />
+          </div>
+          <span className="text-label-sm text-muted-foreground/60 font-mono ml-1">console</span>
+        </div>
+        {lines.length > 0 && <CopyBtn text={lines.join('\n')} />}
+      </div>
+      <div ref={ref} className="flex-1 overflow-y-auto p-3 bg-[#1a1b26]">
+        {lines.length === 0 ? (
+          <div className="text-[13px] font-mono text-muted-foreground/30">Click "Run" to execute code...</div>
+        ) : (
+          <pre className="font-mono text-[13px] leading-relaxed text-[#a9b1d6]">
+            {lines.map((l, i) => {
+              let color = '';
+              if (l.startsWith('$')) color = 'text-[#7aa2f7]';
+              else if (l.startsWith('< HTTP')) color = l.includes('200') ? 'text-[#9ece6a]' : 'text-[#f7768e]';
+              else if (l.startsWith('<')) color = 'text-[#565f89]';
+              else if (l.startsWith('>')) color = 'text-[#565f89]';
+              else if (l.startsWith('#')) color = 'text-[#bb9af7]';
+              else if (l.startsWith('Error')) color = 'text-[#f7768e]';
+              else if (l.includes('"error"')) color = 'text-[#f7768e]';
+              return <div key={i} className={color}>{l || '\u00A0'}</div>;
+            })}
+          </pre>
+        )}
       </div>
     </div>
   );
+}
+
+/* ─── Execute JS code sandbox ─────────────────────────────────────── */
+
+function executeCode(code: string): Promise<string[]> {
+  return new Promise((resolve) => {
+    const logs: string[] = [];
+    const fakeConsole = {
+      log: (...args: any[]) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ')),
+      error: (...args: any[]) => logs.push('Error: ' + args.join(' ')),
+    };
+    const fakeFetch = async (url: string, opts?: any) => {
+      const t0 = performance.now();
+      const res = await window.fetch(url, opts);
+      const ms = Math.round(performance.now() - t0);
+      logs.push(`> ${opts?.method || 'GET'} ${url}`);
+      logs.push(`< HTTP/1.1 ${res.status}${res.status === 200 ? ' OK' : ''}`);
+      logs.push(`< content-type: ${res.headers.get('content-type') || 'unknown'}`);
+      logs.push(`< time: ${ms}ms`);
+      logs.push('');
+      const clone = res.clone();
+      try {
+        const body = await clone.json();
+        logs.push(JSON.stringify(body, null, 2));
+        if (res.ok) logs.push(`\n# ${ms}ms — ${Object.keys(body).length || 0} fields`);
+      } catch {
+        logs.push(await res.text());
+      }
+      return res;
+    };
+
+    try {
+      const fn = new Function('fetch', 'console', code);
+      const result = fn(fakeFetch, fakeConsole);
+      if (result && typeof result.then === 'function') {
+        result.then(() => resolve(logs)).catch((e: any) => { logs.push(`Error: ${e.message}`); resolve(logs); });
+      } else {
+        resolve(logs);
+      }
+    } catch (e: any) {
+      logs.push(`Error: ${e.message}`);
+      resolve(logs);
+    }
+  });
 }
 
 /* ─── Tab content ─────────────────────────────────────────────────── */
@@ -435,7 +251,6 @@ function OverviewTab() {
           RESTful proxy API for GitHub data. Requires an API key for every request.
         </p>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
         {[
           { icon: Lock, label: 'Auth Required', desc: 'x-api-key header', color: 'text-error' },
@@ -450,7 +265,6 @@ function OverviewTab() {
           </div>
         ))}
       </div>
-
       <div className="space-y-3">
         <h3 className="text-title-sm font-semibold text-foreground">Quick Start</h3>
         <ol className="space-y-2 text-body-sm text-muted-foreground">
@@ -467,33 +281,20 @@ function OverviewTab() {
             <span>Pass it via <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono">x-api-key</code> header.</span>
           </li>
         </ol>
-        <CodeBlock lang="bash">{`curl -H "x-api-key: rv_your_key" \\
-  "https://revy.my.id/api/github?path=users/revyid"`}</CodeBlock>
       </div>
-
-      <div className="space-y-2">
-        <h3 className="text-title-sm font-semibold text-foreground">Rate Limits</h3>
-        <p className="text-body-sm text-muted-foreground"><strong className="text-foreground">100 requests/hour</strong> per user. All keys share the same pool.</p>
-        <CodeBlock lang="http">{`HTTP/1.1 429 Too Many Requests
-Retry-After: 3600
-
-{"error": "Rate limit exceeded."}`}</CodeBlock>
-      </div>
-
       <div className="space-y-2">
         <h3 className="text-title-sm font-semibold text-foreground">Error Codes</h3>
         <div className="space-y-1.5">
           {[
-            ['400', 'Bad Request', 'Missing or invalid ?path=', 'bg-warning/15 text-warning'],
-            ['401', 'Unauthorized', 'Missing or invalid API key', 'bg-error/15 text-error'],
-            ['403', 'Forbidden', 'Path not allowed', 'bg-error/15 text-error'],
-            ['429', 'Too Many Requests', 'Rate limit hit', 'bg-warning/15 text-warning'],
-            ['502', 'Bad Gateway', 'GitHub API error', 'bg-error/15 text-error'],
-          ].map(([c, l, d, cl]) => (
+            ['400', 'Bad Request', 'bg-warning/15 text-warning'],
+            ['401', 'Unauthorized', 'bg-error/15 text-error'],
+            ['403', 'Forbidden', 'bg-error/15 text-error'],
+            ['429', 'Too Many Requests', 'bg-warning/15 text-warning'],
+            ['502', 'Bad Gateway', 'bg-error/15 text-error'],
+          ].map(([c, l, cl]) => (
             <div key={c} className="flex items-center gap-2 text-body-sm">
               <Badge color={cl}>{c}</Badge>
               <span className="text-foreground font-medium">{l}</span>
-              <span className="text-muted-foreground">&mdash; {d}</span>
             </div>
           ))}
         </div>
@@ -509,7 +310,6 @@ function EndpointsTab() {
         Base: <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono">https://revy.my.id/api/github</code>
       </p>
       <Accordion
-        id="endpoints"
         items={ENDPOINTS.map(ep => ({
           key: ep.key,
           title: ep.title,
@@ -519,31 +319,24 @@ function EndpointsTab() {
             <div className="space-y-3">
               <p className="text-body-sm text-muted-foreground">{ep.desc}</p>
               <div>
-                <p className="text-label-sm font-medium text-foreground mb-1">Request</p>
-                <CodeBlock lang="bash">{`curl -H "x-api-key: rv_your_key" \\
-  "https://revy.my.id/api/github?path=${ep.example.path}"`}</CodeBlock>
-              </div>
-              <div>
                 <p className="text-label-sm font-medium text-foreground mb-1">Response</p>
                 <div className="rounded-xl border border-outline/20 overflow-hidden">
                   <div className="flex items-center justify-between px-3 py-1.5 bg-success/10 border-b border-outline/20">
                     <span className="text-label-sm font-mono text-success font-medium">200 OK</span>
                     <CopyBtn text={ep.example.response} />
                   </div>
-                  <pre className="p-3 bg-surface-variant/50 overflow-x-auto max-h-60"><code className="text-body-sm font-mono text-foreground whitespace-pre">{ep.example.response}</code></pre>
+                  <pre className="p-3 bg-surface-variant/50 overflow-x-auto max-h-48"><code className="text-body-sm font-mono text-foreground whitespace-pre">{ep.example.response}</code></pre>
                 </div>
               </div>
               <div>
                 <p className="text-label-sm font-medium text-foreground mb-1">Fields</p>
                 <div className="rounded-xl border border-outline/15 overflow-hidden">
                   <table className="w-full text-body-sm">
-                    <thead>
-                      <tr className="bg-surface-variant/50 border-b border-outline/15">
-                        <th className="text-left py-2 px-3 text-label-sm text-muted-foreground font-medium">Field</th>
-                        <th className="text-left py-2 px-3 text-label-sm text-muted-foreground font-medium">Type</th>
-                        <th className="text-left py-2 px-3 text-label-sm text-muted-foreground font-medium">Description</th>
-                      </tr>
-                    </thead>
+                    <thead><tr className="bg-surface-variant/50 border-b border-outline/15">
+                      <th className="text-left py-2 px-3 text-label-sm text-muted-foreground font-medium">Field</th>
+                      <th className="text-left py-2 px-3 text-label-sm text-muted-foreground font-medium">Type</th>
+                      <th className="text-left py-2 px-3 text-label-sm text-muted-foreground font-medium">Description</th>
+                    </tr></thead>
                     <tbody>
                       {ep.fields.map(([f, t, d]) => (
                         <tr key={f} className="border-b border-outline/10 last:border-0">
@@ -565,103 +358,94 @@ function EndpointsTab() {
 }
 
 function TryItTab() {
+  const [code, setCode] = useState(`const API_KEY = 'rv_your_key';\nconst BASE = 'https://revy.my.id/api/github';\n\nconst res = await fetch(\n  \`\${BASE}?path=users/revyid\`,\n  { headers: { 'x-api-key': API_KEY } }\n);\nconst data = await res.json();\nconsole.log(data);`);
+  const [lines, setLines] = useState<string[]>([]);
+  const [running, setRunning] = useState(false);
+
+  const run = async (src: string) => {
+    setRunning(true);
+    setLines(['$ Running...', '']);
+    const result = await executeCode(src);
+    setLines(result);
+    setRunning(false);
+  };
+
   return (
-    <div className="space-y-4">
-      <p className="text-body-sm text-muted-foreground">
-        Run API requests from a simulated terminal. Use <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono">path</code> and <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono">key</code> keywords, or click <strong className="text-foreground">Auto</strong> for a guided demo.
-      </p>
-      <TerminalSimulator />
+    <div className="space-y-3">
+      <p className="text-body-sm text-muted-foreground">Edit the code and click <strong className="text-foreground">Run</strong>. The fetch call executes in-browser against the real API.</p>
+      <div className="h-[500px] rounded-xl border border-outline/20 overflow-hidden flex flex-col lg:flex-row">
+        <div className="flex-1 min-h-[200px] border-b lg:border-b-0 lg:border-r border-outline/20">
+          <SandboxEditor code={code} onRun={run} running={running} />
+        </div>
+        <div className="flex-1 min-h-[200px]">
+          <ConsoleOutput lines={lines} />
+        </div>
+      </div>
     </div>
   );
 }
 
 function SDKsTab() {
-  const [activeSdk, setActiveSdk] = useState(SDK_SNIPPETS[0].key);
-  const [runOutput, setRunOutput] = useState<string[]>([]);
+  const [activeLang, setActiveLang] = useState('JavaScript');
+  const snippet = SDK_LANGS.find(s => s.key === activeLang)!;
+  const [code, setCode] = useState(sdkCode('JavaScript', 'users/revyid'));
+  const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
-  const snippet = SDK_SNIPPETS.find(s => s.key === activeSdk)!;
+  const [activePath, setActivePath] = useState('users/revyid');
 
-  const runSnippet = async () => {
+  const switchLang = (lang: string) => {
+    setActiveLang(lang);
+    setCode(sdkCode(lang, activePath));
+    setLines([]);
+  };
+
+  const switchPath = (p: string) => {
+    setActivePath(p);
+    setCode(sdkCode(activeLang, p));
+    setLines([]);
+  };
+
+  const run = async (src: string) => {
     setRunning(true);
-    setRunOutput(['> Running request...', '']);
-    try {
-      const res = await fetch(`/api/github?path=${encodeURIComponent(snippet.example)}`, {
-        headers: { 'x-api-key': 'rv_your_key' },
-      });
-      const body = await res.json();
-      const lines: string[] = [];
-      if (res.ok) {
-        lines.push(`> GET /api/github?path=${snippet.example}`);
-        lines.push(`> Status: ${res.status} OK`);
-        lines.push('');
-        const formatted = JSON.stringify(body, null, 2).split('\n');
-        formatted.forEach(l => lines.push(l));
-        lines.push('');
-        lines.push(`> Fields: ${Object.keys(body).join(', ')}`);
-      } else {
-        lines.push(`> GET /api/github?path=${snippet.example}`);
-        lines.push(`> Status: ${res.status}`);
-        lines.push(`> Error: ${body.error || 'Unknown'}`);
-      }
-      setRunOutput(lines);
-    } catch (e: any) {
-      setRunOutput([`> Error: ${e.message}`]);
-    }
+    setLines(['$ Running...', '']);
+    const result = await executeCode(src);
+    setLines(result);
     setRunning(false);
   };
 
   return (
-    <div className="space-y-4">
-      <p className="text-body-sm text-muted-foreground">Pick a language. Click <strong className="text-foreground">Run</strong> to test the snippet output.</p>
+    <div className="space-y-3">
+      <p className="text-body-sm text-muted-foreground">Pick a language, edit the code, click <strong className="text-foreground">Run</strong>.</p>
 
-      {/* Language tabs */}
-      <div className="flex flex-wrap gap-1.5">
-        {SDK_SNIPPETS.map(s => (
-          <button
-            key={s.key}
-            onClick={() => { setActiveSdk(s.key); setRunOutput([]); }}
-            className={`px-3 py-1.5 text-label-sm font-medium rounded-lg transition-colors ${
-              activeSdk === s.key ? 'bg-primary text-primary-foreground' : 'bg-surface-variant text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {s.lang}
-          </button>
-        ))}
-      </div>
-
-      {/* Code */}
-      <div>
-        <p className="text-label-sm text-muted-foreground mb-2">{snippet.sub}</p>
-        <CodeBlock lang={snippet.lang}>{snippet.code}</CodeBlock>
-      </div>
-
-      {/* Run button */}
-      <button onClick={runSnippet} disabled={running} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-body-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-        {running ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-        {running ? 'Running...' : 'Run this snippet'}
-      </button>
-
-      {/* Console output */}
-      {runOutput.length > 0 && (
-        <div className="rounded-xl border border-outline/20 overflow-hidden bg-[#1a1b26]">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#13141c] border-b border-outline/10">
-            <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-error/80" />
-              <div className="w-2.5 h-2.5 rounded-full bg-warning/80" />
-              <div className="w-2.5 h-2.5 rounded-full bg-success/80" />
-            </div>
-            <span className="text-label-sm text-muted-foreground/60 font-mono ml-1">output</span>
-            <CopyBtn text={runOutput.join('\n')} />
-          </div>
-          <pre className="p-3 font-mono text-body-sm text-[#a9b1d6] overflow-x-auto max-h-80">
-            {runOutput.map((l, i) => (
-              <div key={i} className={`whitespace-pre-wrap leading-relaxed ${l.startsWith('>') ? 'text-[#7aa2f7]' : l.includes('Status:') && l.includes('OK') ? 'text-[#9ece6a]' : l.includes('Status:') && l.includes('4') ? 'text-[#f7768e]' : l.includes('Error:') ? 'text-[#f7768e]' : l.includes('Fields:') ? 'text-[#bb9af7]' : ''}`}>
-                {l}
-              </div>
-            ))}
-          </pre>
+      {/* Language + path tabs */}
+      <div className="flex flex-wrap gap-2">
+        <div className="flex gap-1 bg-surface-variant/50 rounded-lg p-0.5">
+          {SDK_LANGS.map(s => (
+            <button key={s.key} onClick={() => switchLang(s.key)} className={`px-2.5 py-1 text-label-sm font-medium rounded-md transition-colors ${activeLang === s.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+              {s.key}
+            </button>
+          ))}
         </div>
-      )}
+        <div className="flex gap-1 bg-surface-variant/50 rounded-lg p-0.5">
+          {['users/revyid', 'users/torvalds', 'repos/facebook/react'].map(p => (
+            <button key={p} onClick={() => switchPath(p)} className={`px-2.5 py-1 text-label-sm font-mono rounded-md transition-colors ${activePath === p ? 'bg-surface text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+              {p.split('/').pop()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-label-sm text-muted-foreground">{snippet.sub}</p>
+
+      {/* Editor + Console split */}
+      <div className="h-[500px] rounded-xl border border-outline/20 overflow-hidden flex flex-col lg:flex-row">
+        <div className="flex-1 min-h-[200px] border-b lg:border-b-0 lg:border-r border-outline/20">
+          <SandboxEditor code={code} onRun={run} running={running} />
+        </div>
+        <div className="flex-1 min-h-[200px]">
+          <ConsoleOutput lines={lines} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -670,7 +454,6 @@ function SDKsTab() {
 
 export default function DocsPage() {
   const [tab, setTab] = useState<TabId>('overview');
-
   const renderTab = () => {
     switch (tab) {
       case 'overview': return <OverviewTab />;
@@ -692,13 +475,7 @@ export default function DocsPage() {
         </div>
         <nav className="flex-1 p-3 space-y-0.5">
           {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-body-sm transition-colors text-left ${
-                tab === id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant/50'
-              }`}
-            >
+            <button key={id} onClick={() => setTab(id)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-body-sm transition-colors text-left ${tab === id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant/50'}`}>
               <Icon className="w-4 h-4 shrink-0" />
               {label}
             </button>
@@ -709,16 +486,10 @@ export default function DocsPage() {
         </div>
       </aside>
 
-      {/* Mobile tab bar */}
+      {/* Mobile bottom bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-outline/15 flex">
         {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-label-sm transition-colors ${
-              tab === id ? 'text-primary' : 'text-muted-foreground'
-            }`}
-          >
+          <button key={id} onClick={() => setTab(id)} className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-label-sm transition-colors ${tab === id ? 'text-primary' : 'text-muted-foreground'}`}>
             <Icon className="w-4 h-4" />
             {label}
           </button>
@@ -727,7 +498,7 @@ export default function DocsPage() {
 
       {/* Content */}
       <main className="flex-1 min-w-0">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-24 lg:pb-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-24 lg:pb-6">
           {renderTab()}
         </div>
       </main>
