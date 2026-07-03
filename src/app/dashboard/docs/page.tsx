@@ -64,8 +64,8 @@ const ENDPOINTS = [
 const sdkSnippets: Record<string, (p: string) => string> = {
   JavaScript: (p) => `const API_KEY = 'rv_your_key';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`,
   Python: (p) => `import requests\n\nAPI_KEY = "rv_your_key"\nBASE = "https://revy.my.id/api/github"\n\nres = requests.get(\n    f"{BASE}?path=${p}",\n    headers={"x-api-key": API_KEY}\n)\nprint(res.status_code)\nprint(res.json())`,
-  Go: (p) => `package main\n\nimport (\n\t"encoding/json"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\treq, _ := http.NewRequest("GET",\n\t\t"https://revy.my.id/api/github?path=${p}", nil)\n\treq.Header.Set("x-api-key", "rv_your_key")\n\n\tresp, _ := http.DefaultClient.Do(req)\n\tdefer resp.Body.Close()\n\tbody, _ := io.ReadAll(resp.Body)\n\n\tvar result map[string]any\n\tjson.Unmarshal(body, &result)\n\tfmt.Println(result)\n}`,
-  Rust: (p) => `use serde::Deserialize;\nuse reqwest::Client;\n\n#[derive(Deserialize, Debug)]\nstruct ApiResponse {\n    login: Option<String>,\n    name: Option<String>,\n    #[serde(flatten)]\n    other: std::collections::HashMap<String, serde_json::Value>,\n}\n\n#[tokio::main]\nasync fn main() -> Result<(), Box<dyn std::error::Error>> {\n    let resp = Client::new()\n        .get("https://revy.my.id/api/github?path=${p}")\n        .header("x-api-key", "rv_your_key")\n        .send().await?\n        .json::<serde_json::Value>().await?;\n    println!("{}", serde_json::to_string_pretty(&resp)?);\n    Ok(()\n}`,
+  Go: (p) => `package main\n\nimport (\n\t"encoding/json"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\treq, err := http.NewRequest("GET",\n\t\t"https://revy.my.id/api/github?path=${p}", nil)\n\tif err != nil { panic(err) }\n\treq.Header.Set("x-api-key", "rv_your_key")\n\n\tresp, err := http.DefaultClient.Do(req)\n\tif err != nil { panic(err) }\n\tdefer resp.Body.Close()\n\n\tbody, err := io.ReadAll(resp.Body)\n\tif err != nil { panic(err) }\n\n\tvar result map[string]any\n\tjson.Unmarshal(body, &result)\n\tfmt.Println(result)\n}`,
+  Rust: (p) => `use serde_json::Value;\n\n#[tokio::main]\nasync fn main() -> Result<(), Box<dyn std::error::Error>> {\n    let resp = reqwest::Client::new()\n        .get("https://revy.my.id/api/github?path=${p}")\n        .header("x-api-key", "rv_your_key")\n        .send().await?\n        .json::<Value>().await?;\n    println!("{}", serde_json::to_string_pretty(&resp)?);\n    Ok(())\n}`,
   PHP: (p) => `<?php\n$ch = curl_init("https://revy.my.id/api/github?path=${p}");\ncurl_setopt_array($ch, [\n    CURLOPT_HTTPHEADER => ["x-api-key: rv_your_key"],\n    CURLOPT_RETURNTRANSFER => true,\n]);\n$response = curl_exec($ch);\ncurl_close($ch);\n\n$data = json_decode($response, true);\nprint_r($data);\n?>`,
   cURL: (p) => `curl -s -i -H "x-api-key: rv_your_key" \\\n  "https://revy.my.id/api/github?path=${p}"`,
 };
@@ -198,12 +198,17 @@ async function runPlayground(code: string, lang: string, log: LogFn): Promise<vo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: lang.toLowerCase(), code }),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      log(`Error: ${err.error || 'Server error'}`);
+      return;
+    }
     const data = await res.json();
     if (data.error) {
       log('Compile error:');
-      log(data.output);
+      if (data.output) log(data.output);
     } else {
-      log(data.output);
+      log(data.output || '(no output)');
     }
   } catch (e: any) {
     log(`Error: ${e.message}`);
@@ -261,7 +266,7 @@ function ConsoleOutput({ lines }: { lines: string[] }) {
           <div className="text-[13px] font-mono text-muted-foreground/30">Output appears here...</div>
         ) : (
           <pre className="font-mono text-[13px] leading-relaxed text-[#a9b1d6]">
-            {lines.map((l, i) => {
+            {lines.filter(Boolean).map((l, i) => {
               let cls = '';
               if (l.startsWith('>') || l.startsWith('#') || l.startsWith('*')) cls = 'text-[#7aa2f7]';
               else if (l.startsWith('< HTTP')) cls = l.includes('200') ? 'text-[#9ece6a]' : 'text-[#f7768e]';
@@ -388,12 +393,15 @@ function SandboxTab() {
   const [code, setCode] = useState(`const API_KEY = 'rv_your_key';\nconst res = await fetch(\n  'https://revy.my.id/api/github?path=users/revyid',\n  { headers: { 'x-api-key': API_KEY } }\n);\nconst data = await res.json();\nconsole.log(data);`);
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
+  const codeRef = useRef(code);
+  codeRef.current = code;
 
   const addLine = (line: string) => setLines(prev => [...prev, line]);
 
   const run = async () => {
+    const src = codeRef.current;
     setRunning(true); setLines([]);
-    try { await runJS(code, addLine); } catch (e: any) { addLine(`Error: ${e.message}`); }
+    try { await runJS(src, addLine); } catch (e: any) { addLine(`Error: ${e.message}`); }
     setRunning(false);
   };
 
@@ -420,19 +428,25 @@ function SDKsTab() {
   const [code, setCode] = useState(sdkSnippets.JavaScript('users/revyid'));
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
+  const codeRef = useRef(code);
+  const langRef = useRef(lang);
+  codeRef.current = code;
+  langRef.current = lang;
 
   useEffect(() => { if (!running) { setCode(sdkSnippets[lang]?.(path) || ''); setLines([]); } }, [lang, path]);
 
   const addLine = (line: string) => setLines(prev => [...prev, line]);
 
   const run = async () => {
+    const src = codeRef.current;
+    const curLang = langRef.current;
     setRunning(true); setLines([]);
     try {
-      if (lang === 'JavaScript') await runJS(code, addLine);
-      else if (lang === 'Python') await runPython(code, addLine);
-      else if (lang === 'Go' || lang === 'Rust') await runPlayground(code, lang, addLine);
-      else if (lang === 'cURL') await runCurl(code, addLine);
-      else await runViaFetch(code, lang, addLine);
+      if (curLang === 'JavaScript') await runJS(src, addLine);
+      else if (curLang === 'Python') await runPython(src, addLine);
+      else if (curLang === 'Go' || curLang === 'Rust') await runPlayground(src, curLang, addLine);
+      else if (curLang === 'cURL') await runCurl(src, addLine);
+      else await runViaFetch(src, curLang, addLine);
     } catch (e: any) { addLine(`Error: ${e.message}`); }
     setRunning(false);
   };
