@@ -179,7 +179,9 @@ export async function browserCurl<T = any>(input: BrowserCurlOptions | string): 
       body: JSON.stringify({ ...options, body: serializableBody, curlCommand: typeof input === 'string' ? input : toCurl(options) }),
     });
 
-    return await response.json();
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data as BrowserCurlResponse<T>;
   } else {
     // Direct fetch logic (simplified)
     const { method = 'GET', url, headers = {}, body, timeout, userAgent = 'curl/7.81.0' } = options;
