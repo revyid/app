@@ -188,16 +188,11 @@ async function runTypeScript(code: string, log: LogFn): Promise<void> {
 
 async function runCurl(code: string, log: LogFn): Promise<void> {
   try {
-    const { CurlParser } = await import('@/lib/curl-browser');
+    const { CurlParser, browserCurl } = await import('@/lib/curl-browser');
     const parsed = new CurlParser(code).parse();
-    const url = new URL(parsed.url);
-    log(`* Connecting to ${url.hostname}...`);
-    log(`> ${parsed.method || 'GET'} ${url.pathname + url.search} HTTP/1.1`);
-    log(`> Host: ${url.hostname}`);
-    if (parsed.headers) for (const [k, v] of Object.entries(parsed.headers)) log(`> ${k}: ${v}`);
+    log(`> curl ${code.replace(/\n\s*/g, ' ').trim()}`);
     log('');
 
-    const { browserCurl } = await import('@/lib/curl-browser');
     const res = await browserCurl(code);
     log(`< HTTP/1.1 ${res.status} ${res.statusText}`);
     for (const [k, v] of Object.entries(res.headers)) log(`< ${k}: ${v}`);
