@@ -125,7 +125,7 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         ...cors,
-        'Cache-Control': `public, s-maxage=${CACHE_TTL}, stale-while-revalidate=${CACHE_TTL * 2}`,
+        'Cache-Control': 'private, no-cache',
       },
     });
   } catch {
