@@ -1,79 +1,142 @@
+// app/api/playground/route.ts
+//
+// Proxies code from the docs sandbox to Piston (https://github.com/engineer-man/piston),
+// a free, public, sandboxed multi-language execution engine (the same engine that powers
+// a lot of "run code online" tools and Discord bots). This makes Go / Rust / PHP in the
+// sandbox *actually* compile and run with the real toolchain — not a fake/simulated result.
+//
+// Why proxy through our own server instead of calling Piston from the browser?
+// 1. Keeps things future-proof if we ever want to add auth/rate limiting/caching.
+// 2. Lets us normalize the response shape for the client regardless of language.
+//
+// Note: like virtually all public code-execution sandboxes (Go Playground, Rust
+// Playground, etc.), Piston intentionally has no outbound network access — that's
+// what makes it safe to expose to anonymous visitors. So code that calls out to
+// https://revy.my.id/api/... will compile and run for real, but the HTTP call itself
+// will fail with a connection error inside the sandbox. The client surfaces this with
+// a small notice so it doesn't look like a bug.
+
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-const ALLOWED_ORIGINS = ['https://revy.my.id', 'https://dev.revy.my.id'];
+const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
+const REQUEST_TIMEOUT_MS = 15_000;
+const MAX_CODE_LENGTH = 20_000;
 
-function getCorsHeaders(origin: string) {
-  return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
+type LangKey = 'go' | 'rust' | 'php';
+
+const LANGUAGES: Record<LangKey, { language: string; version: string; filename: string }> = {
+  go: { language: 'go', version: '*', filename: 'main.go' },
+  rust: { language: 'rust', version: '*', filename: 'main.rs' },
+  php: { language: 'php', version: '*', filename: 'main.php' },
+};
+
+interface PistonRunResult {
+  stdout?: string;
+  stderr?: string;
+  output?: string;
+  code?: number | null;
+  signal?: string | null;
 }
 
-export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin') || '';
-  return new NextResponse(null, { status: 204, headers: getCorsHeaders(origin) });
+interface PistonResponse {
+  language?: string;
+  version?: string;
+  compile?: PistonRunResult;
+  run?: PistonRunResult;
+  message?: string;
 }
 
-async function runGo(code: string): Promise<{ output: string; error?: string }> {
-  const body = new URLSearchParams({ version: '2', body: code, withVet: 'true' });
-  const res = await fetch('https://go.dev/_/compile', { method: 'POST', body });
-  const data = await res.json();
-  const lines: string[] = [];
-  if (data.Errors) {
-    data.Errors.forEach((e: string) => lines.push(e));
-    return { output: lines.join('\n'), error: 'compile' };
+export async function POST(req: NextRequest) {
+  let body: { lang?: string; code?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
   }
-  if (data.Events?.length) {
-    data.Events.forEach((e: any) => lines.push(e.Message.replace(/\n$/, '')));
+
+  const langKey = String(body.lang ?? '').toLowerCase() as LangKey;
+  const code = body.code;
+
+  const config = LANGUAGES[langKey];
+  if (!config) {
+    return NextResponse.json(
+      { error: `Unsupported language "${body.lang}". Expected one of: ${Object.keys(LANGUAGES).join(', ')}.` },
+      { status: 400 },
+    );
   }
-  return { output: lines.join('\n') || '(no output)' };
-}
+  if (typeof code !== 'string' || code.trim().length === 0) {
+    return NextResponse.json({ error: 'No code provided.' }, { status: 400 });
+  }
+  if (code.length > MAX_CODE_LENGTH) {
+    return NextResponse.json({ error: `Code exceeds the ${MAX_CODE_LENGTH.toLocaleString()} character limit.` }, { status: 413 });
+  }
 
-async function runRust(code: string): Promise<{ output: string; error?: string }> {
-  const res = await fetch('https://play.rust-lang.org/execute.json', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      code,
-      edition: '2021',
-      mode: 'debug',
-      crateType: 'bin',
-      tests: false,
-    }),
-  });
-  const data = await res.json();
-  const lines: string[] = [];
-  if (data.stderr) lines.push(data.stderr.replace(/\n$/, ''));
-  if (data.stdout) lines.push(data.stdout.replace(/\n$/, ''));
-  return { output: lines.join('\n') || '(no output)', error: data.stderr ? 'compile' : undefined };
-}
-
-export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin') || '';
-  const cors = getCorsHeaders(origin);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const { lang, code } = await request.json();
+    const pistonRes = await fetch(PISTON_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: config.language,
+        version: config.version,
+        files: [{ name: config.filename, content: code }],
+        // Keep a hard ceiling on the sandboxed run itself too.
+        run_timeout: 10_000,
+        compile_timeout: 10_000,
+      }),
+      signal: controller.signal,
+      cache: 'no-store',
+    });
 
-    if (!lang || !code) {
-      return NextResponse.json({ error: 'Missing lang or code' }, { status: 400, headers: cors });
+    if (!pistonRes.ok) {
+      const text = await pistonRes.text().catch(() => '');
+      return NextResponse.json(
+        { error: true, output: `Execution service returned HTTP ${pistonRes.status}.${text ? `\n${text.slice(0, 1000)}` : ''}` },
+        { status: 200 },
+      );
     }
 
-    let result: { output: string; error?: string };
+    const data = (await pistonRes.json()) as PistonResponse;
 
-    if (lang === 'go') {
-      result = await runGo(code);
-    } else if (lang === 'rust') {
-      result = await runRust(code);
-    } else {
-      return NextResponse.json({ error: `Unsupported language: ${lang}` }, { status: 400, headers: cors });
+    // Compiled languages (Go, Rust) fail at the compile step before ever running.
+    if (data.compile && (data.compile.code ?? 0) !== 0) {
+      const compileOutput = (data.compile.stderr || data.compile.output || 'Compilation failed.').trim();
+      return NextResponse.json({ error: true, output: compileOutput, stage: 'compile' });
     }
 
-    return NextResponse.json(result, { headers: cors });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500, headers: cors });
+    const run = data.run;
+    if (!run) {
+      return NextResponse.json({ error: true, output: data.message || 'The sandbox did not return a result.' });
+    }
+
+    const combined = [run.stdout, run.stderr].filter(Boolean).join('\n').trim();
+    const exitedNonZero = typeof run.code === 'number' && run.code !== 0;
+
+    return NextResponse.json({
+      error: exitedNonZero,
+      output: combined || (exitedNonZero ? `Process exited with code ${run.code}` : '(no output)'),
+      exitCode: run.code ?? 0,
+      version: data.version,
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      return NextResponse.json({ error: true, output: 'The sandbox timed out. Try simpler code or fewer iterations.' }, { status: 200 });
+    }
+    const message = err instanceof Error ? err.message : 'Unknown error contacting the execution sandbox.';
+    return NextResponse.json({ error: true, output: message }, { status: 200 });
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: 'This endpoint only accepts POST requests with { lang, code }.' },
+    { status: 405 },
+  );
 }
