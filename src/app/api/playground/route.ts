@@ -36,7 +36,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const GLOT_RUN_URL = process.env.GLOT_RUN_URL || 'https://run.glot.io';
+const GLOT_RUN_URL = process.env.GLOT_RUN_URL || 'https://glot.io/api/run';
 const GLOT_API_TOKEN = process.env.GLOT_API_TOKEN;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_CODE_LENGTH = 20_000;
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const glotRes = await fetch(`${GLOT_RUN_URL}/languages/${config.glotLanguage}/latest`, {
+    const glotRes = await fetch(`${GLOT_RUN_URL}/${config.glotLanguage}/latest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
