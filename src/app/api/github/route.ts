@@ -52,41 +52,54 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing ?path= parameter' }, { status: 400, headers: cors });
   }
 
+  if (!apiKey) {
+    return NextResponse.json({ error: 'API key required' }, { status: 401, headers: cors });
+  }
+
   const allowed = /^(users\/[\w.-]+(?:\/repos|\/events)?|repos\/[\w.-]+\/[\w.-]+)(\?.*)?$/;
   if (!allowed.test(path)) {
     return NextResponse.json({ error: 'Path not allowed' }, { status: 403, headers: cors });
   }
 
-  // If API key provided, validate it via RPC (bypasses RLS)
-  if (apiKey) {
-    try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const keyHash = await sha256Hex(apiKey);
-      const { data: keyResult } = await supabase.rpc('validate_api_key', { p_key_hash: keyHash });
+  // Validate API key (mandatory — middleware already blocks missing keys)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-      if (keyResult?.valid) {
-        // Check unlimited setting
-        const { data: unlimitedSetting } = await supabase.from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
-        const isUnlimited = unlimitedSetting?.value === 'true';
+  // Check if it's the site's own internal API key
+  const { data: siteKeyRow } = await supabase
+    .from('site_settings').select('value').eq('key', 'site_api_key').single();
+  const isSiteKey = siteKeyRow?.value && apiKey === siteKeyRow.value;
 
-        if (!isUnlimited) {
-          const { count } = await supabase.from('api_key_usage').select('id', { count: 'exact', head: true }).eq('user_id', keyResult.user_id).gte('used_at', new Date(Date.now() - 3600000).toISOString());
+  if (!isSiteKey) {
+    // Validate as user API key
+    const keyHash = await sha256Hex(apiKey);
+    const { data: keyResult } = await supabase.rpc('validate_api_key', { p_key_hash: keyHash });
 
-          if ((count || 0) >= (keyResult.rate_limit || 100)) {
-            return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
-          }
-        }
-
-        // Record usage
-        await supabase.from('api_key_usage').insert({ user_id: keyResult.user_id });
-        await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
-      }
-    } catch {
-      // If key validation fails, continue without tracking (public access)
+    if (!keyResult?.valid) {
+      return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: cors });
     }
+
+    // Check rate limit (unless unlimited setting is on)
+    const { data: unlimitedSetting } = await supabase
+      .from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
+    const isUnlimited = unlimitedSetting?.value === 'true';
+
+    if (!isUnlimited) {
+      const { count } = await supabase.from('api_key_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', keyResult.user_id)
+        .gte('used_at', new Date(Date.now() - 3600000).toISOString());
+
+      if ((count || 0) >= (keyResult.rate_limit || 100)) {
+        return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
+      }
+    }
+
+    // Record usage
+    await supabase.from('api_key_usage').insert({ user_id: keyResult.user_id });
+    await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
   }
 
   try {

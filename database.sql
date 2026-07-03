@@ -674,3 +674,29 @@ declare v_key api_keys%rowtype; begin
   if not found then return json_build_object('valid', false); end if;
   return json_build_object('valid', true, 'user_id', v_key.user_id, 'rate_limit', v_key.rate_limit);
 end; $$;
+
+-- ============================================================
+-- SITE API KEY RPC FUNCTIONS
+-- ============================================================
+
+create or replace function public.get_site_api_key(p_token text)
+returns json language plpgsql security definer as $$
+declare v_admin_id uuid; v_key text; begin
+  v_admin_id := public.verify_admin_internal(p_token);
+  select value into v_key from site_settings where key = 'site_api_key';
+  return json_build_object('key', v_key);
+end; $$;
+
+create or replace function public.regenerate_site_api_key(p_token text)
+returns json language plpgsql security definer as $$
+declare v_admin_id uuid; v_key text; begin
+  v_admin_id := public.verify_admin_internal(p_token);
+  v_key := 'rv_site_' || encode(gen_random_bytes(24), 'hex');
+  insert into site_settings (key, value, updated_at)
+    values ('site_api_key', v_key, now())
+    on conflict (key) do update set value = excluded.value, updated_at = now();
+  return json_build_object('key', v_key);
+end; $$;
+
+grant execute on function public.get_site_api_key(text) to anon;
+grant execute on function public.regenerate_site_api_key(text) to anon;

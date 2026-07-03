@@ -25,6 +25,7 @@ export interface AuthResult {
 }
 
 const TOKEN_KEY = 'app_session_token';
+const SITE_API_KEY_STORAGE = 'site_api_key';
 
 // ─── Token Storage ──────────────────────────────────────────────────
 export function getStoredToken(): string | null {
@@ -37,6 +38,20 @@ export function storeToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+// ─── Site API Key Storage (localStorage) ────────────────────────────
+export function getStoredSiteApiKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(SITE_API_KEY_STORAGE);
+}
+
+export function storeSiteApiKey(key: string): void {
+  localStorage.setItem(SITE_API_KEY_STORAGE, key);
+}
+
+export function clearSiteApiKey(): void {
+  localStorage.removeItem(SITE_API_KEY_STORAGE);
 }
 
 // ─── Auth Operations ────────────────────────────────────────────────
@@ -411,4 +426,23 @@ export async function getApiUsageToday(): Promise<number> {
   if (!user.user) return 0;
   const { data } = await (await getSupabase()).rpc('get_api_usage_today', { p_user_id: user.user.id });
   return data || 0;
+}
+
+// ─── Site API Key ──────────────────────────────────────────────────
+
+export async function getSiteApiKey(): Promise<string | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+  const { data, error } = await (await getSupabase()).rpc('get_site_api_key', { p_token: token });
+  if (error || data?.error) return null;
+  return data?.key || null;
+}
+
+export async function regenerateSiteApiKey(): Promise<{ key?: string; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+  const { data, error } = await (await getSupabase()).rpc('regenerate_site_api_key', { p_token: token });
+  if (error) return { error: error.message };
+  if (data?.error) return { error: data.error };
+  return { key: data.key };
 }

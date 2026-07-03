@@ -16,6 +16,21 @@ export function middleware(request: NextRequest) {
     response.headers.set('Cache-Control', 'no-store');
   }
 
+  // Enforce API key on /api/github (skip OPTIONS, /api/track, /api/auth/*)
+  const pathname = request.nextUrl.pathname;
+  if (
+    pathname.startsWith('/api/github') &&
+    request.method !== 'OPTIONS'
+  ) {
+    const apiKey = request.headers.get('x-api-key');
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'API key required. Get one at /dashboard/api-keys' },
+        { status: 401 }
+      );
+    }
+  }
+
   return response;
 }
 
