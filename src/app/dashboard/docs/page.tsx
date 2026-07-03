@@ -64,9 +64,12 @@ const ENDPOINTS = [
 const sdkSnippets: Record<string, (p: string) => string> = {
   JavaScript: (p) => `const API_KEY = 'rv_your_key';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`,
   Python: (p) => `import requests\n\nAPI_KEY = "rv_your_key"\nBASE = "https://revy.my.id/api/github"\n\nres = requests.get(\n    f"{BASE}?path=${p}",\n    headers={"x-api-key": API_KEY}\n)\nprint(res.status_code)\nprint(res.json())`,
+  Go: (p) => `package main\n\nimport (\n\t"encoding/json"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\treq, _ := http.NewRequest("GET",\n\t\t"https://revy.my.id/api/github?path=${p}", nil)\n\treq.Header.Set("x-api-key", "rv_your_key")\n\n\tresp, _ := http.DefaultClient.Do(req)\n\tdefer resp.Body.Close()\n\tbody, _ := io.ReadAll(resp.Body)\n\n\tvar result map[string]any\n\tjson.Unmarshal(body, &result)\n\tfmt.Println(result)\n}`,
+  Rust: (p) => `use serde::Deserialize;\nuse reqwest::Client;\n\n#[derive(Deserialize, Debug)]\nstruct ApiResponse {\n    login: Option<String>,\n    name: Option<String>,\n    #[serde(flatten)]\n    other: std::collections::HashMap<String, serde_json::Value>,\n}\n\n#[tokio::main]\nasync fn main() -> Result<(), Box<dyn std::error::Error>> {\n    let resp = Client::new()\n        .get("https://revy.my.id/api/github?path=${p}")\n        .header("x-api-key", "rv_your_key")\n        .send().await?\n        .json::<serde_json::Value>().await?;\n    println!("{}", serde_json::to_string_pretty(&resp)?);\n    Ok(()\n}`,
+  PHP: (p) => `<?php\n$ch = curl_init("https://revy.my.id/api/github?path=${p}");\ncurl_setopt_array($ch, [\n    CURLOPT_HTTPHEADER => ["x-api-key: rv_your_key"],\n    CURLOPT_RETURNTRANSFER => true,\n]);\n$response = curl_exec($ch);\ncurl_close($ch);\n\n$data = json_decode($response, true);\nprint_r($data);\n?>`,
   cURL: (p) => `curl -s -i -H "x-api-key: rv_your_key" \\\n  "https://revy.my.id/api/github?path=${p}"`,
 };
-const SDK_LANGS = ['JavaScript', 'Python', 'cURL'];
+const SDK_LANGS = ['JavaScript', 'Python', 'Go', 'Rust', 'PHP', 'cURL'];
 const SDK_PATHS = ['users/revyid', 'users/torvalds', 'repos/facebook/react'];
 
 /* ─── Pyodide loader (lazy) ───────────────────────────────────────── */
@@ -155,6 +158,35 @@ async function runPython(code: string, log: LogFn): Promise<void> {
   await pyodide.runPythonAsync(`import micropip; await micropip.install('requests')`);
   log('# Running Python code...\n');
   await pyodide.runPythonAsync(code);
+}
+
+// Languages that can't run in browser — execute equivalent fetch
+async function runViaFetch(code: string, lang: string, log: LogFn): Promise<void> {
+  const url = (code.match(/"(https?:\/\/[^"]+)"/) || code.match(/`(https?:\/\/[^`]+)`/))?.[1];
+  if (!url) { log(`Error: Could not parse URL from ${lang} code`); return; }
+  const headers: Record<string, string> = {};
+  if (code.includes('x-api-key')) headers['x-api-key'] = 'rv_your_key';
+  log(`# Executing equivalent fetch (browser)...\n`);
+  const host = new URL(url).hostname;
+  const pathStr = new URL(url).pathname + new URL(url).search;
+  log(`* Connecting to ${host}...`);
+  log(`> GET ${pathStr} HTTP/1.1`);
+  log(`> Host: ${host}`);
+  for (const [k, v] of Object.entries(headers)) log(`> ${k}: ${v}`);
+  log('');
+  try {
+    const t0 = performance.now();
+    const res = await fetch(url, { headers });
+    const ms = Math.round(performance.now() - t0);
+    log(`< HTTP/1.1 ${res.status} ${res.statusText}`);
+    res.headers.forEach((v, k) => log(`< ${k}: ${v}`));
+    log(`< time: ${ms}ms\n`);
+    const body = await res.json();
+    log(JSON.stringify(body, null, 2));
+    if (res.ok) log(`\n# ${ms}ms`);
+  } catch (e: any) {
+    log(`Error: ${e.message}`);
+  }
 }
 
 async function runCurl(code: string, log: LogFn): Promise<void> {
@@ -378,6 +410,7 @@ function SDKsTab() {
       if (lang === 'JavaScript') await runJS(code, addLine);
       else if (lang === 'Python') await runPython(code, addLine);
       else if (lang === 'cURL') await runCurl(code, addLine);
+      else await runViaFetch(code, lang, addLine); // Go, Rust, PHP
     } catch (e: any) { addLine(`Error: ${e.message}`); }
     setRunning(false);
   };
@@ -385,6 +418,9 @@ function SDKsTab() {
   const desc: Record<string, string> = {
     JavaScript: 'Runs natively in browser via JS engine.',
     Python: 'Runs real Python via Pyodide (WebAssembly). First run loads ~10MB.',
+    Go: 'Go code shown for reference. Run executes equivalent HTTP request.',
+    Rust: 'Rust code shown for reference. Run executes equivalent HTTP request.',
+    PHP: 'PHP code shown for reference. Run executes equivalent HTTP request.',
     cURL: 'Runs real HTTP request, output formatted like curl -v.',
   };
 
