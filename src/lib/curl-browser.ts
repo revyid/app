@@ -53,7 +53,11 @@ export class CurlParser {
     const options: BrowserCurlOptions = { url: '', headers: {}, queryParams: {} };
     const args = this.splitCurlCommand(this.command);
 
-    let i = 0;
+    // Skip program name (curl)
+    let start = 0;
+    if (args.length > 0 && (args[0] === 'curl' || args[0].endsWith('/curl'))) start = 1;
+
+    let i = start;
     while (i < args.length) {
       const arg = args[i];
       switch (arg) {
