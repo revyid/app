@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Copy, Check, Play, Square, Terminal, BookOpen, Globe, Loader2, AlertTriangle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Play, Square, Terminal, BookOpen, Globe, Loader2, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 
 /* ─── Copy button ─────────────────────────────────────────────────── */
@@ -36,13 +36,8 @@ const ENDPOINTS = [
 
 /* ─── SDK snippets ────────────────────────────────────────────────── */
 
-const LANGS = ['JavaScript', 'Python', 'Go', 'Rust', 'PHP', 'cURL'] as const;
+const LANGS = ['JavaScript', 'Python', 'TypeScript', 'Ruby', 'cURL'] as const;
 type Lang = typeof LANGS[number];
-
-// Languages whose sandbox runs in a network-isolated compiler/interpreter.
-// Real code, real toolchain — but no outbound internet, by design (same
-// tradeoff every public playground/sandbox makes to stay safe for anonymous use).
-const SANDBOXED_LANGS: Lang[] = ['Go', 'Rust', 'PHP'];
 
 const PATHS = ['users/revyid', 'users/torvalds', 'repos/facebook/react'];
 
@@ -51,17 +46,15 @@ function sdkCode(lang: Lang, p: string): string {
   const k = 'rv_your_key';
   switch (lang) {
     case 'JavaScript':
-      return `const API_KEY = '${k}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`;
+      return `const API_KEY = '${k}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path: string) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`;
     case 'Python':
       return `import requests\n\nAPI_KEY = "${k}"\nBASE = "https://revy.my.id/api/github"\n\nres = requests.get(\n    f"{BASE}?path=${p}",\n    headers={"x-api-key": API_KEY},\n    timeout=10,\n)\nres.raise_for_status()\nprint(res.status_code)\nprint(res.json())`;
-    case 'Go':
-      return `package main\n\nimport (\n\t"encoding/json"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\treq, err := http.NewRequest("GET", "${url}", nil)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\treq.Header.Set("x-api-key", "${k}")\n\n\tresp, err := http.DefaultClient.Do(req)\n\tif err != nil {\n\t\tfmt.Println("request failed:", err)\n\t\treturn\n\t}\n\tdefer resp.Body.Close()\n\n\tbody, err := io.ReadAll(resp.Body)\n\tif err != nil {\n\t\tpanic(err)\n\t}\n\n\tvar result map[string]any\n\tjson.Unmarshal(body, &result)\n\tfmt.Println(result)\n}`;
-    case 'Rust':
-      return `use serde_json::Value;\n\n#[tokio::main]\nasync fn main() {\n    let client = reqwest::Client::new();\n    let resp = client\n        .get("${url}")\n        .header("x-api-key", "${k}")\n        .send()\n        .await;\n\n    match resp {\n        Ok(r) => {\n            let json: Value = r.json().await.unwrap_or_default();\n            println!("{}", serde_json::to_string_pretty(&json).unwrap());\n        }\n        Err(e) => println!("request failed: {}", e),\n    }\n}`;
-    case 'PHP':
-      return `<?php\n$ch = curl_init("${url}");\ncurl_setopt_array($ch, [\n    CURLOPT_HTTPHEADER => ["x-api-key: ${k}"],\n    CURLOPT_RETURNTRANSFER => true,\n    CURLOPT_TIMEOUT => 10,\n]);\n$response = curl_exec($ch);\n\nif ($response === false) {\n    echo "Request failed: " . curl_error($ch) . "\\n";\n} else {\n    $data = json_decode($response, true);\n    print_r($data);\n}\ncurl_close($ch);\n`;
+    case 'TypeScript':
+      return `interface ApiResponse {\n  login: string;\n  name: string | null;\n  public_repos: number;\n  followers: number;\n}\n\nconst API_KEY: string = '${k}';\nconst BASE: string = 'https://revy.my.id/api/github';\n\nasync function getData(path: string): Promise<ApiResponse> {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json() as Promise<ApiResponse>;\n}\n\nconst data: ApiResponse = await getData('${p}');\nconsole.log(data);`;
     case 'cURL':
       return `curl -s -H "x-api-key: ${k}" \\\n  "${url}"`;
+    case 'Ruby':
+      return `require 'net/http'\nrequire 'json'\n\nuri = URI("${url}")\nreq = Net::HTTP::Get.new(uri)\nreq["x-api-key"] = "${k}"\n\nresponse = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|\n  http.request(req)\nend\n\ndata = JSON.parse(response.body)\nputs data`;
   }
 }
 
@@ -170,35 +163,52 @@ async function runPython(code: string, log: LogFn): Promise<void> {
   await withTimeout(py.runPythonAsync(code), 25000, 'Python script');
 }
 
-async function runPlayground(code: string, lang: Lang, log: LogFn): Promise<void> {
-  log(`# Compiling & running ${lang} in a sandboxed runtime...\n`);
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
-    const res = await fetch('/api/playground', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang: lang.toLowerCase(), code }),
-      signal: controller.signal,
-    }).finally(() => clearTimeout(timer));
+// TypeScript transpiler — loaded from CDN, transpiles TS to JS
+let tsCompiler: any = null;
 
-    const data = await res.json().catch(() => ({ error: true, output: `Server returned HTTP ${res.status}` }));
-
-    if (!res.ok && !data.output) {
-      log(`Error: ${data.error || `HTTP ${res.status}`}`);
-      return;
-    }
-    if (data.error) {
-      log(data.stage === 'compile' ? '# Compile error:\n' : '# Runtime error:\n');
-      log(data.output || 'The sandbox reported an error.');
-      return;
-    }
-    log(data.output || '(no output)');
-    if (typeof data.exitCode === 'number') log(`\n# exited with code ${data.exitCode}`);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? (e.name === 'AbortError' ? 'Sandbox request timed out.' : e.message) : String(e);
-    log(`Error: ${msg}`);
+async function getTsCompiler(): Promise<any> {
+  if (tsCompiler) return tsCompiler;
+  if (!(window as any).ts) {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/typescript@5.4.5/lib/typescript.min.js';
+    document.head.appendChild(s);
+    await new Promise<void>((res, rej) => { s.onload = () => res(); s.onerror = () => rej(new Error('Failed to load TypeScript compiler')); });
   }
+  tsCompiler = (window as any).ts;
+  return tsCompiler;
+}
+
+async function runTypeScript(code: string, log: LogFn): Promise<void> {
+  log('# Transpiling TypeScript to JavaScript...\n');
+  const ts = await getTsCompiler();
+  const js = ts.transpileModule(code, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, strict: true },
+  }).outputText;
+  log('# Running transpiled code...\n');
+  await runJS(js, log);
+}
+
+// Ruby via Opal compiler (Ruby → JS in browser)
+let opalCompiler: any = null;
+
+async function getOpal(): Promise<any> {
+  if (opalCompiler) return opalCompiler;
+  if (!(window as any).Opal) {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/opal-compiler@1.8.2/opal.min.js';
+    document.head.appendChild(s);
+    await new Promise<void>((res, rej) => { s.onload = () => res(); s.onerror = () => rej(new Error('Failed to load Opal Ruby compiler')); });
+  }
+  opalCompiler = (window as any).Opal;
+  return opalCompiler;
+}
+
+async function runRuby(code: string, log: LogFn): Promise<void> {
+  log('# Compiling Ruby to JavaScript via Opal...\n');
+  const Opal = await getOpal();
+  const js = Opal.compile(code);
+  log('# Running compiled Ruby code...\n');
+  await runJS(js, log);
 }
 
 async function runCurl(code: string, log: LogFn): Promise<void> {
@@ -380,9 +390,8 @@ function EndpointsTab() {
 const LANG_INFO: Record<Lang, string> = {
   JavaScript: 'Runs natively in your browser\'s JS engine — real fetch, real response.',
   Python: 'Runs a real CPython interpreter via Pyodide (WebAssembly); requests is patched to use your browser\'s network stack.',
-  Go: 'Compiles and runs with a real Go compiler in an isolated sandbox.',
-  Rust: 'Compiles and runs with a real Rust (rustc) compiler in an isolated sandbox.',
-  PHP: 'Runs on a real PHP interpreter in an isolated sandbox.',
+  TypeScript: 'Transpiles to JavaScript in-browser via the official TypeScript compiler, then runs natively with full HTTP support.',
+  Ruby: 'Compiles Ruby to JavaScript via Opal compiler in-browser, then runs natively with full HTTP support.',
   cURL: 'Sends a genuine HTTP request straight from your browser, formatted like a curl transcript.',
 };
 
@@ -412,7 +421,8 @@ function SandboxTab() {
     try {
       if (curLang === 'JavaScript') await runJS(src, addLine);
       else if (curLang === 'Python') await runPython(src, addLine);
-      else if (curLang === 'Go' || curLang === 'Rust' || curLang === 'PHP') await runPlayground(src, curLang, addLine);
+      else if (curLang === 'TypeScript') await runTypeScript(src, addLine);
+      else if (curLang === 'Ruby') await runRuby(src, addLine);
       else if (curLang === 'cURL') await runCurl(src, addLine);
     } catch (e: unknown) {
       addLine(`Error: ${e instanceof Error ? e.message : String(e)}`);
@@ -446,13 +456,6 @@ function SandboxTab() {
         </div>
       </div>
 
-      {SANDBOXED_LANGS.includes(lang) && (
-        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-warning/10 border border-warning/20 text-label-sm text-warning">
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span>This runs on a real, isolated {lang} sandbox with no outbound internet access (the same tradeoff every public code playground makes for safety). The API call in this code may fail here with a connection error — try JavaScript, Python, or cURL to see a live response.</span>
-        </div>
-      )}
-
       <div className="relative h-[500px] rounded-xl border border-outline/20 overflow-hidden flex flex-col md:flex-row">
         <Editor code={code} setCode={setCode} onRun={run} onReset={reset} running={running} lang={lang} />
         <ConsoleOutput lines={lines} />
@@ -461,7 +464,7 @@ function SandboxTab() {
             <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-xl shadow-lg border border-outline/20">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-body-sm font-medium text-foreground">
-                {lang === 'Python' ? 'Loading Python runtime...' : SANDBOXED_LANGS.includes(lang) ? `Compiling & running ${lang}...` : lang === 'cURL' ? 'Sending request...' : 'Running...'}
+                {lang === 'Python' ? 'Loading Python runtime...' : lang === 'TypeScript' ? 'Transpiling TypeScript...' : lang === 'Ruby' ? 'Compiling Ruby...' : lang === 'cURL' ? 'Sending request...' : 'Running...'}
               </span>
             </div>
           </div>
