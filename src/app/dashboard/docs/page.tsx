@@ -105,68 +105,90 @@ async function getPyodide(): Promise<any> {
 
 /* ─── Runners: execute code per language ──────────────────────────── */
 
-async function runJS(code: string, logs: string[], fakeFetch: Function, con: any): Promise<void> {
-  const js = `(async()=>{${code}})()`;
-  const fn = new Function('fetch', 'console', js);
-  const result = fn(fakeFetch, con);
-  if (result && typeof result.then === 'function') await result;
+type LogFn = (line: string) => void;
+
+function makeCon(log: LogFn) {
+  return {
+    log: (...a: any[]) => log(a.map(x => typeof x === 'object' ? JSON.stringify(x, null, 2) : String(x)).join(' ')),
+    error: (...a: any[]) => log('Error: ' + a.join(' ')),
+  };
 }
 
-async function runPython(code: string, logs: string[]): Promise<void> {
-  logs.push('# Loading Python runtime (first time takes ~10s)...\n');
+function makeFakeFetch(log: LogFn) {
+  return async (url: string, opts?: any) => {
+    const t0 = performance.now();
+    try {
+      const res = await window.fetch(url, opts);
+      const ms = Math.round(performance.now() - t0);
+      log(`> ${opts?.method || 'GET'} ${url}`);
+      log(`< HTTP/1.1 ${res.status} ${res.statusText}`);
+      const ct = res.headers.get('content-type');
+      if (ct) log(`< content-type: ${ct}`);
+      log(`< time: ${ms}ms`);
+      log('');
+      const body = await res.clone().json();
+      log(JSON.stringify(body, null, 2));
+      if (res.ok) log(`\n# ${ms}ms`);
+      return res;
+    } catch (e: any) {
+      log(`Error: ${e.message}`);
+      return new Response('{}', { status: 500 });
+    }
+  };
+}
+
+async function runJS(code: string, log: LogFn): Promise<void> {
+  const con = makeCon(log);
+  const ff = makeFakeFetch(log);
+  const fn = new Function('fetch', 'console', `(async()=>{${code}})()`);
+  const result = fn(ff, con);
+  if (result?.then) await result;
+}
+
+async function runPython(code: string, log: LogFn): Promise<void> {
+  log('# Loading Python runtime...');
+  log('');
   const pyodide = await getPyodide();
-
-  // Capture stdout/stderr
-  pyodide.setStdout({ batched: (text: string) => logs.push(text.replace(/\n$/, '')) });
-  pyodide.setStderr({ batched: (text: string) => logs.push('Error: ' + text.replace(/\n$/, '')) });
-
-  // Install requests via micropip (if not already)
+  log('# Runtime loaded. Installing requests...\n');
+  pyodide.setStdout({ batched: (text: string) => text.split('\n').filter(Boolean).forEach(l => log(l)) });
+  pyodide.setStderr({ batched: (text: string) => text.split('\n').filter(Boolean).forEach(l => log('Error: ' + l)) });
   await pyodide.runPythonAsync(`import micropip; await micropip.install('requests')`);
-
-  // Run the user's Python code
+  log('# Running Python code...\n');
   await pyodide.runPythonAsync(code);
 }
 
-async function runCurl(code: string, logs: string[]): Promise<void> {
-  // Parse cURL command
+async function runCurl(code: string, log: LogFn): Promise<void> {
   const url = (code.match(/"(https?:\/\/[^"]+)"/) || code.match(/'(https?:\/\/[^']+)'/))?.[1];
-  if (!url) { logs.push('Error: Could not parse URL from cURL command'); return; }
-
+  if (!url) { log('Error: Could not parse URL from cURL command'); return; }
   const headers: Record<string, string> = {};
-  const headerMatches = code.matchAll(/-H\s+["']([^"']+)["']/g);
-  for (const m of headerMatches) {
+  for (const m of code.matchAll(/-H\s+["']([^"']+)["']/g)) {
     const [k, ...v] = m[1].split(':');
     headers[k.trim()] = v.join(':').trim();
   }
-
-  // Format like curl -v output
-  logs.push(`* Trying to connect to ${new URL(url).hostname}...`);
-  logs.push(`* Connected to ${new URL(url).hostname}`);
-  logs.push(`* SSL connection using TLSv1.3`);
-  logs.push('');
-  logs.push(`> ${code.includes('-X POST') ? 'POST' : 'GET'} ${new URL(url).pathname}${new URL(url).search} HTTP/1.1`);
-  logs.push(`> Host: ${new URL(url).hostname}`);
-  for (const [k, v] of Object.entries(headers)) {
-    logs.push(`> ${k}: ${v}`);
-  }
-  logs.push(`> User-Agent: curl/8.0`);
-  logs.push(`> Accept: */*`);
-  logs.push('');
-
+  const host = new URL(url).hostname;
+  const pathStr = new URL(url).pathname + new URL(url).search;
+  log(`* Trying to connect to ${host}...`);
+  log(`* Connected to ${host}`);
+  log(`* SSL connection using TLSv1.3`);
+  log('');
+  log(`> GET ${pathStr} HTTP/1.1`);
+  log(`> Host: ${host}`);
+  for (const [k, v] of Object.entries(headers)) log(`> ${k}: ${v}`);
+  log(`> User-Agent: curl/8.0`);
+  log(`> Accept: */*`);
+  log('');
   try {
     const t0 = performance.now();
     const res = await fetch(url, { headers });
     const ms = Math.round(performance.now() - t0);
-
-    logs.push(`< HTTP/1.1 ${res.status} ${res.statusText}`);
-    res.headers.forEach((v, k) => logs.push(`< ${k}: ${v}`));
-    logs.push(`< time: ${ms}ms`);
-    logs.push('');
-
+    log(`< HTTP/1.1 ${res.status} ${res.statusText}`);
+    res.headers.forEach((v, k) => log(`< ${k}: ${v}`));
+    log(`< time: ${ms}ms`);
+    log('');
     const body = await res.json();
-    logs.push(JSON.stringify(body, null, 2));
+    log(JSON.stringify(body, null, 2));
   } catch (e: any) {
-    logs.push(`curl: (6) ${e.message}`);
+    log(`curl: (6) ${e.message}`);
   }
 }
 
@@ -214,11 +236,11 @@ function Editor({ code, setCode, onRun, running, lang }: { code: string; setCode
           {lang && <span className="text-label-sm text-muted-foreground/50 font-mono ml-1">{lang === 'cURL' ? 'terminal' : lang.toLowerCase()}</span>}
         </div>
         <button onClick={onRun} disabled={running} className="flex items-center gap-1.5 px-3 py-1 text-label-sm font-mono rounded-md bg-primary/20 text-primary hover:bg-primary/30 transition-colors disabled:opacity-50">
-          {running ? <><Square className="w-3 h-3" /> Stop</> : <><Play className="w-3 h-3" /> Run</>}
+          {running ? <><Square className="w-3 h-3" /> Running</> : <><Play className="w-3 h-3" /> Run</>}
         </button>
       </div>
-      <textarea ref={ref} value={code} onChange={e => setCode(e.target.value)} spellCheck={false}
-        className="flex-1 w-full p-3 bg-[#1a1b26] text-[#a9b1d6] font-mono text-[13px] leading-relaxed resize-none outline-none" />
+      <textarea ref={ref} value={code} onChange={e => setCode(e.target.value)} spellCheck={false} disabled={running}
+        className="flex-1 w-full p-3 bg-[#1a1b26] text-[#a9b1d6] font-mono text-[13px] leading-relaxed resize-none outline-none disabled:opacity-60" />
     </div>
   );
 }
@@ -314,38 +336,26 @@ function SandboxTab() {
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
 
+  const addLine = (line: string) => setLines(prev => [...prev, line]);
+
   const run = async () => {
     setRunning(true); setLines([]);
-    const logs: string[] = [];
-    const con = { log: (...a: any[]) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x, null, 2) : String(x)).join(' ')), error: (...a: any[]) => logs.push('Error: ' + a.join(' ')) };
-    const fakeFetch = async (url: string, opts?: any) => {
-      const t0 = performance.now();
-      try {
-        const res = await window.fetch(url, opts);
-        const ms = Math.round(performance.now() - t0);
-        logs.push(`> ${opts?.method || 'GET'} ${url}`);
-        logs.push(`< HTTP/1.1 ${res.status} ${res.statusText}`);
-        logs.push(`< time: ${ms}ms\n`);
-        const body = await res.clone().json();
-        logs.push(JSON.stringify(body, null, 2));
-        if (res.ok) logs.push(`\n# ${ms}ms`);
-        return res;
-      } catch (e: any) { logs.push(`Error: ${e.message}`); return new Response('{}', { status: 500 }); }
-    };
-    try {
-      const fn = new Function('fetch', 'console', `(async()=>{${code}})()`);
-      const result = fn(fakeFetch, con);
-      if (result?.then) await result;
-    } catch (e: any) { logs.push(`Error: ${e.message}`); }
-    setLines(logs); setRunning(false);
+    try { await runJS(code, addLine); } catch (e: any) { addLine(`Error: ${e.message}`); }
+    setRunning(false);
   };
 
   return (
     <div className="space-y-4">
       <div><h1 className="text-2xl font-bold text-foreground mb-1">Sandbox</h1><p className="text-body-sm text-muted-foreground">Edit JavaScript, click Run. Real API call in your browser.</p></div>
-      <div className="h-[480px] rounded-xl border border-outline/20 overflow-hidden flex flex-col md:flex-row">
+      <div className="relative h-[480px] rounded-xl border border-outline/20 overflow-hidden flex flex-col md:flex-row">
         <Editor code={code} setCode={setCode} onRun={run} running={running} />
         <ConsoleOutput lines={lines} />
+        {running && <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-10">
+          <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-xl shadow-lg border border-outline/20">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-body-sm font-medium text-foreground">Running...</span>
+          </div>
+        </div>}
       </div>
     </div>
   );
@@ -358,65 +368,50 @@ function SDKsTab() {
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
 
-  useEffect(() => { setCode(sdkSnippets[lang]?.(path) || ''); setLines([]); }, [lang, path]);
+  useEffect(() => { if (!running) { setCode(sdkSnippets[lang]?.(path) || ''); setLines([]); } }, [lang, path]);
+
+  const addLine = (line: string) => setLines(prev => [...prev, line]);
 
   const run = async () => {
     setRunning(true); setLines([]);
-    const logs: string[] = [];
-    const con = { log: (...a: any[]) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x, null, 2) : String(x)).join(' ')), error: (...a: any[]) => logs.push('Error: ' + a.join(' ')) };
-    const fakeFetch = async (url: string, opts?: any) => {
-      const t0 = performance.now();
-      try {
-        const res = await window.fetch(url, opts);
-        const ms = Math.round(performance.now() - t0);
-        logs.push(`> ${opts?.method || 'GET'} ${url}`);
-        logs.push(`< HTTP/1.1 ${res.status} ${res.statusText}`);
-        logs.push(`< time: ${ms}ms\n`);
-        const body = await res.clone().json();
-        logs.push(JSON.stringify(body, null, 2));
-        if (res.ok) logs.push(`\n# ${ms}ms`);
-        return res;
-      } catch (e: any) { logs.push(`Error: ${e.message}`); return new Response('{}', { status: 500 }); }
-    };
-
     try {
-      if (lang === 'JavaScript') {
-        const fn = new Function('fetch', 'console', `(async()=>{${code}})()`);
-        const result = fn(fakeFetch, con);
-        if (result?.then) await result;
-      } else if (lang === 'Python') {
-        await runPython(code, logs);
-      } else if (lang === 'cURL') {
-        await runCurl(code, logs);
-      }
-    } catch (e: any) { logs.push(`Error: ${e.message}`); }
-    setLines(logs); setRunning(false);
+      if (lang === 'JavaScript') await runJS(code, addLine);
+      else if (lang === 'Python') await runPython(code, addLine);
+      else if (lang === 'cURL') await runCurl(code, addLine);
+    } catch (e: any) { addLine(`Error: ${e.message}`); }
+    setRunning(false);
+  };
+
+  const desc: Record<string, string> = {
+    JavaScript: 'Runs natively in browser via JS engine.',
+    Python: 'Runs real Python via Pyodide (WebAssembly). First run loads ~10MB.',
+    cURL: 'Runs real HTTP request, output formatted like curl -v.',
   };
 
   return (
     <div className="space-y-4">
-      <div><h1 className="text-2xl font-bold text-foreground mb-1">SDKs</h1>
-        <p className="text-body-sm text-muted-foreground">
-          {lang === 'JavaScript' && 'Runs natively in browser via JS engine.'}
-          {lang === 'Python' && 'Runs real Python via Pyodide (WebAssembly). First run loads ~10MB runtime.'}
-          {lang === 'cURL' && 'Runs real HTTP request, output formatted like curl -v.'}
-        </p>
-      </div>
+      <div><h1 className="text-2xl font-bold text-foreground mb-1">SDKs</h1><p className="text-body-sm text-muted-foreground">{desc[lang]}</p></div>
       <div className="flex flex-wrap gap-2">
         <div className="flex gap-1 bg-surface-variant/50 rounded-lg p-0.5">
           {SDK_LANGS.map(l => (
-            <button key={l} onClick={() => setLang(l)} className={`px-2.5 py-1 text-label-sm font-medium rounded-md transition-colors ${lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>
+            <button key={l} onClick={() => setLang(l)} disabled={running} className={`px-2.5 py-1 text-label-sm font-medium rounded-md transition-colors disabled:opacity-50 ${lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>
           ))}
         </div>
         <div className="flex gap-1 bg-surface-variant/50 rounded-lg p-0.5">
           {SDK_PATHS.map(p => (
-            <button key={p} onClick={() => setPath(p)} className={`px-2.5 py-1 text-label-sm font-mono rounded-md transition-colors ${path === p ? 'bg-surface text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{p.split('/').pop()}</button>
+            <button key={p} onClick={() => setPath(p)} disabled={running} className={`px-2.5 py-1 text-label-sm font-mono rounded-md transition-colors disabled:opacity-50 ${path === p ? 'bg-surface text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{p.split('/').pop()}</button>
           ))}
         </div>
       </div>
-      <div className="h-[480px] rounded-xl border border-outline/20 overflow-hidden flex flex-col md:flex-row">
+      <div className="relative h-[480px] rounded-xl border border-outline/20 overflow-hidden flex flex-col md:flex-row">
         <Editor code={code} setCode={setCode} onRun={run} running={running} lang={lang} />
         <ConsoleOutput lines={lines} />
+        {running && <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-10">
+          <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-xl shadow-lg border border-outline/20">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-body-sm font-medium text-foreground">{lang === 'Python' ? 'Loading Python runtime...' : 'Running...'}</span>
+          </div>
+        </div>}
       </div>
     </div>
   );
