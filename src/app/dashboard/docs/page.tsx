@@ -187,38 +187,19 @@ async function runTypeScript(code: string, log: LogFn): Promise<void> {
 }
 
 async function runCurl(code: string, log: LogFn): Promise<void> {
-  const url = (code.match(/"(https?:\/\/[^"]+)"/) || code.match(/'(https?:\/\/[^']+)'/))?.[1];
-  if (!url) { log('Error: Could not parse a URL from the command.'); return; }
-  const headers: Record<string, string> = {};
-  for (const m of code.matchAll(/-H\s+["']([^"']+)["']/g)) {
-    const [k, ...v] = m[1].split(':');
-    headers[k.trim()] = v.join(':').trim();
-  }
-  const parsed = new URL(url);
-  log(`* Connecting to ${parsed.hostname}...`);
-  log(`> GET ${parsed.pathname + parsed.search} HTTP/1.1`);
-  log(`> Host: ${parsed.hostname}`);
-  for (const [k, v] of Object.entries(headers)) log(`> ${k}: ${v}`);
-  log('');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const t0 = performance.now();
-    const res = await fetch(url, { headers, signal: controller.signal });
-    const ms = Math.round(performance.now() - t0);
+    const { browserCurl } = await import('@/lib/curl-browser');
+    const res = await browserCurl(code);
+    log(`> ${res.curlCommand}`);
+    log('');
     log(`< HTTP/1.1 ${res.status} ${res.statusText}`);
-    log(`< time: ${ms}ms\n`);
-    try {
-      const body = await res.json();
-      log(JSON.stringify(body, null, 2));
-    } catch {
-      log(await res.text());
-    }
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? (e.name === 'AbortError' ? 'request timed out' : e.message) : String(e);
-    log(`Error: ${msg}`);
-  } finally {
-    clearTimeout(timer);
+    for (const [k, v] of Object.entries(res.headers)) log(`< ${k}: ${v}`);
+    if (res.duration) log(`< time: ${res.duration}ms`);
+    log('');
+    if (typeof res.body === 'object') log(JSON.stringify(res.body, null, 2));
+    else log(String(res.body));
+  } catch (e: any) {
+    log(`Error: ${e.message}`);
   }
 }
 
