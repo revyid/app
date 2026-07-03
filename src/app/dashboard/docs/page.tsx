@@ -577,18 +577,49 @@ function TryItTab() {
 
 function SDKsTab() {
   const [activeSdk, setActiveSdk] = useState(SDK_SNIPPETS[0].key);
+  const [runOutput, setRunOutput] = useState<string[]>([]);
+  const [running, setRunning] = useState(false);
   const snippet = SDK_SNIPPETS.find(s => s.key === activeSdk)!;
+
+  const runSnippet = async () => {
+    setRunning(true);
+    setRunOutput(['> Running request...', '']);
+    try {
+      const res = await fetch(`/api/github?path=${encodeURIComponent(snippet.example)}`, {
+        headers: { 'x-api-key': 'rv_your_key' },
+      });
+      const body = await res.json();
+      const lines: string[] = [];
+      if (res.ok) {
+        lines.push(`> GET /api/github?path=${snippet.example}`);
+        lines.push(`> Status: ${res.status} OK`);
+        lines.push('');
+        const formatted = JSON.stringify(body, null, 2).split('\n');
+        formatted.forEach(l => lines.push(l));
+        lines.push('');
+        lines.push(`> Fields: ${Object.keys(body).join(', ')}`);
+      } else {
+        lines.push(`> GET /api/github?path=${snippet.example}`);
+        lines.push(`> Status: ${res.status}`);
+        lines.push(`> Error: ${body.error || 'Unknown'}`);
+      }
+      setRunOutput(lines);
+    } catch (e: any) {
+      setRunOutput([`> Error: ${e.message}`]);
+    }
+    setRunning(false);
+  };
 
   return (
     <div className="space-y-4">
-      <p className="text-body-sm text-muted-foreground">Pick a language. Each snippet can be tested directly via the terminal below.</p>
+      <p className="text-body-sm text-muted-foreground">Pick a language. Click <strong className="text-foreground">Run</strong> to test the snippet output.</p>
 
       {/* Language tabs */}
       <div className="flex flex-wrap gap-1.5">
         {SDK_SNIPPETS.map(s => (
           <button
             key={s.key}
-            onClick={() => setActiveSdk(s.key)}
+            onClick={() => { setActiveSdk(s.key); setRunOutput([]); }}
             className={`px-3 py-1.5 text-label-sm font-medium rounded-lg transition-colors ${
               activeSdk === s.key ? 'bg-primary text-primary-foreground' : 'bg-surface-variant text-muted-foreground hover:text-foreground'
             }`}
@@ -598,11 +629,39 @@ function SDKsTab() {
         ))}
       </div>
 
-      {/* Active snippet */}
+      {/* Code */}
       <div>
         <p className="text-label-sm text-muted-foreground mb-2">{snippet.sub}</p>
         <CodeBlock lang={snippet.lang}>{snippet.code}</CodeBlock>
       </div>
+
+      {/* Run button */}
+      <button onClick={runSnippet} disabled={running} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-body-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+        {running ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+        {running ? 'Running...' : 'Run this snippet'}
+      </button>
+
+      {/* Console output */}
+      {runOutput.length > 0 && (
+        <div className="rounded-xl border border-outline/20 overflow-hidden bg-[#1a1b26]">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#13141c] border-b border-outline/10">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-error/80" />
+              <div className="w-2.5 h-2.5 rounded-full bg-warning/80" />
+              <div className="w-2.5 h-2.5 rounded-full bg-success/80" />
+            </div>
+            <span className="text-label-sm text-muted-foreground/60 font-mono ml-1">output</span>
+            <CopyBtn text={runOutput.join('\n')} />
+          </div>
+          <pre className="p-3 font-mono text-body-sm text-[#a9b1d6] overflow-x-auto max-h-80">
+            {runOutput.map((l, i) => (
+              <div key={i} className={`whitespace-pre-wrap leading-relaxed ${l.startsWith('>') ? 'text-[#7aa2f7]' : l.includes('Status:') && l.includes('OK') ? 'text-[#9ece6a]' : l.includes('Status:') && l.includes('4') ? 'text-[#f7768e]' : l.includes('Error:') ? 'text-[#f7768e]' : l.includes('Fields:') ? 'text-[#bb9af7]' : ''}`}>
+                {l}
+              </div>
+            ))}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
