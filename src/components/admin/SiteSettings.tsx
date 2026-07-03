@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings, Key, Copy, Check, RefreshCw } from 'lucide-react';
-import { getSiteSetting, updateSiteSetting, getSiteApiKey, regenerateSiteApiKey, storeSiteApiKey } from '@/lib/auth';
+import { getSiteSetting, updateSiteSetting, getSiteApiKey, regenerateSiteApiKey } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 
@@ -63,7 +63,6 @@ export function SiteSettings() {
       setNewSiteKey(result.key);
       setSiteKey(result.key);
       setSiteKeyVisible(true);
-      storeSiteApiKey(result.key);
     } else {
       alert(result.error || 'Failed to regenerate key');
     }

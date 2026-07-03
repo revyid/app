@@ -5,13 +5,26 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContai
 import { Card } from '@/components/ui/card';
 import { SectionLabel } from '@/components/shared/SectionLabel';
 import { getSupabase } from '@/lib/supabase';
-import { getStoredSiteApiKey } from '@/lib/auth';
 import { containerVariants, itemVariants, viewportOnce, SPRING_BOUNCY } from '@/lib/motion-presets';
 
+let _siteKeyCache: string | null = null;
+
+async function getSiteKey(): Promise<string> {
+  if (_siteKeyCache !== null) return _siteKeyCache;
+  try {
+    const client = await getSupabase();
+    const { data } = await client.rpc('get_site_setting', { p_key: 'site_api_key' });
+    _siteKeyCache = data || '';
+  } catch {
+    _siteKeyCache = '';
+  }
+  return _siteKeyCache ?? '';
+}
+
 async function fetchGitHub(path: string): Promise<any> {
-  const siteKey = getStoredSiteApiKey();
+  const key = await getSiteKey();
   const res = await fetch(`/api/github?path=${encodeURIComponent(path)}`, {
-    headers: siteKey ? { 'x-api-key': siteKey } : {},
+    headers: key ? { 'x-api-key': key } : {},
   });
   return res.json();
 }

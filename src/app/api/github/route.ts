@@ -52,22 +52,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing ?path= parameter' }, { status: 400, headers: cors });
   }
 
-  if (!apiKey) {
-    return NextResponse.json({ error: 'API key required' }, { status: 401, headers: cors });
-  }
-
   const allowed = /^(users\/[\w.-]+(?:\/repos|\/events)?|repos\/[\w.-]+\/[\w.-]+)(\?.*)?$/;
   if (!allowed.test(path)) {
     return NextResponse.json({ error: 'Path not allowed' }, { status: 403, headers: cors });
   }
 
-  // Validate API key (mandatory — middleware already blocks missing keys)
+  if (!apiKey) {
+    return NextResponse.json({ error: 'API key required' }, { status: 401, headers: cors });
+  }
+
+  // Validate API key
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Check if it's the site's own internal API key
+  // Check if it's the site's own API key (bypasses rate limit)
   const { data: siteKeyRow } = await supabase
     .from('site_settings').select('value').eq('key', 'site_api_key').single();
   const isSiteKey = siteKeyRow?.value && apiKey === siteKeyRow.value;

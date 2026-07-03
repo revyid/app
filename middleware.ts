@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
     response.headers.set('Cache-Control', 'no-store');
   }
 
-  // Enforce API key on /api/github (skip OPTIONS, /api/track, /api/auth/*)
+  // Enforce API key on /api/github (skip OPTIONS)
   const pathname = request.nextUrl.pathname;
   if (
     pathname.startsWith('/api/github') &&
