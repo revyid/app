@@ -36,7 +36,7 @@ const ENDPOINTS = [
 
 /* ─── SDK snippets ────────────────────────────────────────────────── */
 
-const LANGS = ['JavaScript', 'Python', 'TypeScript', 'Ruby', 'cURL'] as const;
+const LANGS = ['JavaScript', 'Python', 'TypeScript', 'cURL'] as const;
 type Lang = typeof LANGS[number];
 
 const PATHS = ['users/revyid', 'users/torvalds', 'repos/facebook/react'];
@@ -53,8 +53,6 @@ function sdkCode(lang: Lang, p: string): string {
       return `interface ApiResponse {\n  login: string;\n  name: string | null;\n  public_repos: number;\n  followers: number;\n}\n\nconst API_KEY: string = '${k}';\nconst BASE: string = 'https://revy.my.id/api/github';\n\nasync function getData(path: string): Promise<ApiResponse> {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json() as Promise<ApiResponse>;\n}\n\nconst data: ApiResponse = await getData('${p}');\nconsole.log(data);`;
     case 'cURL':
       return `curl -s -H "x-api-key: ${k}" \\\n  "${url}"`;
-    case 'Ruby':
-      return `require 'net/http'\nrequire 'json'\n\nuri = URI("${url}")\nreq = Net::HTTP::Get.new(uri)\nreq["x-api-key"] = "${k}"\n\nresponse = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|\n  http.request(req)\nend\n\ndata = JSON.parse(response.body)\nputs data`;
   }
 }
 
@@ -185,29 +183,6 @@ async function runTypeScript(code: string, log: LogFn): Promise<void> {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, strict: true },
   }).outputText;
   log('# Running transpiled code...\n');
-  await runJS(js, log);
-}
-
-// Ruby via Opal compiler (Ruby → JS in browser)
-let opalCompiler: any = null;
-
-async function getOpal(): Promise<any> {
-  if (opalCompiler) return opalCompiler;
-  if (!(window as any).Opal) {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/opal-compiler@1.8.2/opal.min.js';
-    document.head.appendChild(s);
-    await new Promise<void>((res, rej) => { s.onload = () => res(); s.onerror = () => rej(new Error('Failed to load Opal Ruby compiler')); });
-  }
-  opalCompiler = (window as any).Opal;
-  return opalCompiler;
-}
-
-async function runRuby(code: string, log: LogFn): Promise<void> {
-  log('# Compiling Ruby to JavaScript via Opal...\n');
-  const Opal = await getOpal();
-  const js = Opal.compile(code);
-  log('# Running compiled Ruby code...\n');
   await runJS(js, log);
 }
 
@@ -391,7 +366,6 @@ const LANG_INFO: Record<Lang, string> = {
   JavaScript: 'Runs natively in your browser\'s JS engine — real fetch, real response.',
   Python: 'Runs a real CPython interpreter via Pyodide (WebAssembly); requests is patched to use your browser\'s network stack.',
   TypeScript: 'Transpiles to JavaScript in-browser via the official TypeScript compiler, then runs natively with full HTTP support.',
-  Ruby: 'Compiles Ruby to JavaScript via Opal compiler in-browser, then runs natively with full HTTP support.',
   cURL: 'Sends a genuine HTTP request straight from your browser, formatted like a curl transcript.',
 };
 
@@ -422,7 +396,6 @@ function SandboxTab() {
       if (curLang === 'JavaScript') await runJS(src, addLine);
       else if (curLang === 'Python') await runPython(src, addLine);
       else if (curLang === 'TypeScript') await runTypeScript(src, addLine);
-      else if (curLang === 'Ruby') await runRuby(src, addLine);
       else if (curLang === 'cURL') await runCurl(src, addLine);
     } catch (e: unknown) {
       addLine(`Error: ${e instanceof Error ? e.message : String(e)}`);
@@ -464,7 +437,7 @@ function SandboxTab() {
             <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-xl shadow-lg border border-outline/20">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-body-sm font-medium text-foreground">
-                {lang === 'Python' ? 'Loading Python runtime...' : lang === 'TypeScript' ? 'Transpiling TypeScript...' : lang === 'Ruby' ? 'Compiling Ruby...' : lang === 'cURL' ? 'Sending request...' : 'Running...'}
+                {lang === 'Python' ? 'Loading Python runtime...' : lang === 'TypeScript' ? 'Transpiling TypeScript...' : lang === 'cURL' ? 'Sending request...' : 'Running...'}
               </span>
             </div>
           </div>
