@@ -189,23 +189,21 @@ async function runViaFetch(code: string, lang: string, log: LogFn): Promise<void
   }
 }
 
-// Go Playground — runs Go code on go.dev servers
-async function runGo(code: string, log: LogFn): Promise<void> {
-  log('# Sending to Go Playground (go.dev)...\n');
+// Go/Rust — runs via server-side proxy (no CORS)
+async function runPlayground(code: string, lang: string, log: LogFn): Promise<void> {
+  log(`# Compiling ${lang} code...\n`);
   try {
-    const body = new URLSearchParams({ version: '2', body: code, withVet: 'true' });
-    const res = await fetch('https://go.dev/_/compile', { method: 'POST', body });
+    const res = await fetch('/api/playground', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: lang.toLowerCase(), code }),
+    });
     const data = await res.json();
-    if (data.Errors) {
+    if (data.error) {
       log('Compile error:');
-      data.Errors.forEach((e: string) => log('  ' + e));
+      log(data.output);
     } else {
-      if (data.Events?.length) {
-        data.Events.forEach((e: any) => log(e.Message.replace(/\n$/, '')));
-      } else {
-        log('(no output)');
-      }
-      if (data.BuildFailed) log('\nBuild failed');
+      log(data.output);
     }
   } catch (e: any) {
     log(`Error: ${e.message}`);
@@ -432,9 +430,9 @@ function SDKsTab() {
     try {
       if (lang === 'JavaScript') await runJS(code, addLine);
       else if (lang === 'Python') await runPython(code, addLine);
-      else if (lang === 'Go') await runGo(code, addLine);
+      else if (lang === 'Go' || lang === 'Rust') await runPlayground(code, lang, addLine);
       else if (lang === 'cURL') await runCurl(code, addLine);
-      else await runViaFetch(code, lang, addLine); // Rust, PHP
+      else await runViaFetch(code, lang, addLine);
     } catch (e: any) { addLine(`Error: ${e.message}`); }
     setRunning(false);
   };
@@ -442,8 +440,8 @@ function SDKsTab() {
   const desc: Record<string, string> = {
     JavaScript: 'Runs natively in browser via JS engine.',
     Python: 'Runs real Python via Pyodide (WebAssembly). First run loads ~10MB.',
-    Go: 'Runs real Go code via Go Playground (go.dev). Any Go code works.',
-    Rust: 'Rust code shown for reference. Run executes equivalent HTTP request.',
+    Go: 'Runs real Go code via go.dev Playground (server-side proxy).',
+    Rust: 'Runs real Rust code via play.rust-lang.org (server-side proxy).',
     PHP: 'PHP code shown for reference. Run executes equivalent HTTP request.',
     cURL: 'Runs real HTTP request, output formatted like curl -v.',
   };
