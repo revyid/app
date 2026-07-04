@@ -5,6 +5,7 @@
  */
 
 import { getSupabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────
 export interface AppUser {
