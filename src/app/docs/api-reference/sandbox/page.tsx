@@ -123,7 +123,12 @@ async function runCurl(code: string, log: LogFn): Promise<void> {
 
 type Lang = 'JavaScript' | 'Python' | 'TypeScript' | 'cURL';
 const LANGS: Lang[] = ['JavaScript', 'Python', 'TypeScript', 'cURL'];
-const PATHS = ['users/revyid', 'users/torvalds', 'repos/facebook/react'];
+const EXAMPLES = [
+  { id: 'user', label: 'User Profile', path: 'users/revyid' },
+  { id: 'repos', label: 'Repos', path: 'users/revyid/repos' },
+  { id: 'events', label: 'Events', path: 'users/revyid/events' },
+  { id: 'repo', label: 'Repository', path: 'repos/facebook/react' },
+];
 
 const LANG_INFO: Record<Lang, string> = {
   JavaScript: 'Runs natively in your browser — real fetch, real response.',
@@ -203,8 +208,8 @@ function Editor({ code, setCode, onRun, onReset, running, lang }: {
 
 export default function SandboxPage() {
   const [lang, setLang] = useState<Lang>('JavaScript');
-  const [path, setPath] = useState('users/revyid');
-  const [code, setCode] = useState(sdkCode('JavaScript', 'users/revyid'));
+  const [example, setExample] = useState(EXAMPLES[0]);
+  const [code, setCode] = useState(sdkCode('JavaScript', EXAMPLES[0].path));
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const codeRef = useRef(code);
@@ -212,7 +217,7 @@ export default function SandboxPage() {
   codeRef.current = code;
   langRef.current = lang;
 
-  useEffect(() => { if (!running) { setCode(sdkCode(lang, path)); setLines([]); } }, [lang, path]);
+  useEffect(() => { if (!running) { setCode(sdkCode(lang, example.path)); setLines([]); } }, [lang, example]);
   const addLine = useCallback((line: string) => setLines(prev => [...prev, line]), []);
 
   const run = async () => {
@@ -228,7 +233,7 @@ export default function SandboxPage() {
     setRunning(false);
   };
 
-  const reset = () => setCode(sdkCode(lang, path));
+  const reset = () => setCode(sdkCode(lang, example.path));
 
   return (
     <div className="space-y-4">
@@ -245,9 +250,9 @@ export default function SandboxPage() {
           ))}
         </div>
         <div className="flex gap-1 bg-surface-variant/50 rounded-lg p-0.5">
-          {PATHS.map(p => (
-            <button key={p} onClick={() => setPath(p)} disabled={running}
-              className={`px-2.5 py-1 text-label-sm font-mono rounded-md transition-colors disabled:opacity-50 ${path === p ? 'bg-surface text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{p.split('/').pop()}</button>
+          {EXAMPLES.map(ex => (
+            <button key={ex.id} onClick={() => setExample(ex)} disabled={running}
+              className={`px-2.5 py-1 text-label-sm font-medium rounded-md transition-colors disabled:opacity-50 ${example.id === ex.id ? 'bg-surface text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{ex.label}</button>
           ))}
         </div>
       </div>

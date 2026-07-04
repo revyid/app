@@ -9,11 +9,12 @@ const NAV = [
     { href: '/docs', label: 'Overview', icon: BookOpen },
   ]},
   { label: 'Revvy API', items: [
-    { href: '/docs/api', label: 'Endpoints', icon: Globe },
-    { href: '/docs/api/sandbox', label: 'Sandbox', icon: PlayCircle },
+    { href: '/docs/api-reference', label: 'Endpoints', icon: Globe },
+    { href: '/docs/api-reference/sandbox', label: 'Code Sandbox', icon: PlayCircle },
   ]},
-  { label: 'Packages', items: [
+  { label: 'Tools', items: [
     { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
+    { href: '/docs/linux-sandbox', label: 'Linux Sandbox', icon: Terminal },
   ]},
 ];
 
