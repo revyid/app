@@ -59,6 +59,13 @@ declare global {
 
 const V86_CDN = 'https://cdn.jsdelivr.net/npm/v86@0.5.420';
 
+function proxyUrl(url: string): string {
+  if (url.includes('i.copy.sh')) {
+    return `/api/v86-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 async function loadV86(): Promise<any> {
   if (window.V86) return window.V86;
   const script = document.createElement('script');
@@ -69,6 +76,12 @@ async function loadV86(): Promise<any> {
     script.onerror = () => reject(new Error('Failed to load v86'));
   });
   return (window as any).V86;
+}
+
+async function fetchBuffer(url: string): Promise<ArrayBuffer> {
+  const res = await fetch(proxyUrl(url));
+  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
+  return res.arrayBuffer();
 }
 
 export default function LinuxSandboxPage() {
@@ -105,24 +118,31 @@ export default function LinuxSandboxPage() {
       };
 
       if (profile.bzimage) {
-        config.bzimage = { url: profile.bzimage, async: false };
+        setTerminalLines(prev => [...prev, '> Loading kernel image...']);
+        const buf = await fetchBuffer(profile.bzimage);
+        config.bzimage = { buffer: buf };
       }
       if (profile.hda) {
-        config.hda = { url: profile.hda, async: false };
+        setTerminalLines(prev => [...prev, '> Loading disk image...']);
+        const buf = await fetchBuffer(profile.hda);
+        config.hda = { buffer: buf };
       }
       if (profile.cdrom) {
-        config.cdrom = { url: profile.cdrom, async: false };
+        const buf = await fetchBuffer(profile.cdrom);
+        config.cdrom = { buffer: buf };
       }
       if (profile.cmdline) {
         config.cmdline = profile.cmdline;
       }
       if (profile.state) {
-        config.initial_state = { url: profile.state, use_parts: true, fixed_chunk_size: 256 * 1024 };
+        setTerminalLines(prev => [...prev, '> Loading state image...']);
+        const buf = await fetchBuffer(profile.state);
+        config.initial_state = { buffer: buf };
       }
       if (profile.filesystem) {
         config.filesystem = {
-          baseurl: profile.filesystem,
-          basefs: { url: `${profile.filesystem}fs.json` },
+          baseurl: proxyUrl(profile.filesystem),
+          basefs: { url: proxyUrl(`${profile.filesystem}fs.json`) },
         };
         config.bzimage_initrd_from_filesystem = true;
       }
