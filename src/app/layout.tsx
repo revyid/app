@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { RootProviders } from './root-providers';
-import { PageTransition } from '@/components/shared/PageTransition';
 
 export const metadata: Metadata = {
   title: 'Revy — Full-Stack Software Engineer · Jambi, Indonesia',
@@ -70,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-background text-foreground antialiased" style={{ overflowX: 'clip', position: 'relative' }} suppressHydrationWarning>
-        <RootProviders><PageTransition>{children}</PageTransition></RootProviders>
+        <RootProviders>{children}</RootProviders>
       </body>
     </html>
   );

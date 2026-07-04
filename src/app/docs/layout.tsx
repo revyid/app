@@ -5,6 +5,14 @@ import { ArrowLeft, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, Chevro
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
+import { CustomLogin } from '@/components/auth/CustomLogin';
+import { createPortal } from 'react-dom';
+
+function PopupPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === 'undefined') return null;
+  return createPortal(children, document.body);
+}
 
 interface NavItem {
   href: string;
@@ -14,30 +22,13 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  {
-    href: '/docs',
-    label: 'Overview',
-    icon: BookOpen,
-  },
-  {
-    href: '/docs/api-reference',
-    label: 'API Reference',
-    icon: Globe,
-    children: [
-      { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
-      { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
-    ],
-  },
-  {
-    href: '/docs/sandbox',
-    label: 'Sandbox',
-    icon: PlayCircle,
-  },
-  {
-    href: '/docs/curl-ts',
-    label: 'curl-ts',
-    icon: CodeIcon,
-  },
+  { href: '/docs', label: 'Overview', icon: BookOpen },
+  { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
+    { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
+    { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
+  ]},
+  { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
+  { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
 ];
 
 function SidebarItem({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate?: () => void }) {
@@ -50,25 +41,15 @@ function SidebarItem({ item, pathname, onNavigate }: { item: NavItem; pathname: 
     <div>
       <div className="flex items-center">
         {hasChildren && (
-          <button
-            onClick={() => setOpen(!open)}
-            className="p-1 rounded hover:bg-surface-variant/40 transition-colors shrink-0"
-          >
-            <ChevronRight
-              className={`w-3 h-3 text-muted-foreground/50 transition-transform ${open ? 'rotate-90' : ''}`}
-            />
+          <button onClick={() => setOpen(!open)} className="p-1 rounded hover:bg-surface-variant/40 transition-colors shrink-0">
+            <ChevronRight className={`w-3 h-3 text-muted-foreground/50 transition-transform ${open ? 'rotate-90' : ''}`} />
           </button>
         )}
         {!hasChildren && <div className="w-5" />}
-        <Link
-          href={item.href}
-          onClick={onNavigate}
+        <Link href={item.href} onClick={onNavigate}
           className={`flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] transition-colors ml-0.5 ${
-            isActive
-              ? 'bg-primary/8 text-primary font-medium'
-              : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant/40'
-          }`}
-        >
+            isActive ? 'bg-primary/8 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant/40'
+          }`}>
           <Icon className="w-4 h-4 shrink-0 opacity-60" />
           {item.label}
         </Link>
@@ -86,10 +67,7 @@ function SidebarItem({ item, pathname, onNavigate }: { item: NavItem; pathname: 
 
 function MobileNav({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   return (
     <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-outline/10">
@@ -98,14 +76,10 @@ function MobileNav({ pathname }: { pathname: string }) {
           <ArrowLeft className="w-4 h-4 text-muted-foreground" />
         </Link>
         <span className="text-body-sm font-semibold text-foreground">Docs</span>
-        <button
-          onClick={() => setOpen(!open)}
-          className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors"
-        >
+        <button onClick={() => setOpen(!open)} className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors">
           {open ? <X className="w-4 h-4 text-muted-foreground" /> : <Menu className="w-4 h-4 text-muted-foreground" />}
         </button>
       </div>
-
       <AnimatePresence>
         {open && (
           <motion.div
@@ -129,12 +103,14 @@ function MobileNav({ pathname }: { pathname: string }) {
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex">
       <MobileNav pathname={pathname} />
 
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar — no exit animation, just stays put */}
       <aside className="hidden lg:block w-56 shrink-0 border-r border-outline/10 bg-background sticky top-0 h-screen overflow-y-auto">
         <div className="px-5 pt-6 pb-4">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-5">
@@ -151,12 +127,32 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         </nav>
       </aside>
 
-      {/* Content */}
+      {/* Content with page transitions */}
       <main className="flex-1 min-w-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 lg:py-8 pt-14 lg:pt-8">
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
+
+      {/* FloatingNavbar for docs */}
+      <FloatingNavbar
+        onChatClick={() => {}}
+        onProfileClick={() => setIsProfileOpen(true)}
+      />
+
+      <PopupPortal>
+        <CustomLogin isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      </PopupPortal>
     </div>
   );
 }
