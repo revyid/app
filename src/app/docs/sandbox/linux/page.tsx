@@ -10,11 +10,7 @@ interface Profile {
   memory: number;
   bzimage?: string;
   hda?: string;
-  cdrom?: string;
   cmdline?: string;
-  state?: string;
-  filesystem?: string;
-  net_device_type?: string;
 }
 
 const PROFILES: Profile[] = [
@@ -25,15 +21,6 @@ const PROFILES: Profile[] = [
     memory: 128,
     bzimage: 'https://i.copy.sh/buildroot-bzimage68.bin',
     cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
-  },
-  {
-    id: 'archlinux',
-    name: 'Arch Linux',
-    desc: 'Full Linux with Xorg, Firefox — interact via the VGA screen above',
-    memory: 512,
-    state: 'https://i.copy.sh/arch_state-v3.bin.zst',
-    filesystem: 'https://i.copy.sh/arch/',
-    net_device_type: 'virtio',
   },
   {
     id: 'tinycore',
@@ -59,13 +46,6 @@ declare global {
 
 const V86_CDN = 'https://cdn.jsdelivr.net/npm/v86@0.5.420';
 
-function proxyUrl(url: string): string {
-  if (url.includes('i.copy.sh')) {
-    return `/api/v86-proxy?url=${encodeURIComponent(url)}`;
-  }
-  return url;
-}
-
 async function loadV86(): Promise<any> {
   if (window.V86) return window.V86;
   const script = document.createElement('script');
@@ -76,12 +56,6 @@ async function loadV86(): Promise<any> {
     script.onerror = () => reject(new Error('Failed to load v86'));
   });
   return (window as any).V86;
-}
-
-async function fetchBuffer(url: string): Promise<ArrayBuffer> {
-  const res = await fetch(proxyUrl(url));
-  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
-  return res.arrayBuffer();
 }
 
 export default function LinuxSandboxPage() {
@@ -118,36 +92,13 @@ export default function LinuxSandboxPage() {
       };
 
       if (profile.bzimage) {
-        setTerminalLines(prev => [...prev, '> Loading kernel image...']);
-        const buf = await fetchBuffer(profile.bzimage);
-        config.bzimage = { buffer: buf };
+        config.bzimage = { url: profile.bzimage, async: false };
       }
       if (profile.hda) {
-        setTerminalLines(prev => [...prev, '> Loading disk image...']);
-        const buf = await fetchBuffer(profile.hda);
-        config.hda = { buffer: buf };
-      }
-      if (profile.cdrom) {
-        const buf = await fetchBuffer(profile.cdrom);
-        config.cdrom = { buffer: buf };
+        config.hda = { url: profile.hda, async: false };
       }
       if (profile.cmdline) {
         config.cmdline = profile.cmdline;
-      }
-      if (profile.state) {
-        setTerminalLines(prev => [...prev, '> Loading state image...']);
-        const buf = await fetchBuffer(profile.state);
-        config.initial_state = { buffer: buf };
-      }
-      if (profile.filesystem) {
-        config.filesystem = {
-          baseurl: proxyUrl(profile.filesystem),
-          basefs: { url: proxyUrl('https://i.copy.sh/fs.json') },
-        };
-        config.bzimage_initrd_from_filesystem = true;
-      }
-      if (profile.net_device_type) {
-        config.net_device_type = profile.net_device_type;
       }
 
       const emulator = new V86Class(config);
@@ -169,7 +120,6 @@ export default function LinuxSandboxPage() {
         });
       });
 
-      // If no serial output after 5s, tell user to use VGA display
       setTimeout(() => {
         if (!serialReceivedRef.current && emulatorRef.current) {
           setTerminalLines(prev => [
@@ -200,7 +150,6 @@ export default function LinuxSandboxPage() {
     if (!emulatorRef.current || !terminalInput.trim()) return;
     const cmd = terminalInput.trim();
     setTerminalLines(prev => [...prev, '$ ' + cmd]);
-    // serial0_send takes a string, not individual chars
     emulatorRef.current.serial0_send(cmd + '\n');
     setTerminalInput('');
   };
