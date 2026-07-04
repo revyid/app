@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Check, ExternalLink } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -72,8 +72,9 @@ export default function ShortenApiPage() {
         <h2 className="text-xl font-semibold text-foreground mb-3">Quick Start</h2>
         <CodeBlock code={`# Create a short URL
 curl -X POST https://revy.my.id/api/shorten \\
+  -H "x-api-key: rv_your_key" \\
   -H "Content-Type: application/json" \\
-  -d '{"url":"https://github.com/revyid/app","token":"your_session_token","slug":"my-app"}'
+  -d '{"url":"https://github.com/revyid/app","slug":"my-app"}'
 
 # Result: https://revy.my.id/s/my-app
 
@@ -86,8 +87,8 @@ curl -I https://revy.my.id/s/my-app
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-3">Authentication</h2>
         <p className="text-body-sm text-muted-foreground">
-          All requests require a <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono text-[11px]">token</code> from your
-          active session. Get it from the browser&apos;s localStorage or the login API.
+          All requests require an <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono text-[11px]">x-api-key</code> header.
+          Get your key from <Link href="/dashboard/api-keys" className="text-primary hover:underline">Dashboard → API Keys</Link>.
         </p>
       </section>
 
@@ -100,7 +101,6 @@ curl -I https://revy.my.id/s/my-app
           desc="Generate a short link. If no slug is provided, a random 7-character code is generated."
           request={`{
   "url": "https://github.com/revyid/app",
-  "token": "your_session_token",
   "slug": "my-app"  // optional
 }`}
           response={`{
@@ -113,7 +113,7 @@ curl -I https://revy.my.id/s/my-app
         />
 
         <EndpointSection
-          method="GET" path="/api/shorten?slug={slug}&token={token}"
+          method="GET" path="/api/shorten?slug={slug}"
           title="Get Click Stats"
           desc="Retrieve click count and metadata for a short URL you own."
           response={`{
@@ -134,7 +134,7 @@ Location: https://github.com/revyid/app`}
         />
 
         <EndpointSection
-          method="DELETE" path="/api/shorten?slug={slug}&token={token}"
+          method="DELETE" path="/api/shorten?slug={slug}"
           title="Delete Short URL"
           desc="Remove a short URL you own."
           response={`{ "ok": true }`}
@@ -144,43 +144,10 @@ Location: https://github.com/revyid/app`}
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-3">Slug Rules</h2>
         <ul className="space-y-2 text-body-sm text-muted-foreground">
-          <li className="flex items-start gap-2">
-            <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-            3-16 characters, lowercase alphanumeric + hyphens only
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="w-4 h-0.5 text-success shrink-0 mt-0.5" />
-            If omitted, a random 7-character slug is auto-generated
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-            Slugs are unique — duplicate slugs return an error
-          </li>
+          <li>3-16 characters, lowercase alphanumeric + hyphens only</li>
+          <li>If omitted, a random 7-character slug is auto-generated</li>
+          <li>Slugs are unique — duplicate slugs return an error</li>
         </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-foreground mb-3">Errors</h2>
-        <div className="rounded-xl border border-outline/15 overflow-hidden">
-          <table className="w-full text-[13px]">
-            <thead><tr className="bg-surface-variant/50 border-b border-outline/15">
-              <th className="text-left py-2 px-3 text-muted-foreground font-medium">Status</th>
-              <th className="text-left py-2 px-3 text-muted-foreground font-medium">Cause</th>
-            </tr></thead>
-            <tbody>
-              {[
-                ['400', 'Missing token, url, or invalid slug format'],
-                ['401', 'Invalid or expired session token'],
-                ['404', 'Slug not found or not owned by you'],
-              ].map(([s, c]) => (
-                <tr key={s} className="border-b border-outline/10 last:border-0">
-                  <td className="py-1.5 px-3 font-mono text-primary">{s}</td>
-                  <td className="py-1.5 px-3 text-muted-foreground">{c}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </section>
     </div>
   );

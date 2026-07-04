@@ -1,9 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NavItem {
   href: string;
@@ -39,12 +40,11 @@ const NAV: NavItem[] = [
   },
 ];
 
-function SidebarItem({ item, pathname, depth = 0 }: { item: NavItem; pathname: string; depth?: number }) {
+function SidebarItem({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate?: () => void }) {
   const [open, setOpen] = useState(true);
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
   const isActive = pathname === item.href || (item.href !== '/docs' && pathname.startsWith(item.href));
-  const isExpanded = hasChildren && isActive;
 
   return (
     <div>
@@ -62,6 +62,7 @@ function SidebarItem({ item, pathname, depth = 0 }: { item: NavItem; pathname: s
         {!hasChildren && <div className="w-5" />}
         <Link
           href={item.href}
+          onClick={onNavigate}
           className={`flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] transition-colors ml-0.5 ${
             isActive
               ? 'bg-primary/8 text-primary font-medium'
@@ -75,10 +76,53 @@ function SidebarItem({ item, pathname, depth = 0 }: { item: NavItem; pathname: s
       {hasChildren && open && (
         <div className="ml-3 border-l border-outline/10 pl-2 mt-0.5">
           {item.children!.map(child => (
-            <SidebarItem key={child.href} item={child} pathname={pathname} depth={depth + 1} />
+            <SidebarItem key={child.href} item={child} pathname={pathname} onNavigate={onNavigate} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function MobileNav({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  return (
+    <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-outline/10">
+      <div className="flex items-center justify-between px-3 py-2">
+        <Link href="/" className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors">
+          <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+        </Link>
+        <span className="text-body-sm font-semibold text-foreground">Docs</span>
+        <button
+          onClick={() => setOpen(!open)}
+          className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors"
+        >
+          {open ? <X className="w-4 h-4 text-muted-foreground" /> : <Menu className="w-4 h-4 text-muted-foreground" />}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden border-t border-outline/10"
+          >
+            <nav className="px-3 py-2 space-y-1">
+              {NAV.map(item => (
+                <SidebarItem key={item.href} item={item} pathname={pathname} onNavigate={() => setOpen(false)} />
+              ))}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -88,15 +132,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-outline/10">
-        <div className="flex items-center gap-2 px-3 py-2">
-          <Link href="/" className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors">
-            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
-          </Link>
-          <span className="text-body-sm font-semibold text-foreground">Docs</span>
-        </div>
-      </div>
+      <MobileNav pathname={pathname} />
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:block w-56 shrink-0 border-r border-outline/10 bg-background sticky top-0 h-screen overflow-y-auto">

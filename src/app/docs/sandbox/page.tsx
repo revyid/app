@@ -155,19 +155,19 @@ function sdkCode(lang: Lang, p: string): string {
   // URL Shortener examples
   if (p === '__shorten__') {
     switch (lang) {
-      case 'JavaScript': return `const TOKEN = 'your_session_token';\n\nconst res = await fetch('https://revy.my.id/api/shorten', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    url: 'https://github.com/revyid/app',\n    token: TOKEN,\n    slug: 'my-app'\n  })\n});\n\nconst data = await res.json();\nconsole.log(data.short_url);  // https://revy.my.id/s/my-app`;
-      case 'Python': return `import requests\n\nTOKEN = "your_session_token"\n\nres = requests.post(\n    "https://revy.my.id/api/shorten",\n    json={\n        "url": "https://github.com/revyid/app",\n        "token": TOKEN,\n        "slug": "my-app"\n    },\n    timeout=10,\n)\nres.raise_for_status()\ndata = res.json()\nprint(data["short_url"])  # https://revy.my.id/s/my-app`;
-      case 'TypeScript': return `const TOKEN: string = 'your_session_token';\n\nconst res = await fetch('https://revy.my.id/api/shorten', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    url: 'https://github.com/revyid/app',\n    token: TOKEN,\n    slug: 'my-app'\n  })\n});\n\nconst data: { short_url: string } = await res.json();\nconsole.log(data.short_url);  // https://revy.my.id/s/my-app`;
-      case 'cURL': return `curl -s -X POST https://revy.my.id/api/shorten \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"https://github.com/revyid/app","token":"your_session_token","slug":"my-app"}'`;
+      case 'JavaScript': return `const API_KEY = '${k}';\n\nconst res = await fetch('https://revy.my.id/api/shorten', {\n  method: 'POST',\n  headers: {\n    'x-api-key': API_KEY,\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify({\n    url: 'https://github.com/revyid/app',\n    slug: 'my-app'\n  })\n});\n\nconst data = await res.json();\nconsole.log(data.short_url);  // https://revy.my.id/s/my-app`;
+      case 'Python': return `import requests\n\nAPI_KEY = "${k}"\n\nres = requests.post(\n    "https://revy.my.id/api/shorten",\n    headers={"x-api-key": API_KEY},\n    json={"url": "https://github.com/revyid/app", "slug": "my-app"},\n    timeout=10,\n)\nres.raise_for_status()\ndata = res.json()\nprint(data["short_url"])  # https://revy.my.id/s/my-app`;
+      case 'TypeScript': return `const API_KEY: string = '${k}';\n\nconst res = await fetch('https://revy.my.id/api/shorten', {\n  method: 'POST',\n  headers: {\n    'x-api-key': API_KEY,\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify({\n    url: 'https://github.com/revyid/app',\n    slug: 'my-app'\n  })\n});\n\nconst data: { short_url: string } = await res.json();\nconsole.log(data.short_url);  // https://revy.my.id/s/my-app`;
+      case 'cURL': return `curl -s -X POST https://revy.my.id/api/shorten \\\n  -H "x-api-key: ${k}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"https://github.com/revyid/app","slug":"my-app"}'`;
     }
   }
 
   if (p === '__stats__') {
     switch (lang) {
-      case 'JavaScript': return `const TOKEN = 'your_session_token';\nconst SLUG = 'my-app';\n\nconst res = await fetch(\n  \`https://revy.my.id/api/shorten?slug=\${SLUG}&token=\${TOKEN}\`\n);\n\nconst data = await res.json();\nconsole.log(\`Clicks: \${data.clicks}\`);`;
-      case 'Python': return `import requests\n\nTOKEN = "your_session_token"\nSLUG = "my-app"\n\nres = requests.get(\n    f"https://revy.my.id/api/shorten?slug={SLUG}&token={TOKEN}",\n    timeout=10,\n)\nres.raise_for_status()\ndata = res.json()\nprint(f"Clicks: {data['clicks']}")`;
-      case 'TypeScript': return `const TOKEN: string = 'your_session_token';\nconst SLUG: string = 'my-app';\n\nconst res = await fetch(\n  \`https://revy.my.id/api/shorten?slug=\${SLUG}&token=\${TOKEN}\`\n);\n\nconst data: { clicks: number } = await res.json();\nconsole.log(\`Clicks: \${data.clicks}\`);`;
-      case 'cURL': return `curl -s "https://revy.my.id/api/shorten?slug=my-app&token=your_session_token"`;
+      case 'JavaScript': return `const API_KEY = '${k}';\nconst SLUG = 'my-app';\n\nconst res = await fetch(\n  \`https://revy.my.id/api/shorten?slug=\${SLUG}\`,\n  { headers: { 'x-api-key': API_KEY } }\n);\n\nconst data = await res.json();\nconsole.log(\`Clicks: \${data.clicks}\`);`;
+      case 'Python': return `import requests\n\nAPI_KEY = "${k}"\nSLUG = "my-app"\n\nres = requests.get(\n    f"https://revy.my.id/api/shorten?slug={SLUG}",\n    headers={"x-api-key": API_KEY},\n    timeout=10,\n)\nres.raise_for_status()\ndata = res.json()\nprint(f"Clicks: {data['clicks']}")`;
+      case 'TypeScript': return `const API_KEY: string = '${k}';\nconst SLUG: string = 'my-app';\n\nconst res = await fetch(\n  \`https://revy.my.id/api/shorten?slug=\${SLUG}\`,\n  { headers: { 'x-api-key': API_KEY } }\n);\n\nconst data: { clicks: number } = await res.json();\nconsole.log(\`Clicks: \${data.clicks}\`);`;
+      case 'cURL': return `curl -s -H "x-api-key: ${k}" \\\n  "https://revy.my.id/api/shorten?slug=my-app"`;
     }
   }
 
