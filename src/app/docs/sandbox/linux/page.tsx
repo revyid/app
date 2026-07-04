@@ -142,7 +142,7 @@ export default function LinuxSandboxPage() {
       if (profile.filesystem) {
         config.filesystem = {
           baseurl: proxyUrl(profile.filesystem),
-          basefs: { url: proxyUrl(`${profile.filesystem}fs.json`) },
+          basefs: { url: proxyUrl('https://i.copy.sh/fs.json') },
         };
         config.bzimage_initrd_from_filesystem = true;
       }
