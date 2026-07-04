@@ -429,17 +429,6 @@ export async function getApiUsageToday(): Promise<number> {
   return data || 0;
 }
 
-export async function getShortenUsageToday(): Promise<number> {
-  const token = getStoredToken();
-  if (!token) return 0;
-  const user = await validateSession(token);
-  if (!user.user) return 0;
-  const { count } = await getAdminClient()
-    .from('short_urls').select('id', { count: 'exact', head: true })
-    .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
-  return count || 0;
-}
-
 // ─── Site API Key ──────────────────────────────────────────────────
 
 export async function getSiteApiKey(): Promise<string | null> {
@@ -461,30 +450,42 @@ export async function regenerateSiteApiKey(): Promise<{ key?: string; error?: st
 
 // ─── Short URLs ────────────────────────────────────────────────────
 
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
 export async function listShortUrls(): Promise<Array<{ id: string; slug: string; short_url: string; original_url: string; clicks: number; created_at: string }>> {
   const token = getStoredToken();
   if (!token) return [];
   const user = await validateSession(token);
   if (!user.user) return [];
-  const { data, error } = await getAdminClient()
-    .from('short_urls')
-    .select('id, slug, original_url, clicks, created_at')
-    .order('created_at', { ascending: false });
-  if (error) return [];
-  return (data || []).map((r: any) => ({ ...r, short_url: `https://revy.my.id/s/${r.slug}` }));
+  try {
+    const res = await fetch('/api/short-urls');
+    const data = await res.json();
+    return data.urls || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getShortenUsageToday(): Promise<number> {
+  const token = getStoredToken();
+  if (!token) return 0;
+  const user = await validateSession(token);
+  if (!user.user) return 0;
+  try {
+    const res = await fetch('/api/short-urls?action=count-today');
+    const data = await res.json();
+    return data.count || 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function deleteShortUrl(slug: string): Promise<boolean> {
   const token = getStoredToken();
   if (!token) return false;
-  const { data, error } = await (await getSupabase()).rpc('delete_short_url', { p_token: token, p_slug: slug });
-  if (error) return false;
-  return data?.ok === true;
+  try {
+    const res = await fetch(`/api/shorten?slug=${slug}`, { method: 'DELETE', headers: { 'x-api-key': await getStoredSiteApiKey() || '' } });
+    const data = await res.json();
+    return data?.ok === true;
+  } catch {
+    return false;
+  }
 }
