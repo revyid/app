@@ -27,6 +27,7 @@ interface FloatingNavbarProps {
 }
 
 const navItems = [
+  { id: 'home', icon: Home, label: 'Home', href: '/' },
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   { id: 'api-keys', icon: Key, label: 'API Keys', href: '/dashboard/api-keys' },
   { id: 'docs', icon: FileText, label: 'Docs', href: '/docs' },
@@ -140,15 +141,6 @@ export const FloatingNavbar = memo(function FloatingNavbar({
 
           {/* Divider */}
           <div className="w-px h-6 sm:h-7 bg-outline/30 mx-0.5" />
-
-          {/* Home / Portfolio link */}
-          <button
-            onClick={() => router.push('/')}
-            aria-label="Portfolio"
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <Home className="w-[18px] h-[18px]" />
-          </button>
 
           {/* Admin */}
           {user?.is_admin && onAdminClick && (
