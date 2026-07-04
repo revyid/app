@@ -5,14 +5,6 @@ import { ArrowLeft, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, Chevro
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
-import { CustomLogin } from '@/components/auth/CustomLogin';
-import { createPortal } from 'react-dom';
-
-function PopupPortal({ children }: { children: React.ReactNode }) {
-  if (typeof document === 'undefined') return null;
-  return createPortal(children, document.body);
-}
 
 interface NavItem {
   href: string;
@@ -103,11 +95,8 @@ function MobileNav({ pathname }: { pathname: string }) {
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const hasNavigated = useRef(false);
 
-  // Mark as navigated after first render
   useEffect(() => {
     hasNavigated.current = true;
   }, []);
@@ -116,7 +105,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-background flex">
       <MobileNav pathname={pathname} />
 
-      {/* Desktop sidebar — no exit animation, just stays put */}
       <aside className="hidden lg:block w-56 shrink-0 border-r border-outline/10 bg-background sticky top-0 h-screen overflow-y-auto">
         <div className="px-5 pt-6 pb-4">
           <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-5">
@@ -133,7 +121,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         </nav>
       </aside>
 
-      {/* Content with page transitions — no animation on first load */}
       <main className="flex-1 min-w-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 lg:py-8 pt-14 lg:pt-8">
           <AnimatePresence mode="wait">
@@ -149,16 +136,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           </AnimatePresence>
         </div>
       </main>
-
-      {/* FloatingNavbar for docs */}
-      <FloatingNavbar
-        onChatClick={() => {}}
-        onProfileClick={() => setIsProfileOpen(true)}
-      />
-
-      <PopupPortal>
-        <CustomLogin isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
-      </PopupPortal>
     </div>
   );
 }
