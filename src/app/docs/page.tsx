@@ -444,14 +444,14 @@ export default function DocsPage() {
     <div className="min-h-screen bg-background">
       <div className="lg:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-outline/10">
         <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
-          <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors shrink-0 mr-1"><ArrowLeft className="w-4 h-4 text-muted-foreground" /></Link>
+          <Link href="/" className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors shrink-0 mr-1"><ArrowLeft className="w-4 h-4 text-muted-foreground" /></Link>
           {TABS.map(({ id, label }) => (<button key={id} onClick={() => setTab(id)} className={`px-3 py-1.5 text-label-sm font-medium rounded-lg transition-colors shrink-0 whitespace-nowrap ${tab === id ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>{label}</button>))}
         </div>
       </div>
       <div className="flex">
         <aside className="hidden lg:block w-56 shrink-0 border-r border-outline/10 bg-background sticky top-0 h-screen overflow-y-auto">
           <div className="px-5 pt-6 pb-4">
-            <Link href="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-5"><ArrowLeft className="w-4 h-4" /><span className="text-label-sm font-medium">Back</span></Link>
+            <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-5"><ArrowLeft className="w-4 h-4" /><span className="text-label-sm font-medium">Home</span></Link>
             <p className="text-body-sm font-semibold text-foreground">Revvy API</p><p className="text-label-sm text-muted-foreground/50 mt-0.5">v1.0</p>
           </div>
           {NAV.map(sec => (

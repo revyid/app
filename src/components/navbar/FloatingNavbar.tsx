@@ -41,7 +41,7 @@ const portfolioNavItems = [
 const dashboardNavItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
   { id: 'api-keys', icon: Key, label: 'API Keys', href: '/dashboard/api-keys' },
-  { id: 'docs', icon: FileText, label: 'Docs', href: '/dashboard/docs' },
+  { id: 'docs', icon: FileText, label: 'Docs', href: '/docs' },
 ];
 
 export const FloatingNavbar = memo(function FloatingNavbar({
@@ -73,7 +73,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
     if (isDashboard) {
       if (pathname === '/dashboard') return 'dashboard';
       if (pathname === '/dashboard/api-keys') return 'api-keys';
-      if (pathname === '/dashboard/docs') return 'docs';
+      if (pathname === '/docs' || pathname.startsWith('/docs/')) return 'docs';
       return 'dashboard';
     }
     if (!activeSection) return 'home';

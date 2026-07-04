@@ -122,7 +122,7 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          <Link href="/dashboard/docs" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-primary/50 transition-colors">
+          <Link href="/docs" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-primary/50 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center">
