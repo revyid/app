@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { ArrowLeft, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
 import { CustomLogin } from '@/components/auth/CustomLogin';
@@ -105,6 +105,12 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const hasNavigated = useRef(false);
+
+  // Mark as navigated after first render
+  useEffect(() => {
+    hasNavigated.current = true;
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -127,13 +133,13 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         </nav>
       </aside>
 
-      {/* Content with page transitions */}
+      {/* Content with page transitions — no animation on first load */}
       <main className="flex-1 min-w-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 lg:py-8 pt-14 lg:pt-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
-              initial={{ opacity: 0, y: 10 }}
+              initial={hasNavigated.current ? { opacity: 0, y: 10 } : false}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}

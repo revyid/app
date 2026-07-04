@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
@@ -19,7 +19,7 @@ import {
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { floatingNavbar, SPRING_SNAPPY, SPRING_DEFAULT } from '@/lib/motion-presets';
+import { SPRING_SNAPPY } from '@/lib/motion-presets';
 import { getSiteSetting } from '@/lib/auth';
 import { useActiveSection } from '@/contexts/ActiveSectionContext';
 import { useLenis } from '@/components/shared/SmoothScroll';
@@ -83,7 +83,6 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   }, [activeSection, pathname, isDashboard]);
 
   const scrollToSection = useCallback((sectionId: string) => {
-    // Check if this item has an href (like docs link)
     const portfolioItem = portfolioNavItems.find(i => i.id === sectionId);
     if (portfolioItem && 'href' in portfolioItem && (portfolioItem as any).href) {
       router.push((portfolioItem as any).href);
@@ -107,7 +106,6 @@ export const FloatingNavbar = memo(function FloatingNavbar({
     else { const el = document.getElementById(sectionId); if (el) lenis?.scrollTo(el, { duration: 1.2, offset: 80 }); }
   }, [pathname, router, lenis, isDashboard]);
 
-  const [isSectionHovered, setIsSectionHovered] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [siteLogo, setSiteLogo] = useState<string | null>(null);
 
@@ -123,115 +121,65 @@ export const FloatingNavbar = memo(function FloatingNavbar({
 
   return (
     <motion.nav
-      variants={floatingNavbar}
-      initial="hidden"
-      animate="visible"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.5 }}
       className="fixed bottom-6 left-4 right-4 lg:left-auto lg:right-8 z-40 flex justify-center lg:justify-end w-auto pointer-events-none"
     >
       <div className="pointer-events-auto px-1 py-2">
         <motion.div
           layout
-          animate={{ scale: isScrolled && !isSectionHovered ? 0.92 : 1 }}
+          animate={{ scale: isScrolled ? 0.92 : 1 }}
           transition={SPRING_SNAPPY}
-          className="flex items-center justify-center gap-0.5 sm:gap-1.5 px-1.5 py-1.5 sm:px-2 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
+          className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
         >
-          {/* Nav Items */}
+          {/* Nav Items — text labels, no icon-only mode */}
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem === item.id;
-            const isHome = item.id === 'home';
 
             return (
-              <motion.div
+              <button
                 key={item.id}
-                layout
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative flex-shrink-0"
-                onMouseEnter={() => setIsSectionHovered(true)}
-                onMouseLeave={() => setIsSectionHovered(false)}
+                onClick={() => scrollToSection(item.id)}
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full transition-colors duration-150 text-[13px] font-medium ${
+                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant/60'
+                }`}
               >
-                <button
-                  onClick={() => scrollToSection(item.id)}
-                  aria-label={item.label}
-                  className={`relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base ${
-                    isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {isHome && !isDashboard ? (
-                    siteLogo ? (
-                      <motion.img layoutId="logo" src={siteLogo} alt="Logo" className="w-5 h-5 rounded-md object-cover shadow-sm ring-1 ring-border/20" />
-                    ) : (
-                      <motion.div layoutId="logo" className="w-5 h-5 bg-surface text-foreground font-bold rounded-md flex items-center justify-center text-[10px] shadow-sm ring-1 ring-border/20">R</motion.div>
-                    )
-                  ) : (
-                    <Icon className="w-5 h-5" />
-                  )}
-                  <AnimatePresence mode="wait">
-                    {(isActive || isSectionHovered) && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={SPRING_DEFAULT}
-                        className="text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline"
-                      >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                  {isActive && (
-                    <motion.div layoutId="navActiveIndicator" className="absolute inset-0 rounded-full bg-secondary-container -z-10" transition={SPRING_SNAPPY} />
-                  )}
-                </button>
-              </motion.div>
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{item.label}</span>
+              </button>
             );
           })}
 
           {/* Divider */}
-          <div className="w-px h-6 sm:h-7 bg-outline/30 mx-0.5" />
+          <div className="w-px h-5 bg-outline/30 mx-0.5" />
 
           {/* Utility Buttons */}
-          {/* Dashboard / Portfolio switch */}
           <button
             onClick={() => router.push(isDashboard ? '/' : '/dashboard')}
             aria-label={isDashboard ? 'Portfolio' : 'Dashboard'}
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
           >
-            {isDashboard ? <Home className="w-[18px] h-[18px]" /> : <LayoutDashboard className="w-[18px] h-[18px]" />}
+            {isDashboard ? <Home className="w-4 h-4" /> : <LayoutDashboard className="w-4 h-4" />}
           </button>
 
-          {/* Admin — only for admins */}
           {user?.is_admin && onAdminClick && (
-            <button
-              onClick={onAdminClick}
-              aria-label="Admin Panel"
-              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-primary"
-            >
-              <Shield className="w-[18px] h-[18px]" />
+            <button onClick={onAdminClick} aria-label="Admin"
+              className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-primary">
+              <Shield className="w-4 h-4" />
             </button>
           )}
 
-          {/* Chat */}
-          <button
-            onClick={onChatClick}
-            aria-label="Chat"
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <MessageCircle className="w-[18px] h-[18px]" />
+          <button onClick={onChatClick} aria-label="Chat"
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground">
+            <MessageCircle className="w-4 h-4" />
           </button>
 
-          {/* Theme Toggle */}
-          <button
-            ref={ref}
-            onClick={toggleSwitchTheme}
-            aria-label="Toggle theme"
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {isDark ? (
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              ) : (
+          <button ref={ref} onClick={toggleSwitchTheme} aria-label="Toggle theme"
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {isDark ? <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> : (
                 <>
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" />
@@ -247,23 +195,15 @@ export const FloatingNavbar = memo(function FloatingNavbar({
             </svg>
           </button>
 
-          {/* Profile Avatar */}
-          <button
-            onClick={onProfileClick}
-            aria-label="Profile"
-            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-0.5"
-          >
+          <button onClick={onProfileClick} aria-label="Profile"
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-0.5">
             {isSignedIn && user ? (
-              <img
-                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`}
-                alt={user.display_name || 'User'}
-                referrerPolicy="no-referrer"
-                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`; }}
-                className="w-full h-full object-cover"
-              />
+              <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`}
+                alt={user.display_name || 'User'} referrerPolicy="no-referrer"
+                className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-surface-variant text-muted-foreground">
-                <User className="w-[18px] h-[18px]" />
+                <User className="w-4 h-4" />
               </div>
             )}
           </button>
