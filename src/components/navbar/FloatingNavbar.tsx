@@ -36,6 +36,7 @@ const portfolioNavItems = [
   { id: 'stats', icon: BarChart3, label: 'Stats', sections: ['stats'] },
   { id: 'experience', icon: Briefcase, label: 'Resume', sections: ['experience', 'education'] },
   { id: 'contact', icon: Mail, label: 'Contact' },
+  { id: 'docs', icon: FileText, label: 'Docs', href: '/docs' },
 ];
 
 const dashboardNavItems = [
@@ -82,6 +83,13 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   }, [activeSection, pathname, isDashboard]);
 
   const scrollToSection = useCallback((sectionId: string) => {
+    // Check if this item has an href (like docs link)
+    const portfolioItem = portfolioNavItems.find(i => i.id === sectionId);
+    if (portfolioItem && 'href' in portfolioItem && (portfolioItem as any).href) {
+      router.push((portfolioItem as any).href);
+      return;
+    }
+
     if (isDashboard) {
       const item = dashboardNavItems.find(i => i.id === sectionId);
       if (item) router.push(item.href);

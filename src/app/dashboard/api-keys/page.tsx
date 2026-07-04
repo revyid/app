@@ -18,8 +18,12 @@ interface ApiKey {
 }
 
 export default function ApiKeysPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [keys, setKeys] = useState<ApiKey[]>([]);
+
+  useEffect(() => {
+    if (!loading && !user) window.location.href = '/';
+  }, [user, loading]);
   const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
