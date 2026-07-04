@@ -11,25 +11,19 @@ export async function GET(
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Increment clicks and get URL atomically
-  const { data: url } = await supabase
-    .rpc('increment_short_url_clicks', { p_slug: slug });
-
-  if (url) {
-    return NextResponse.redirect(url, { status: 302 });
-  }
-
-  // Fallback: try to find the URL without incrementing
+  // Find URL and increment clicks
   const { data: row } = await supabase
     .from('short_urls')
-    .select('original_url')
+    .select('original_url, clicks')
     .eq('slug', slug)
     .single();
 
   if (row?.original_url) {
+    // Increment clicks directly (don't block redirect)
+    supabase.from('short_urls').update({ clicks: (row as any).clicks + 1 }).eq('slug', slug).then(() => {});
     return NextResponse.redirect(row.original_url, { status: 302 });
   }
 
