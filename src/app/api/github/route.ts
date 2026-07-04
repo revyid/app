@@ -81,25 +81,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: cors });
     }
 
+    // Use service role for all DB queries (bypass RLS)
+    const adminDb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
     // Check rate limit (unless unlimited setting is on)
-    const { data: unlimitedSetting } = await supabase
+    const { data: unlimitedSetting } = await adminDb
       .from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
     const isUnlimited = unlimitedSetting?.value === 'true';
 
     // Resolve user_id: site key uses admin user
     let trackUserId = keyResult.user_id;
     if (!trackUserId) {
-      const { data: admin } = await supabase.from('app_users').select('id').eq('is_admin', true).limit(1).single();
+      const { data: admin } = await adminDb.from('app_users').select('id').eq('is_admin', true).limit(1).single();
       trackUserId = admin?.id;
     }
 
     if (!isUnlimited && trackUserId) {
-      const { count } = await supabase.from('api_key_usage')
+      const { count } = await adminDb.from('api_key_usage')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', trackUserId)
         .gte('used_at', new Date(Date.now() - 3600000).toISOString());
 
-      const { data: ghLimitSetting } = await supabase
+      const { data: ghLimitSetting } = await adminDb
         .from('site_settings').select('value').eq('key', 'rate_limit_github').single();
       const ghLimit = ghLimitSetting?.value ? parseInt(ghLimitSetting.value) : 100;
 
