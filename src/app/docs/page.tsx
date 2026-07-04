@@ -1,4 +1,4 @@
-import { Globe, Code as CodeIcon, PlayCircle, BookOpen, Terminal } from 'lucide-react';
+import { Globe, Code as CodeIcon, PlayCircle, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DocsPage() {
@@ -56,19 +56,6 @@ export default function DocsPage() {
               </div>
             </div>
             <p className="text-body-sm text-muted-foreground">JavaScript, Python, TypeScript, cURL — all with real HTTP support.</p>
-          </Link>
-
-          <Link href="/docs/linux-sandbox" className="group block p-6 rounded-2xl bg-surface border border-outline/15 hover:border-primary/40 transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
-                <Terminal className="w-5 h-5 text-error" />
-              </div>
-              <div>
-                <h3 className="text-body-md font-semibold text-foreground group-hover:text-primary transition-colors">Linux Sandbox</h3>
-                <p className="text-label-sm text-muted-foreground">x86 PC emulator</p>
-              </div>
-            </div>
-            <p className="text-body-sm text-muted-foreground">Full Linux environment running in your browser via v86.</p>
           </Link>
         </div>
       </section>

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, BookOpen, Globe, Terminal, Code as CodeIcon, PlayCircle, Key } from 'lucide-react';
+import { ArrowLeft, BookOpen, Globe, Code as CodeIcon, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 
 const NAV = [
@@ -14,7 +14,6 @@ const NAV = [
   ]},
   { label: 'Tools', items: [
     { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
-    { href: '/docs/linux-sandbox', label: 'Linux Sandbox', icon: Terminal },
   ]},
 ];
 
