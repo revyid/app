@@ -433,10 +433,8 @@ export async function getShortenUsageToday(): Promise<number> {
   if (!token) return 0;
   const user = await validateSession(token);
   if (!user.user) return 0;
-  // Count short URLs created today
-  const { count } = await (await getSupabase())
+  const { count } = await getAdminClient()
     .from('short_urls').select('id', { count: 'exact', head: true })
-    .eq('user_id', user.user.id)
     .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
   return count || 0;
 }
@@ -462,12 +460,24 @@ export async function regenerateSiteApiKey(): Promise<{ key?: string; error?: st
 
 // ─── Short URLs ────────────────────────────────────────────────────
 
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
 export async function listShortUrls(): Promise<Array<{ id: string; slug: string; short_url: string; original_url: string; clicks: number; created_at: string }>> {
   const token = getStoredToken();
   if (!token) return [];
-  const { data, error } = await (await getSupabase()).rpc('list_short_urls', { p_token: token });
-  if (error || data?.error) return [];
-  return data || [];
+  const user = await validateSession(token);
+  if (!user.user) return [];
+  const { data, error } = await getAdminClient()
+    .from('short_urls')
+    .select('id, slug, original_url, clicks, created_at')
+    .order('created_at', { ascending: false });
+  if (error) return [];
+  return (data || []).map((r: any) => ({ ...r, short_url: `https://revy.my.id/s/${r.slug}` }));
 }
 
 export async function deleteShortUrl(slug: string): Promise<boolean> {
