@@ -8,16 +8,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { listApiKeys, getApiUsageToday } from '@/lib/auth';
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [keyCount, setKeyCount] = useState(0);
   const [usageToday, setUsageToday] = useState(0);
 
   // Redirect to home if not logged in
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       window.location.href = '/';
     }
-  }, [user, loading]);
+  }, [user, isLoading]);
 
   const refreshData = () => {
     if (user) {

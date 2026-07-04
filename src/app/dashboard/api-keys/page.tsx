@@ -18,7 +18,7 @@ interface ApiKey {
 }
 
 export default function ApiKeysPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [keys, setKeys] = useState<ApiKey[]>([]);
 
   useEffect(() => {
