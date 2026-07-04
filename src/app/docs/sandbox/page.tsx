@@ -127,7 +127,8 @@ const EXAMPLES = [
   { id: 'user', label: 'User Profile', path: 'users/revyid' },
   { id: 'repos', label: 'Repos', path: 'users/revyid/repos' },
   { id: 'events', label: 'Events', path: 'users/revyid/events' },
-  { id: 'repo', label: 'Repository', path: 'repos/facebook/react' },
+  { id: 'shorten', label: 'Shorten URL', path: '__shorten__' },
+  { id: 'stats', label: 'URL Stats', path: '__stats__' },
 ];
 
 const LANG_INFO: Record<Lang, string> = {
@@ -138,14 +139,39 @@ const LANG_INFO: Record<Lang, string> = {
 };
 
 function sdkCode(lang: Lang, p: string): string {
-  const url = `https://revy.my.id/api/github?path=${p}`;
   const k = 'rv_your_key';
-  switch (lang) {
-    case 'JavaScript': return `const API_KEY = '${k}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`;
-    case 'Python': return `import requests\n\nAPI_KEY = "${k}"\nBASE = "https://revy.my.id/api/github"\n\nres = requests.get(\n    f"{BASE}?path=${p}",\n    headers={"x-api-key": API_KEY},\n    timeout=10,\n)\nres.raise_for_status()\nprint(res.status_code)\nprint(res.json())`;
-    case 'TypeScript': return `interface ApiResponse {\n  login: string;\n  name: string | null;\n  public_repos: number;\n  followers: number;\n}\n\nconst API_KEY: string = '${k}';\nconst BASE: string = 'https://revy.my.id/api/github';\n\nasync function getData(path: string): Promise<ApiResponse> {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json() as Promise<ApiResponse>;\n}\n\nconst data: ApiResponse = await getData('${p}');\nconsole.log(data);`;
-    case 'cURL': return `curl -s -H "x-api-key: ${k}" \\\n  "${url}"`;
+
+  // GitHub API examples
+  if (p !== '__shorten__' && p !== '__stats__') {
+    const url = `https://revy.my.id/api/github?path=${p}`;
+    switch (lang) {
+      case 'JavaScript': return `const API_KEY = '${k}';\nconst BASE = 'https://revy.my.id/api/github';\n\nasync function getData(path) {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json();\n}\n\nconst data = await getData('${p}');\nconsole.log(data);`;
+      case 'Python': return `import requests\n\nAPI_KEY = "${k}"\nBASE = "https://revy.my.id/api/github"\n\nres = requests.get(\n    f"{BASE}?path=${p}",\n    headers={"x-api-key": API_KEY},\n    timeout=10,\n)\nres.raise_for_status()\nprint(res.status_code)\nprint(res.json())`;
+      case 'TypeScript': return `interface ApiResponse {\n  login: string;\n  name: string | null;\n  public_repos: number;\n  followers: number;\n}\n\nconst API_KEY: string = '${k}';\nconst BASE: string = 'https://revy.my.id/api/github';\n\nasync function getData(path: string): Promise<ApiResponse> {\n  const res = await fetch(\`\${BASE}?path=\${path}\`, {\n    headers: { 'x-api-key': API_KEY }\n  });\n  if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n  return res.json() as Promise<ApiResponse>;\n}\n\nconst data: ApiResponse = await getData('${p}');\nconsole.log(data);`;
+      case 'cURL': return `curl -s -H "x-api-key: ${k}" \\\n  "${url}"`;
+    }
   }
+
+  // URL Shortener examples
+  if (p === '__shorten__') {
+    switch (lang) {
+      case 'JavaScript': return `const TOKEN = 'your_session_token';\n\nconst res = await fetch('https://revy.my.id/api/shorten', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    url: 'https://github.com/revyid/app',\n    token: TOKEN,\n    slug: 'my-app'\n  })\n});\n\nconst data = await res.json();\nconsole.log(data.short_url);  // https://revy.my.id/s/my-app`;
+      case 'Python': return `import requests\n\nTOKEN = "your_session_token"\n\nres = requests.post(\n    "https://revy.my.id/api/shorten",\n    json={\n        "url": "https://github.com/revyid/app",\n        "token": TOKEN,\n        "slug": "my-app"\n    },\n    timeout=10,\n)\nres.raise_for_status()\ndata = res.json()\nprint(data["short_url"])  # https://revy.my.id/s/my-app`;
+      case 'TypeScript': return `const TOKEN: string = 'your_session_token';\n\nconst res = await fetch('https://revy.my.id/api/shorten', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    url: 'https://github.com/revyid/app',\n    token: TOKEN,\n    slug: 'my-app'\n  })\n});\n\nconst data: { short_url: string } = await res.json();\nconsole.log(data.short_url);  // https://revy.my.id/s/my-app`;
+      case 'cURL': return `curl -s -X POST https://revy.my.id/api/shorten \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"https://github.com/revyid/app","token":"your_session_token","slug":"my-app"}'`;
+    }
+  }
+
+  if (p === '__stats__') {
+    switch (lang) {
+      case 'JavaScript': return `const TOKEN = 'your_session_token';\nconst SLUG = 'my-app';\n\nconst res = await fetch(\n  \`https://revy.my.id/api/shorten?slug=\${SLUG}&token=\${TOKEN}\`\n);\n\nconst data = await res.json();\nconsole.log(\`Clicks: \${data.clicks}\`);`;
+      case 'Python': return `import requests\n\nTOKEN = "your_session_token"\nSLUG = "my-app"\n\nres = requests.get(\n    f"https://revy.my.id/api/shorten?slug={SLUG}&token={TOKEN}",\n    timeout=10,\n)\nres.raise_for_status()\ndata = res.json()\nprint(f"Clicks: {data['clicks']}")`;
+      case 'TypeScript': return `const TOKEN: string = 'your_session_token';\nconst SLUG: string = 'my-app';\n\nconst res = await fetch(\n  \`https://revy.my.id/api/shorten?slug=\${SLUG}&token=\${TOKEN}\`\n);\n\nconst data: { clicks: number } = await res.json();\nconsole.log(\`Clicks: \${data.clicks}\`);`;
+      case 'cURL': return `curl -s "https://revy.my.id/api/shorten?slug=my-app&token=your_session_token"`;
+    }
+  }
+
+  return '';
 }
 
 function ConsoleOutput({ lines }: { lines: string[] }) {

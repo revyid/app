@@ -25,8 +25,12 @@ const NAV: NavItem[] = [
     children: [
       { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
       { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
-      { href: '/docs/sandbox', label: 'Code Sandbox', icon: PlayCircle },
     ],
+  },
+  {
+    href: '/docs/sandbox',
+    label: 'Sandbox',
+    icon: PlayCircle,
   },
   {
     href: '/docs/curl-ts',
