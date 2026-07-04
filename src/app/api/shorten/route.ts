@@ -108,9 +108,13 @@ export async function POST(request: Request) {
 
   let body: any;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400, headers: cors });
+    const text = await request.text();
+    if (!text || text.trim() === '') {
+      return NextResponse.json({ error: 'Empty request body' }, { status: 400, headers: cors });
+    }
+    body = JSON.parse(text);
+  } catch (e: any) {
+    return NextResponse.json({ error: 'Invalid JSON: ' + (e.message || 'parse error') }, { status: 400, headers: cors });
   }
 
   const { url, slug } = body;
