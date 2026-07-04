@@ -189,8 +189,8 @@ async function runTypeScript(code: string, log: LogFn): Promise<void> {
 async function runCurl(code: string, log: LogFn): Promise<void> {
   try {
     const { CurlParser, browserCurl } = await import('@/lib/curl-browser');
-    const parsed = new CurlParser(code).parse();
-    log(`> curl ${code.replace(/\n\s*/g, ' ').trim()}`);
+    CurlParser(code); // validate syntax
+    log(`> ${code.replace(/\n\s*/g, ' ').trim()}`);
     log('');
 
     const res = await browserCurl(code);
