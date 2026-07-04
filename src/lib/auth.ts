@@ -446,3 +446,21 @@ export async function regenerateSiteApiKey(): Promise<{ key?: string; error?: st
   if (data?.error) return { error: data.error };
   return { key: data.key };
 }
+
+// ─── Short URLs ────────────────────────────────────────────────────
+
+export async function listShortUrls(): Promise<Array<{ id: string; slug: string; short_url: string; original_url: string; clicks: number; created_at: string }>> {
+  const token = getStoredToken();
+  if (!token) return [];
+  const { data, error } = await (await getSupabase()).rpc('list_short_urls', { p_token: token });
+  if (error || data?.error) return [];
+  return data || [];
+}
+
+export async function deleteShortUrl(slug: string): Promise<boolean> {
+  const token = getStoredToken();
+  if (!token) return false;
+  const { data, error } = await (await getSupabase()).rpc('delete_short_url', { p_token: token, p_slug: slug });
+  if (error) return false;
+  return data?.ok === true;
+}

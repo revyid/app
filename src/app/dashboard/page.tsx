@@ -2,36 +2,60 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Key, Activity, Shield, ArrowRight, ExternalLink } from 'lucide-react';
+import { Key, Activity, Shield, ArrowRight, ExternalLink, Link2, Trash2, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { listApiKeys, getApiUsageToday } from '@/lib/auth';
+import { listApiKeys, getApiUsageToday, getSiteSetting, listShortUrls, deleteShortUrl } from '@/lib/auth';
+
+interface ShortUrl {
+  id: string;
+  slug: string;
+  short_url: string;
+  original_url: string;
+  clicks: number;
+  created_at: string;
+}
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const [keyCount, setKeyCount] = useState(0);
   const [usageToday, setUsageToday] = useState(0);
+  const [rateLimit, setRateLimit] = useState(100);
+  const [shortUrls, setShortUrls] = useState<ShortUrl[]>([]);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
-  // Redirect to home if not logged in
   useEffect(() => {
-    if (!isLoading && !user) {
-      window.location.href = '/';
-    }
+    if (!isLoading && !user) window.location.href = '/';
   }, [user, isLoading]);
 
   const refreshData = () => {
-    if (user) {
-      listApiKeys().then(keys => setKeyCount(keys.length));
-      getApiUsageToday().then(count => setUsageToday(count));
-    }
+    if (!user) return;
+    listApiKeys().then(keys => setKeyCount(keys.length));
+    getApiUsageToday().then(count => setUsageToday(count));
+    getSiteSetting('rate_limit_github').then(v => { if (v) setRateLimit(parseInt(v)); });
+    listShortUrls().then(urls => setShortUrls(urls));
   };
 
   useEffect(() => {
     refreshData();
-    const handleVisible = () => { if (document.visibilityState === 'visible') refreshData(); };
-    document.addEventListener('visibilitychange', handleVisible);
-    return () => document.removeEventListener('visibilitychange', handleVisible);
+    const h = () => { if (document.visibilityState === 'visible') refreshData(); };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
   }, [user]);
+
+  const handleCopyShortUrl = (url: string, slug: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedSlug(slug);
+    setTimeout(() => setCopiedSlug(null), 2000);
+  };
+
+  const handleDeleteShortUrl = async (slug: string) => {
+    if (!confirm(`Delete short URL /s/${slug}?`)) return;
+    const ok = await deleteShortUrl(slug);
+    if (ok) setShortUrls(prev => prev.filter(u => u.slug !== slug));
+  };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,68 +75,57 @@ export default function DashboardPage() {
           <h1 className="text-headline-sm font-semibold text-foreground mb-1">
             Welcome, {user?.display_name || user?.email}
           </h1>
-          <p className="text-body-md text-muted-foreground">Manage your API keys and monitor usage</p>
+          <p className="text-body-md text-muted-foreground">Manage your API keys, short URLs, and monitor usage</p>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-5 rounded-2xl bg-surface border border-outline/20"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="p-5 rounded-2xl bg-surface border border-outline/20">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center">
                 <Key className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-label-sm text-muted-foreground">Total Keys</p>
+                <p className="text-label-sm text-muted-foreground">API Keys</p>
                 <p className="text-title-sm font-semibold text-foreground">{keyCount}</p>
               </div>
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="p-5 rounded-2xl bg-surface border border-outline/20"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="p-5 rounded-2xl bg-surface border border-outline/20">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center">
                 <Activity className="w-5 h-5 text-secondary" />
               </div>
               <div>
                 <p className="text-label-sm text-muted-foreground">Requests (1h)</p>
-                <p className="text-title-sm font-semibold text-foreground">{usageToday}/100</p>
+                <p className="text-title-sm font-semibold text-foreground">{usageToday}/{rateLimit}</p>
               </div>
             </div>
             <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min((usageToday / 100) * 100, 100)}%` }}
-                className={`h-full rounded-full ${usageToday > 80 ? 'bg-error' : usageToday > 50 ? 'bg-warning' : 'bg-primary'}`}
-              />
+              <motion.div initial={{ width: 0 }}
+                animate={{ width: `${Math.min((usageToday / rateLimit) * 100, 100)}%` }}
+                className={`h-full rounded-full ${usageToday > rateLimit * 0.8 ? 'bg-error' : usageToday > rateLimit * 0.5 ? 'bg-warning' : 'bg-primary'}`} />
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="p-5 rounded-2xl bg-surface border border-outline/20"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="p-5 rounded-2xl bg-surface border border-outline/20">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-tertiary-container flex items-center justify-center">
-                <Shield className="w-5 h-5 text-tertiary" />
+                <Link2 className="w-5 h-5 text-tertiary" />
               </div>
               <div>
-                <p className="text-label-sm text-muted-foreground">Rate Limit</p>
-                <p className="text-title-sm font-semibold text-foreground">100/hr</p>
+                <p className="text-label-sm text-muted-foreground">Short URLs</p>
+                <p className="text-title-sm font-semibold text-foreground">{shortUrls.length}</p>
               </div>
             </div>
           </motion.div>
         </div>
 
+        {/* Quick Links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href="/dashboard/api-keys" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-primary/50 transition-colors">
             <div className="flex items-center justify-between">
@@ -144,6 +157,51 @@ export default function DashboardPage() {
             </div>
           </Link>
         </div>
+
+        {/* Short URLs List */}
+        {shortUrls.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Short URLs</h2>
+              <Link href="/docs/api-reference/shorten" className="text-body-sm text-primary hover:underline">API Docs</Link>
+            </div>
+            <div className="rounded-2xl border border-outline/20 overflow-hidden">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="bg-surface-variant/50 border-b border-outline/15">
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Short URL</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Original</th>
+                    <th className="text-right py-3 px-4 text-muted-foreground font-medium">Clicks</th>
+                    <th className="text-right py-3 px-4 text-muted-foreground font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shortUrls.map(url => (
+                    <tr key={url.id} className="border-b border-outline/10 last:border-0 hover:bg-surface-variant/30 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <code className="text-primary font-mono text-[12px]">{url.short_url}</code>
+                          <button onClick={() => handleCopyShortUrl(url.short_url, url.slug)}
+                            className="p-1 rounded hover:bg-surface-variant transition-colors">
+                            {copiedSlug === url.slug ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-muted-foreground truncate max-w-[200px]">{url.original_url}</td>
+                      <td className="py-3 px-4 text-right font-mono text-foreground">{url.clicks}</td>
+                      <td className="py-3 px-4 text-right">
+                        <button onClick={() => handleDeleteShortUrl(url.slug)}
+                          className="p-1.5 rounded-lg hover:bg-error/10 text-muted-foreground hover:text-error transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

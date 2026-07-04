@@ -92,7 +92,11 @@ export async function GET(request: Request) {
         .eq('user_id', keyResult.user_id)
         .gte('used_at', new Date(Date.now() - 3600000).toISOString());
 
-      if ((count || 0) >= (keyResult.rate_limit || 100)) {
+      const { data: ghLimitSetting } = await supabase
+        .from('site_settings').select('value').eq('key', 'rate_limit_github').single();
+      const ghLimit = ghLimitSetting?.value ? parseInt(ghLimitSetting.value) : (keyResult.rate_limit || 100);
+
+      if ((count || 0) >= ghLimit) {
         return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
       }
     }
