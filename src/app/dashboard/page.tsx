@@ -44,7 +44,14 @@ export default function DashboardPage() {
     refreshData();
     const h = () => { if (document.visibilityState === 'visible') refreshData(); };
     document.addEventListener('visibilitychange', h);
-    return () => document.removeEventListener('visibilitychange', h);
+    // Poll every 5s for real-time updates
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') refreshData();
+    }, 5000);
+    return () => {
+      document.removeEventListener('visibilitychange', h);
+      clearInterval(interval);
+    };
   }, [user]);
 
   const handleCopyShortUrl = (url: string, slug: string) => {

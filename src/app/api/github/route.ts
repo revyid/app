@@ -84,6 +84,11 @@ export async function GET(request: Request) {
     // Use service role for all DB queries (bypass RLS)
     const adminDb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Check rate limit
+    const { data: unlimitedSetting } = await adminDb
+      .from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
+    const isUnlimited = unlimitedSetting?.value === 'true';
+
     // Resolve user_id: site key uses admin user
     let trackUserId = keyResult.user_id;
     if (!trackUserId) {
@@ -91,7 +96,7 @@ export async function GET(request: Request) {
       trackUserId = admin?.id;
     }
 
-    if (trackUserId) {
+    if (!isUnlimited && trackUserId) {
       const { count } = await adminDb.from('api_key_usage')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', trackUserId)
