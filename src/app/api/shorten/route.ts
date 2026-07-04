@@ -124,18 +124,51 @@ export async function POST(request: Request) {
   }
 
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-  const { data } = await supabase.rpc('create_short_url', {
-    p_user_id: auth.userId,
-    p_key_id: auth.keyId,
-    p_url: url,
-    p_slug: slug || null,
-  });
 
-  if (data?.error) {
-    return NextResponse.json({ error: data.error }, { status: 400, headers: cors });
+  // Validate URL directly
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return NextResponse.json({ error: 'Invalid URL (must start with http:// or https://)' }, { status: 400, headers: cors });
   }
 
-  return NextResponse.json(data, { status: 201, headers: cors });
+  // Generate or validate slug
+  let finalSlug = slug;
+  if (!finalSlug) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let s = '';
+    for (let i = 0; i < 7; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    finalSlug = s;
+  } else {
+    finalSlug = finalSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (finalSlug.length < 3 || finalSlug.length > 16) {
+      return NextResponse.json({ error: 'Slug must be 3-16 alphanumeric characters' }, { status: 400, headers: cors });
+    }
+  }
+
+  // Check if slug exists
+  const { data: existing } = await supabase.from('short_urls').select('id').eq('slug', finalSlug).single();
+  if (existing) {
+    return NextResponse.json({ error: 'Slug already taken' }, { status: 400, headers: cors });
+  }
+
+  // Insert
+  const { data: inserted, error: insertError } = await supabase.from('short_urls').insert({
+    slug: finalSlug,
+    original_url: url,
+    user_id: userId,
+    api_key_id: keyId,
+  }).select().single();
+
+  if (insertError) {
+    return NextResponse.json({ error: insertError.message }, { status: 500, headers: cors });
+  }
+
+  return NextResponse.json({
+    id: inserted.id,
+    slug: inserted.slug,
+    short_url: `https://revy.my.id/s/${inserted.slug}`,
+    original_url: inserted.original_url,
+    created_at: inserted.created_at,
+  }, { status: 201, headers: cors });
 }
 
 export async function DELETE(request: Request) {
