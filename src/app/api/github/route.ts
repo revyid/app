@@ -108,9 +108,11 @@ export async function GET(request: Request) {
       }
     }
 
-    // Record usage
+    // Record usage (use service role to bypass RLS)
     if (trackUserId) {
-      await supabase.from('api_key_usage').insert({ user_id: trackUserId });
+      const adminSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+      await adminSupabase.from('api_key_usage').insert({ user_id: trackUserId });
+      await adminSupabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
     }
   }
 
