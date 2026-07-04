@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Key, Activity, Shield, ArrowRight, ExternalLink, Link2, Trash2, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { listApiKeys, getApiUsageToday, getSiteSetting, listShortUrls, deleteShortUrl } from '@/lib/auth';
+import { listApiKeys, getApiUsageToday, getShortenUsageToday, getSiteSetting, listShortUrls, deleteShortUrl } from '@/lib/auth';
 
 interface ShortUrl {
   id: string;
@@ -19,8 +19,10 @@ interface ShortUrl {
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const [keyCount, setKeyCount] = useState(0);
-  const [usageToday, setUsageToday] = useState(0);
-  const [rateLimit, setRateLimit] = useState(100);
+  const [ghUsage, setGhUsage] = useState(0);
+  const [shortenUsage, setShortenUsage] = useState(0);
+  const [ghLimit, setGhLimit] = useState(100);
+  const [shortenLimit, setShortenLimit] = useState(100);
   const [shortUrls, setShortUrls] = useState<ShortUrl[]>([]);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
@@ -31,8 +33,10 @@ export default function DashboardPage() {
   const refreshData = () => {
     if (!user) return;
     listApiKeys().then(keys => setKeyCount(keys.length));
-    getApiUsageToday().then(count => setUsageToday(count));
-    getSiteSetting('rate_limit_github').then(v => { if (v) setRateLimit(parseInt(v)); });
+    getApiUsageToday().then(c => setGhUsage(c));
+    getShortenUsageToday().then(c => setShortenUsage(c));
+    getSiteSetting('rate_limit_github').then(v => { if (v) setGhLimit(parseInt(v)); });
+    getSiteSetting('rate_limit_shorten').then(v => { if (v) setShortenLimit(parseInt(v)); });
     listShortUrls().then(urls => setShortUrls(urls));
   };
 
@@ -100,14 +104,14 @@ export default function DashboardPage() {
                 <Activity className="w-5 h-5 text-secondary" />
               </div>
               <div>
-                <p className="text-label-sm text-muted-foreground">Requests (1h)</p>
-                <p className="text-title-sm font-semibold text-foreground">{usageToday}/{rateLimit}</p>
+                <p className="text-label-sm text-muted-foreground">GitHub (1h)</p>
+                <p className="text-title-sm font-semibold text-foreground">{ghUsage}/{ghLimit}</p>
               </div>
             </div>
             <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
               <motion.div initial={{ width: 0 }}
-                animate={{ width: `${Math.min((usageToday / rateLimit) * 100, 100)}%` }}
-                className={`h-full rounded-full ${usageToday > rateLimit * 0.8 ? 'bg-error' : usageToday > rateLimit * 0.5 ? 'bg-warning' : 'bg-primary'}`} />
+                animate={{ width: `${Math.min((ghUsage / ghLimit) * 100, 100)}%` }}
+                className={`h-full rounded-full ${ghUsage > ghLimit * 0.8 ? 'bg-error' : ghUsage > ghLimit * 0.5 ? 'bg-warning' : 'bg-primary'}`} />
             </div>
           </motion.div>
 
@@ -118,9 +122,14 @@ export default function DashboardPage() {
                 <Link2 className="w-5 h-5 text-tertiary" />
               </div>
               <div>
-                <p className="text-label-sm text-muted-foreground">Short URLs</p>
-                <p className="text-title-sm font-semibold text-foreground">{shortUrls.length}</p>
+                <p className="text-label-sm text-muted-foreground">Shortener (today)</p>
+                <p className="text-title-sm font-semibold text-foreground">{shortenUsage}/{shortenLimit}</p>
               </div>
+            </div>
+            <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
+              <motion.div initial={{ width: 0 }}
+                animate={{ width: `${Math.min((shortenUsage / shortenLimit) * 100, 100)}%` }}
+                className={`h-full rounded-full ${shortenUsage > shortenLimit * 0.8 ? 'bg-error' : shortenUsage > shortenLimit * 0.5 ? 'bg-warning' : 'bg-primary'}`} />
             </div>
           </motion.div>
         </div>

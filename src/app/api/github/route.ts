@@ -86,15 +86,22 @@ export async function GET(request: Request) {
       .from('site_settings').select('value').eq('key', 'unlimited_api_keys').single();
     const isUnlimited = unlimitedSetting?.value === 'true';
 
-    if (!isUnlimited) {
+    // Resolve user_id: site key uses admin user
+    let trackUserId = keyResult.user_id;
+    if (!trackUserId) {
+      const { data: admin } = await supabase.from('app_users').select('id').eq('is_admin', true).limit(1).single();
+      trackUserId = admin?.id;
+    }
+
+    if (!isUnlimited && trackUserId) {
       const { count } = await supabase.from('api_key_usage')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', keyResult.user_id)
+        .eq('user_id', trackUserId)
         .gte('used_at', new Date(Date.now() - 3600000).toISOString());
 
       const { data: ghLimitSetting } = await supabase
         .from('site_settings').select('value').eq('key', 'rate_limit_github').single();
-      const ghLimit = ghLimitSetting?.value ? parseInt(ghLimitSetting.value) : (keyResult.rate_limit || 100);
+      const ghLimit = ghLimitSetting?.value ? parseInt(ghLimitSetting.value) : 100;
 
       if ((count || 0) >= ghLimit) {
         return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429, headers: { ...cors, 'Retry-After': '3600' } });
@@ -102,8 +109,9 @@ export async function GET(request: Request) {
     }
 
     // Record usage
-    await supabase.from('api_key_usage').insert({ user_id: keyResult.user_id });
-    await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
+    if (trackUserId) {
+      await supabase.from('api_key_usage').insert({ user_id: trackUserId });
+    }
   }
 
   try {

@@ -428,6 +428,19 @@ export async function getApiUsageToday(): Promise<number> {
   return data || 0;
 }
 
+export async function getShortenUsageToday(): Promise<number> {
+  const token = getStoredToken();
+  if (!token) return 0;
+  const user = await validateSession(token);
+  if (!user.user) return 0;
+  // Count short URLs created today
+  const { count } = await (await getSupabase())
+    .from('short_urls').select('id', { count: 'exact', head: true })
+    .eq('user_id', user.user.id)
+    .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+  return count || 0;
+}
+
 // ─── Site API Key ──────────────────────────────────────────────────
 
 export async function getSiteApiKey(): Promise<string | null> {
