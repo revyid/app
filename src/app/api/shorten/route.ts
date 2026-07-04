@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 
+function getSupabase() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
+
 const ALLOWED_ORIGINS = ['https://revy.my.id', 'https://dev.revy.my.id'];
 
 function getCorsHeaders(origin: string) {
@@ -20,7 +24,7 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 async function validateApiKey(apiKey: string) {
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const supabase = getSupabase();
 
   // Check site key first
   const { data: siteKeyRow } = await supabase
@@ -60,7 +64,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: cors });
   }
 
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const supabase = getSupabase();
 
   // List mode
   if (!slug) {
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
   let userId = auth.userId;
   let keyId = auth.keyId;
   if (!userId) {
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     const { data: admin } = await supabase.from('app_users').select('id').eq('is_admin', true).limit(1).single();
     if (admin) {
       userId = admin.id;
@@ -123,7 +127,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400, headers: cors });
   }
 
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const supabase = getSupabase();
 
   // Validate URL directly
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -190,7 +194,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: cors });
   }
 
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  const supabase = getSupabase();
   const { data } = await supabase.rpc('delete_short_url', { p_user_id: auth.userId, p_slug: slug });
 
   if (data?.error) {
