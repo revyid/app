@@ -96,8 +96,8 @@ export default function LinuxSandboxPage() {
 
       const config: any = {
         screen_container: containerRef.current,
-        bios: { url: 'https://copy.sh/v86/bios/seabios.bin' },
-        vga_bios: { url: 'https://copy.sh/v86/bios/vgabios.bin' },
+        bios: { url: '/v86/bios/seabios.bin' },
+        vga_bios: { url: '/v86/bios/vgabios.bin' },
         wasm_path: `${V86_CDN}/build/v86.wasm`,
         memory_size: profile.memory,
         autostart: true,
