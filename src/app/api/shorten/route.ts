@@ -92,6 +92,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: cors });
   }
 
+  // Site key: find admin user to use as owner
+  let userId = auth.userId;
+  let keyId = auth.keyId;
+  if (!userId) {
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: admin } = await supabase.from('app_users').select('id').eq('is_admin', true).limit(1).single();
+    if (admin) {
+      userId = admin.id;
+      // Use first active API key of admin
+      const { data: adminKey } = await supabase.from('api_keys').select('id').eq('user_id', admin.id).eq('is_active', true).limit(1).single();
+      keyId = adminKey?.id || null;
+    }
+  }
+
   let body: any;
   try {
     body = await request.json();
