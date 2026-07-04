@@ -103,6 +103,100 @@ export default function ApiEndpointsPage() {
           </div>
         </section>
       ))}
+
+      {/* URL Shortener */}
+      <div className="pt-4">
+        <h2 className="text-2xl font-bold text-foreground mb-1">URL Shortener</h2>
+        <p className="text-body-sm text-muted-foreground">
+          Create short URLs at <code className="px-1.5 py-0.5 bg-surface-variant rounded text-primary font-mono text-[13px]">https://revy.my.id/s/</code>
+        </p>
+      </div>
+
+      {/* Create */}
+      <section className="border-b border-outline/10 pb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="px-2 py-0.5 rounded bg-success/15 text-success text-label-sm font-mono font-medium">POST</span>
+          <code className="text-[13px] font-mono text-foreground">/api/shorten</code>
+        </div>
+        <p className="text-body-sm text-muted-foreground mb-3">Create a short URL. Requires session token.</p>
+        <p className="text-label-sm font-medium text-foreground mb-1">Request</p>
+        <div className="my-2 rounded-xl border border-outline/20 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-surface-variant/80 border-b border-outline/20">
+            <span className="text-label-sm text-muted-foreground font-mono">json</span>
+            <CopyBtn text={'{\n  "url": "https://example.com/very-long-url",\n  "token": "your_session_token",\n  "slug": "my-link"\n}'} />
+          </div>
+          <pre className="p-3 bg-surface-variant/50 overflow-x-auto"><code className="text-[13px] font-mono text-foreground whitespace-pre">{`{
+  "url": "https://example.com/very-long-url",
+  "token": "your_session_token",
+  "slug": "my-link"  // optional, auto-generated if omitted
+}`}</code></pre>
+        </div>
+        <p className="text-label-sm font-medium text-foreground mb-1 mt-3">Response</p>
+        <div className="rounded-xl border border-outline/20 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-success/10 border-b border-outline/20">
+            <span className="text-label-sm font-mono text-success font-medium">201 Created</span>
+          </div>
+          <pre className="p-3 bg-surface-variant/50 overflow-x-auto"><code className="text-[13px] font-mono text-foreground whitespace-pre">{`{
+  "id": "uuid",
+  "slug": "my-link",
+  "short_url": "https://revy.my.id/s/my-link",
+  "original_url": "https://example.com/very-long-url",
+  "created_at": "2026-07-04T12:00:00Z"
+}`}</code></pre>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="border-b border-outline/10 pb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-label-sm font-mono font-medium">GET</span>
+          <code className="text-[13px] font-mono text-foreground">/api/shorten?slug=my-link&amp;token=xxx</code>
+        </div>
+        <p className="text-body-sm text-muted-foreground mb-3">Get click stats for a short URL.</p>
+        <p className="text-label-sm font-medium text-foreground mb-1">Response</p>
+        <div className="rounded-xl border border-outline/20 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-success/10 border-b border-outline/20">
+            <span className="text-label-sm font-mono text-success font-medium">200 OK</span>
+          </div>
+          <pre className="p-3 bg-surface-variant/50 overflow-x-auto"><code className="text-[13px] font-mono text-foreground whitespace-pre">{`{
+  "id": "uuid",
+  "slug": "my-link",
+  "original_url": "https://example.com/very-long-url",
+  "clicks": 42,
+  "created_at": "2026-07-04T12:00:00Z"
+}`}</code></pre>
+        </div>
+      </section>
+
+      {/* Redirect */}
+      <section className="border-b border-outline/10 pb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-label-sm font-mono font-medium">GET</span>
+          <code className="text-[13px] font-mono text-foreground">/s/{'{slug}'}</code>
+        </div>
+        <p className="text-body-sm text-muted-foreground mb-3">Redirect to the original URL. Increments click counter.</p>
+        <div className="rounded-xl border border-outline/20 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-success/10 border-b border-outline/20">
+            <span className="text-label-sm font-mono text-success font-medium">302 Found</span>
+          </div>
+          <pre className="p-3 bg-surface-variant/50 overflow-x-auto"><code className="text-[13px] font-mono text-foreground whitespace-pre">Location: https://example.com/very-long-url</code></pre>
+        </div>
+      </section>
+
+      {/* Delete */}
+      <section className="pb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="px-2 py-0.5 rounded bg-error/15 text-error text-label-sm font-mono font-medium">DELETE</span>
+          <code className="text-[13px] font-mono text-foreground">/api/shorten?slug=my-link&amp;token=xxx</code>
+        </div>
+        <p className="text-body-sm text-muted-foreground mb-3">Delete a short URL.</p>
+        <div className="rounded-xl border border-outline/20 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-success/10 border-b border-outline/20">
+            <span className="text-label-sm font-mono text-success font-medium">200 OK</span>
+          </div>
+          <pre className="p-3 bg-surface-variant/50 overflow-x-auto"><code className="text-[13px] font-mono text-foreground whitespace-pre">{`{ "ok": true }`}</code></pre>
+        </div>
+      </section>
     </div>
   );
 }
