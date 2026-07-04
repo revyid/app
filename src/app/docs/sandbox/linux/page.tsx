@@ -12,6 +12,9 @@ interface Profile {
   hda?: string;
   cdrom?: string;
   cmdline?: string;
+  state?: string;
+  filesystem?: string;
+  net_device_type?: string;
 }
 
 const PROFILES: Profile[] = [
@@ -22,6 +25,15 @@ const PROFILES: Profile[] = [
     memory: 128,
     bzimage: 'https://i.copy.sh/buildroot-bzimage68.bin',
     cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
+  },
+  {
+    id: 'archlinux',
+    name: 'Arch Linux',
+    desc: 'Full Linux with Xorg, Firefox — interact via the VGA screen above',
+    memory: 512,
+    state: 'https://i.copy.sh/arch_state-v3.bin.zst',
+    filesystem: 'https://i.copy.sh/arch/',
+    net_device_type: 'virtio',
   },
   {
     id: 'tinycore',
@@ -45,10 +57,12 @@ declare global {
   }
 }
 
+const V86_CDN = 'https://cdn.jsdelivr.net/npm/v86@0.5.420';
+
 async function loadV86(): Promise<any> {
   if (window.V86) return window.V86;
   const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/v86@0.5.420/dist/v86.wasm.js';
+  script.src = `${V86_CDN}/build/libv86.js`;
   document.head.appendChild(script);
   await new Promise<void>((resolve, reject) => {
     script.onload = () => resolve();
@@ -84,6 +98,7 @@ export default function LinuxSandboxPage() {
         screen_container: containerRef.current,
         bios: { url: 'https://copy.sh/v86/bios/seabios.bin' },
         vga_bios: { url: 'https://copy.sh/v86/bios/vgabios.bin' },
+        wasm_path: `${V86_CDN}/build/v86.wasm`,
         memory_size: profile.memory,
         autostart: true,
         preserve_mac_address: true,
@@ -100,6 +115,19 @@ export default function LinuxSandboxPage() {
       }
       if (profile.cmdline) {
         config.cmdline = profile.cmdline;
+      }
+      if (profile.state) {
+        config.initial_state = { url: profile.state, use_parts: true, fixed_chunk_size: 256 * 1024 };
+      }
+      if (profile.filesystem) {
+        config.filesystem = {
+          baseurl: profile.filesystem,
+          basefs: { url: `${profile.filesystem}fs.json` },
+        };
+        config.bzimage_initrd_from_filesystem = true;
+      }
+      if (profile.net_device_type) {
+        config.net_device_type = profile.net_device_type;
       }
 
       const emulator = new V86Class(config);
