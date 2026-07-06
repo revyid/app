@@ -127,10 +127,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
       <aside className="hidden lg:block w-56 shrink-0 border-r border-outline/10 bg-background sticky top-0 h-screen overflow-y-auto">
         <div className="px-5 pt-6 pb-4">
-          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-5">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-label-sm font-medium">Home</span>
-          </Link>
           <p className="text-body-sm font-semibold text-foreground">Docs</p>
           <p className="text-label-sm text-muted-foreground/50 mt-0.5">v1.0</p>
         </div>

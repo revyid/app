@@ -73,12 +73,6 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]} />
-        <div>
-          <h1 className="text-headline-sm font-semibold text-foreground mb-1">
-            Welcome, {user?.display_name || user?.email}
-          </h1>
-          <p className="text-body-md text-muted-foreground">Manage your API keys, short URLs, and monitor usage</p>
-        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
