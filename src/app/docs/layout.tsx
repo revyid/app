@@ -3,8 +3,9 @@
 import { usePathname } from 'next/navigation';
 import { ArrowLeft, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 
 interface NavItem {
   href: string;
@@ -101,6 +102,25 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     hasNavigated.current = true;
   }, []);
 
+  const crumbs = useMemo(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    const labels: Record<string, string> = {
+      docs: 'Docs',
+      'api-reference': 'API Reference',
+      github: 'GitHub API',
+      shorten: 'URL Shortener',
+      sandbox: 'Sandbox',
+      'curl-ts': 'curl-ts',
+    };
+    return [
+      { label: 'Home', href: '/' },
+      ...segments.map((seg, i) => ({
+        label: labels[seg] || seg,
+        href: i < segments.length - 1 ? '/' + segments.slice(0, i + 1).join('/') : undefined,
+      })),
+    ];
+  }, [pathname]);
+
   return (
     <div className="min-h-screen bg-background flex">
       <MobileNav pathname={pathname} />
@@ -123,6 +143,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
       <main className="flex-1 min-w-0">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 lg:py-8 pt-14 lg:pt-8">
+          <Breadcrumbs items={crumbs} />
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}

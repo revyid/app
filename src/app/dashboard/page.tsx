@@ -6,6 +6,7 @@ import { Key, Activity, Shield, ArrowRight, ExternalLink, Link2, Trash2, Copy, C
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { listApiKeys, getApiUsageToday, getShortenUsageToday, getSiteSetting, listShortUrls, deleteShortUrl } from '@/lib/auth';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 
 interface ShortUrl {
   id: string;
@@ -70,18 +71,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-outline/20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <span className="text-title-sm font-semibold text-foreground">Dashboard</span>
-          {user?.is_admin && (
-            <button onClick={() => document.dispatchEvent(new CustomEvent('open-admin'))} className="flex items-center gap-1.5 text-body-sm text-primary hover:text-primary/80 transition-colors">
-              <Shield className="w-4 h-4" /> Admin
-            </button>
-          )}
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]} />
         <div>
           <h1 className="text-headline-sm font-semibold text-foreground mb-1">
             Welcome, {user?.display_name || user?.email}

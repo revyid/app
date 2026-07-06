@@ -52,10 +52,11 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   const router = useRouter();
 
   const activeItem = useMemo(() => {
+    if (pathname === '/') return 'home';
     if (pathname === '/dashboard') return 'dashboard';
     if (pathname === '/dashboard/api-keys') return 'api-keys';
     if (pathname === '/docs' || pathname.startsWith('/docs/')) return 'docs';
-    return 'dashboard';
+    return 'home';
   }, [pathname]);
 
   const scrollToSection = useCallback((sectionId: string) => {

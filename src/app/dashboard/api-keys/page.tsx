@@ -6,6 +6,7 @@ import { Key, Plus, Trash2, Copy, Check, ArrowLeft, Clock, Shield } from 'lucide
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { listApiKeys, createApiKey, deleteApiKey } from '@/lib/auth';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 
 interface ApiKey {
   id: string;
@@ -71,13 +72,8 @@ export default function ApiKeysPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-outline/20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <span className="text-title-sm font-semibold text-foreground">API Keys</span>
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Dashboard', href: '/dashboard' }, { label: 'API Keys' }]} />
         {/* Create New Key */}
         <div className="p-6 rounded-2xl bg-surface border border-outline/20">
           <h2 className="text-title-sm font-semibold text-foreground mb-4">Create New Key</h2>

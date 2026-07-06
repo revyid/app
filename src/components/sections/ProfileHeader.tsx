@@ -61,7 +61,7 @@ export function ProfileHeader() {
           {profileData.name}
         </h1>
 
-        <div className="relative w-5 h-5 flex items-center justify-center flex-shrink-0 idle-pulse-glow">
+        <div className="relative w-5 h-5 flex items-center justify-center flex-shrink-0">
           <AnimatePresence mode="popLayout" initial={false}>
             {!isNawaMode ? (
               <motion.div
