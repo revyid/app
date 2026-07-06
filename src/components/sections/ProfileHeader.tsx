@@ -24,7 +24,7 @@ export function ProfileHeader() {
     <div className="mb-6">
       {/* Profile Images */}
       <div className="flex items-center gap-4 mb-4 h-20">
-        <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-primary/20 idle-breathe rounded-[20px] hover:scale-105 transition-transform duration-300">
+        <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-primary/20 rounded-[20px] hover:scale-105 transition-transform duration-300">
           <img 
             src={profileData.image} 
             alt={profileData.name} 

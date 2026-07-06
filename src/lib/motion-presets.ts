@@ -143,7 +143,7 @@ export const scaleIn: Variants = {
 
 // M3 Expressive — bouncy pop in
 export const scaleInBounce: Variants = {
-  hidden: { opacity: 0, scale: 0.3 },
+  hidden: { opacity: 0, scale: 0.85 },
   visible: {
     opacity: 1,
     scale: 1,
@@ -489,7 +489,7 @@ export const fluidSurface = (index: number): Variants => ({
 // ============================================
 
 export const particleBurst = (index: number): Variants => ({
-  initial: { scale: 0, opacity: 1 },
+  initial: { scale: 0.5, opacity: 1 },
   animate: {
     scale: 1,
     opacity: 0,

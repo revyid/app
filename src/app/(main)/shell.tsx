@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { LayoutGroup } from 'framer-motion';
 import { Providers } from '@/app/providers';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
@@ -38,31 +37,29 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <LayoutGroup>
-        <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 overflow-x-clip ${nawaMode ? 'nawa-mode' : ''}`}>
-          {isLoading && <WelcomePreloader onComplete={() => setIsLoading(false)} />}
+      <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 overflow-x-clip ${nawaMode ? 'nawa-mode' : ''}`}>
+        {isLoading && <WelcomePreloader onComplete={() => setIsLoading(false)} />}
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
-            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">
-              Skip to content
-            </a>
-            <Sidebar ready={!isLoading} />
-            <main id="main-content">
-              <ErrorBoundary>{children}</ErrorBoundary>
-            </main>
-          </div>
-
-          <div className="lg:hidden text-center space-y-2 py-8 pb-24 border-t border-outline/20 mx-4">
-            <p className="text-label-sm text-muted-foreground/50">Built with React & Next.js</p>
-            <div className="flex items-center justify-center gap-3 text-label-sm">
-              <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
-              <span className="w-1 h-1 rounded-full bg-outline/40" />
-              <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
-            </div>
-            <p className="text-label-sm text-muted-foreground/50">&copy; 2026 revyid</p>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">
+            Skip to content
+          </a>
+          <Sidebar ready={!isLoading} />
+          <main id="main-content">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </main>
         </div>
-      </LayoutGroup>
+
+        <div className="lg:hidden text-center space-y-2 py-8 pb-24 border-t border-outline/20 mx-4">
+          <p className="text-label-sm text-muted-foreground/50">Built with React & Next.js</p>
+          <div className="flex items-center justify-center gap-3 text-label-sm">
+            <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
+            <span className="w-1 h-1 rounded-full bg-outline/40" />
+            <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
+          </div>
+          <p className="text-label-sm text-muted-foreground/50">&copy; 2026 revyid</p>
+        </div>
+      </div>
 
       {isCommandPaletteOpen && (
         <CommandPalette

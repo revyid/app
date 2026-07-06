@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
+import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
@@ -15,10 +15,8 @@ import {
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { floatingNavbar, SPRING_SNAPPY, SPRING_DEFAULT } from '@/lib/motion-presets';
+import { floatingNavbar } from '@/lib/motion-presets';
 import { getSiteSetting } from '@/lib/auth';
-import { useActiveSection } from '@/contexts/ActiveSectionContext';
-import { useLenis } from '@/components/shared/SmoothScroll';
 
 interface FloatingNavbarProps {
   onChatClick: () => void;
@@ -52,8 +50,6 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   const isSignedIn = !!user;
   const pathname = usePathname();
   const router = useRouter();
-  const { activeSection } = useActiveSection();
-  const lenis = useLenis();
 
   const activeItem = useMemo(() => {
     if (pathname === '/dashboard') return 'dashboard';
@@ -67,12 +63,14 @@ export const FloatingNavbar = memo(function FloatingNavbar({
     if (item) router.push(item.href);
   }, [router]);
 
-  const [isSectionHovered, setIsSectionHovered] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  // ponytail: CSS class toggle avoids re-render on every scroll tick
+  const pillRef = useRef<HTMLDivElement>(null);
   const [siteLogo, setSiteLogo] = useState<string | null>(null);
 
   useEffect(() => {
-    const h = () => setIsScrolled(window.scrollY > 100);
+    const h = () => {
+      pillRef.current?.classList.toggle('navbar-scrolled', window.scrollY > 100);
+    };
     window.addEventListener('scroll', h, { passive: true });
     return () => window.removeEventListener('scroll', h);
   }, []);
@@ -89,53 +87,32 @@ export const FloatingNavbar = memo(function FloatingNavbar({
       className="fixed bottom-6 left-4 right-4 lg:left-auto lg:right-8 z-40 flex justify-center lg:justify-end w-auto pointer-events-none"
     >
       <div className="pointer-events-auto px-1 py-2">
-        <motion.div
-          layout
-          animate={{ scale: isScrolled && !isSectionHovered ? 0.92 : 1 }}
-          transition={SPRING_SNAPPY}
-          className="flex items-center justify-center gap-0.5 sm:gap-1.5 px-1.5 py-1.5 sm:px-2 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
+        <div
+          ref={pillRef}
+          className="navbar-pill flex items-center justify-center gap-0.5 sm:gap-1.5 px-1.5 py-1.5 sm:px-2 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
         >
-          {/* Nav Items — with hover expand */}
+          {/* Nav Items */}
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem === item.id;
 
             return (
-              <motion.div
+              <button
                 key={item.id}
-                layout
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative flex-shrink-0"
-                onMouseEnter={() => setIsSectionHovered(true)}
-                onMouseLeave={() => setIsSectionHovered(false)}
+                onClick={() => scrollToSection(item.id)}
+                aria-label={item.label}
+                className={`nav-item relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base active:scale-95 ${
+                  isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
-                <button
-                  onClick={() => scrollToSection(item.id)}
-                  aria-label={item.label}
-                  className={`relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base ${
-                    isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <AnimatePresence mode="wait">
-                    {(isActive || isSectionHovered) && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={SPRING_DEFAULT}
-                        className="text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline"
-                      >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                  {isActive && (
-                    <motion.div layoutId="navActiveIndicator" className="absolute inset-0 rounded-full bg-secondary-container -z-10" transition={SPRING_SNAPPY} />
-                  )}
-                </button>
-              </motion.div>
+                {isActive && (
+                  <span className="absolute inset-0 rounded-full bg-secondary-container -z-10 nav-active-bg" />
+                )}
+                <Icon className="w-5 h-5" />
+                <span className={`nav-label text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline ${isActive ? 'nav-label-open' : ''}`}>
+                  {item.label}
+                </span>
+              </button>
             );
           })}
 
@@ -189,7 +166,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
               </div>
             )}
           </button>
-        </motion.div>
+        </div>
       </div>
     </motion.nav>
   );

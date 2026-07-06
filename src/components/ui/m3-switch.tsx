@@ -98,6 +98,7 @@ export function M3Switch({
             damping: 30,
           }}
           style={{
+            willChange: "transform",
             backgroundColor: isChecked
               ? 'hsl(var(--primary-foreground))'
               : 'hsl(var(--outline))',

@@ -183,7 +183,6 @@ function Button({
     )
   }
 
-  // Animated button with shape morphing
   return (
     <motion.button
       data-slot="button"
@@ -194,16 +193,9 @@ function Button({
         buttonVariants({ variant, size, className })
       )}
       onClick={handleClick as any}
-      whileHover={{ scale: 1.02, y: -1 }}
-      whileTap={{
-        scale: 0.94,
-        borderRadius: "32px",
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 400,
-        damping: 25,
-      }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
       {...(props as any)}
     >
       <StateLayer />
@@ -260,9 +252,9 @@ function IconButton({
         "disabled:pointer-events-none disabled:opacity-38",
         className
       )}
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.88, borderRadius: "14px" }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.93 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
       onClick={handleClick as any}
       {...(props as any)}
     >
@@ -326,8 +318,8 @@ function FAB({
         !extended && size === "lg" && "w-[96px]",
       )}
       whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.92, borderRadius: "24px" }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
       onClick={(e: any) => {
         if (!disableRipple) addRipple(e)
         onClick?.(e)

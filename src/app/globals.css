@@ -164,7 +164,6 @@
   * { @apply border-border; }
 
   html {
-    scroll-behavior: smooth;
     overflow-x: clip;
   }
 
@@ -273,13 +272,14 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Hide all scrollbars */
-  * {
+  /* Hide scrollbars on main document only */
+  html, body {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
-  *::-webkit-scrollbar {
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
     display: none;
   }
 
@@ -450,9 +450,9 @@
 
 /* M3 Expressive — pop in with bounce */
 @keyframes m3-pop-in {
-  0% { transform: scale(0.3); opacity: 0; }
-  50% { transform: scale(1.08); }
-  70% { transform: scale(0.95); }
+  0% { transform: scale(0.85); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.97); }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -465,9 +465,9 @@
 
 /* M3 Expressive — bounce in */
 @keyframes m3-bounce-in {
-  0% { transform: scale(0.3); opacity: 0; }
+  0% { transform: scale(0.85); opacity: 0; }
   50% { transform: scale(1.05); }
-  70% { transform: scale(0.9); }
+  70% { transform: scale(0.95); }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -508,8 +508,8 @@
 }
 
 @keyframes idle-pulse-glow-kf {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.1); opacity: 1; }
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
 
 @keyframes idle-shape-morph-kf {
@@ -543,7 +543,7 @@
 }
 
 .animate-on-scroll.is-visible {
-  animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: fadeInUp 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 .animate-on-scroll.is-visible:nth-child(1) { animation-delay: 0ms; }
@@ -561,22 +561,46 @@
 
 .idle-float {
   animation: idle-float-kf 4s ease-in-out infinite;
-  will-change: transform;
 }
 
 .idle-breathe {
   animation: idle-breathe-kf 4s ease-in-out infinite;
-  will-change: transform;
 }
 
 .idle-pulse-glow {
   animation: idle-pulse-glow-kf 2.5s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .idle-shape-morph {
   animation: idle-shape-morph-kf 6s ease-in-out infinite;
-  will-change: border-radius;
+}
+
+/* ============================================
+   FLOATING NAVBAR
+   ============================================ */
+
+.navbar-pill {
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform;
+}
+
+.navbar-scrolled {
+  transform: scale(0.92);
+}
+
+.nav-label {
+  width: 0;
+  opacity: 0;
+  transition: width 200ms cubic-bezier(0.2, 0, 0, 1), opacity 150ms ease;
+}
+
+.nav-label-open {
+  width: auto;
+  opacity: 1;
+}
+
+.nav-active-bg {
+  transition: opacity 150ms ease;
 }
 
 /* ============================================
