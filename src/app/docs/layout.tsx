@@ -65,11 +65,14 @@ function DocsSidebarContent({ pathname }: { pathname: string }) {
         <p className="text-body-sm font-semibold text-foreground mb-1">Docs</p>
         <p className="text-label-sm text-muted-foreground/50">v1.0</p>
       </div>
-      <nav className="space-y-0.5">
-        {NAV.map(item => (
-          <SidebarItem key={item.href} item={item} pathname={pathname} />
-        ))}
-      </nav>
+      <div>
+        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-1.5 px-1">Reference</p>
+        <nav className="space-y-0.5">
+          {NAV.map(item => (
+            <SidebarItem key={item.href} item={item} pathname={pathname} />
+          ))}
+        </nav>
+      </div>
       <div className="mt-auto pt-4 border-t border-outline/15">
         <p className="text-label-sm text-muted-foreground/40 text-center">© 2026 revyid</p>
       </div>

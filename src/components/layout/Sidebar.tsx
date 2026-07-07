@@ -21,11 +21,22 @@ const CRUMB_LABELS: Record<string, string> = {
   'curl-ts': 'curl-ts',
 };
 
-function SidebarShell({ children, crumbs }: { children: ReactNode; crumbs: ReactNode }) {
+function SidebarShell({ children, crumbs, pathname }: { children: ReactNode; crumbs: ReactNode; pathname: string }) {
   return (
     <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
       {crumbs}
-      {children}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="space-y-2.5 flex-1 flex flex-col"
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -50,7 +61,7 @@ export function Sidebar({ children }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:block fixed left-8 top-4 bottom-4 w-72 z-10">
         <div className="h-full flex items-center">
-          <SidebarShell crumbs={crumbs}>{children}</SidebarShell>
+          <SidebarShell crumbs={crumbs} pathname={pathname}>{children}</SidebarShell>
         </div>
       </aside>
 
@@ -93,7 +104,18 @@ export function Sidebar({ children }: SidebarProps) {
                   </button>
                 </div>
                 {crumbs}
-                {children}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pathname}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="space-y-2.5"
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </motion.aside>
           </>
