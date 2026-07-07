@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { SPRING_SNAPPY } from '@/lib/motion-presets';
 import { LoadingIndicator } from './LoadingIndicator';
@@ -10,12 +10,18 @@ interface WelcomePreloaderProps {
   isDataReady: boolean;
 }
 
+const MINIMUM_LOAD_MS = 2500;
+
 export function WelcomePreloader({ onComplete, isDataReady }: WelcomePreloaderProps) {
   const [isExiting, setIsExiting] = useState(false);
+  const mountTime = useRef(Date.now());
 
   useEffect(() => {
     if (!isDataReady) return;
     document.body.style.overflow = 'hidden';
+
+    const elapsed = Date.now() - mountTime.current;
+    const remaining = Math.max(0, MINIMUM_LOAD_MS - elapsed);
 
     const timer = setTimeout(() => {
       setIsExiting(true);
@@ -23,7 +29,7 @@ export function WelcomePreloader({ onComplete, isDataReady }: WelcomePreloaderPr
         document.body.style.overflow = '';
         onComplete();
       }, 400);
-    }, 600);
+    }, remaining);
 
     return () => {
       clearTimeout(timer);

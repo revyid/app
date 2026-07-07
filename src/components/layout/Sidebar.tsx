@@ -1,18 +1,21 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, MessageCircle, Sun, Moon, User } from 'lucide-react';
+import { Menu, X, MessageCircle, Sun, Moon, User, Shield } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   children: ReactNode;
+  showFooter?: boolean;
   onChatClick?: () => void;
   onProfileClick?: () => void;
+  onAdminClick?: () => void;
 }
 
-function SidebarFooter({ onChatClick, onProfileClick }: { onChatClick?: () => void; onProfileClick?: () => void }) {
+function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatClick?: () => void; onProfileClick?: () => void; onAdminClick?: () => void }) {
   const { effectiveTheme, toggleTheme } = useTheme();
   const { user } = useAuth();
 
@@ -23,8 +26,20 @@ function SidebarFooter({ onChatClick, onProfileClick }: { onChatClick?: () => vo
           <MessageCircle className="w-[18px] h-[18px]" />
         </button>
         <button onClick={toggleTheme} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Toggle theme">
-          {effectiveTheme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+          <motion.div
+            key={effectiveTheme}
+            initial={{ rotate: -90, scale: 0 }}
+            animate={{ rotate: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+          >
+            {effectiveTheme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+          </motion.div>
         </button>
+        {user?.is_admin && (
+          <button onClick={onAdminClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Admin">
+            <Shield className="w-[18px] h-[18px]" />
+          </button>
+        )}
         <button onClick={onProfileClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors overflow-hidden" aria-label="Profile">
           {user?.avatar_url ? (
             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -37,8 +52,15 @@ function SidebarFooter({ onChatClick, onProfileClick }: { onChatClick?: () => vo
   );
 }
 
-export function Sidebar({ children, onChatClick, onProfileClick }: SidebarProps) {
+const sidebarVariants = {
+  initial: { opacity: 0, x: -12, filter: 'blur(4px)' },
+  animate: { opacity: 1, x: 0, filter: 'blur(0px)' },
+  exit: { opacity: 0, x: 12, filter: 'blur(4px)' },
+};
+
+export function Sidebar({ children, showFooter = false, onChatClick, onProfileClick, onAdminClick }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <>
@@ -46,8 +68,20 @@ export function Sidebar({ children, onChatClick, onProfileClick }: SidebarProps)
       <aside className="hidden lg:block fixed left-8 top-4 bottom-4 w-72 z-10">
         <div className="h-full flex items-center">
           <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
-            {children}
-            <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                variants={sidebarVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className="space-y-2.5 flex-1 flex flex-col"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+            {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
           </div>
         </div>
       </aside>
@@ -90,8 +124,20 @@ export function Sidebar({ children, onChatClick, onProfileClick }: SidebarProps)
                     <X className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
-                {children}
-                <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pathname}
+                    variants={sidebarVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="space-y-2.5"
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+                {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
               </div>
             </motion.aside>
           </>

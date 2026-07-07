@@ -1,11 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { PageTransition } from '@/components/shared/PageTransition';
+import { ChatPopup } from '@/components/chat/ChatPopup';
+import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
+import { AdminPanel } from '@/components/admin/AdminPanel';
+import { createPortal } from 'react-dom';
 
 interface NavItem {
   href: string;
@@ -64,13 +68,26 @@ function NavItem({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
+function PopupPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === 'undefined') return null;
+  return createPortal(children, document.body);
+}
+
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
-        <Sidebar>
+        <Sidebar
+          showFooter
+          onChatClick={() => setIsChatOpen(true)}
+          onProfileClick={() => setIsProfileOpen(true)}
+          onAdminClick={() => setIsAdminOpen(true)}
+        >
           <nav className="space-y-0.5">
             {NAV.map(item => (
               <NavItem key={item.href} item={item} pathname={pathname} />
@@ -81,6 +98,11 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
+      <PopupPortal>
+        <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => {}} />
+        <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => {}} />
+        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      </PopupPortal>
     </div>
   );
 }
