@@ -83,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:pl-[420px] lg:pr-8 py-8 lg:py-12 pb-24">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
         <Sidebar
           showFooter
           onChatClick={() => setIsChatOpen(true)}
@@ -101,8 +101,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
       <PopupPortal>
-        <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => {}} />
-        <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => {}} />
+        <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => {}} side="left" />
+        <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => {}} side="left" />
         <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
       </PopupPortal>
     </div>

@@ -14,9 +14,10 @@ interface ChatPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginRequest: () => void;
+  side?: 'left' | 'right';
 }
 
-export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
+export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: ChatPopupProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +60,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
 
           <motion.div initial={{ opacity: 0, y: '100%' }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60]">
+            className={`fixed bottom-0 left-0 right-0 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60] ${side === 'left' ? 'sm:left-4' : 'sm:right-4 sm:left-auto'}`}>
 
             <BottomSheet onClose={onClose}>
               <div className="bg-surface rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 border border-outline/20 overflow-hidden noise-grain">

@@ -81,7 +81,7 @@ export function Sidebar({ children, showFooter = false, onChatClick, onProfileCl
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block fixed left-1/2 -translate-x-[calc(50%+200px)] top-4 bottom-4 w-72 z-10">
+      <aside className="hidden lg:block fixed left-8 top-4 bottom-4 w-72 z-10">
         <div className="h-full flex items-center">
           <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
             <AnimatePresence mode="wait">
@@ -103,7 +103,7 @@ export function Sidebar({ children, showFooter = false, onChatClick, onProfileCl
       </aside>
 
       {/* Desktop spacer */}
-      <div className="hidden lg:block w-[420px] flex-shrink-0" />
+      <div className="hidden lg:block w-80 flex-shrink-0" />
 
       {/* Mobile menu button */}
       <button
