@@ -5,6 +5,7 @@ import { BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight } fr
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { PageTransition } from '@/components/shared/PageTransition';
 
 interface NavItem {
   href: string;
@@ -86,7 +87,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <DocsSidebarContent pathname={pathname} />
         </Sidebar>
         <main className="max-w-4xl mx-auto">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
     </div>

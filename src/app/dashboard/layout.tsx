@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Key, FileText, Home } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { PageTransition } from '@/components/shared/PageTransition';
 
 const NAV = [
   { href: '/', label: 'Home', icon: Home },
@@ -39,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </Sidebar>
         <main className="max-w-6xl mx-auto">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
     </div>

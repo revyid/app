@@ -35,9 +35,8 @@ export function Sidebar({ children }: SidebarProps) {
   const pathname = usePathname();
 
   const crumbs = useMemo(() => {
-    if (pathname === '/') return null;
     const segments = pathname.split('/').filter(Boolean);
-    const items: { label: string; href?: string }[] = [{ label: 'Home', href: '/' }];
+    const items: { label: string; href?: string }[] = [{ label: 'home', href: '/' }];
     segments.forEach((seg, i) => {
       const label = CRUMB_LABELS[seg] || seg;
       const href = i < segments.length - 1 ? '/' + segments.slice(0, i + 1).join('/') : undefined;

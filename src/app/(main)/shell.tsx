@@ -5,6 +5,7 @@ import { Providers } from '@/app/providers';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { PageTransition } from '@/components/shared/PageTransition';
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
@@ -20,12 +21,21 @@ function HomeSidebarContent() {
   return (
     <>
       <ProfileHeader />
-      <div className="h-px bg-outline/15" />
-      <AboutSection />
-      <div className="h-px bg-outline/15" />
-      <LanguagesSection />
-      <div className="h-px bg-outline/15" />
-      <SocialLinks />
+      <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
+      <div>
+        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">About</p>
+        <AboutSection />
+      </div>
+      <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
+      <div>
+        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">Languages</p>
+        <LanguagesSection />
+      </div>
+      <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
+      <div>
+        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">Connect</p>
+        <SocialLinks />
+      </div>
       <div className="mt-auto pt-4 border-t border-outline/15">
         <div className="text-center space-y-1.5">
           <p className="text-label-sm text-muted-foreground/40">Built with React & Next.js</p>
@@ -84,7 +94,9 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             <HomeSidebarContent />
           </Sidebar>
           <main id="main-content">
-            <ErrorBoundary>{children}</ErrorBoundary>
+            <ErrorBoundary>
+              <PageTransition>{children}</PageTransition>
+            </ErrorBoundary>
           </main>
         </div>
 
