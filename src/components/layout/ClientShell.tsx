@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
+import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
 import { ChatPopup } from '@/components/chat/ChatPopup';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
 import { AdminPanel } from '@/components/admin/AdminPanel';
@@ -17,10 +19,20 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === '/';
 
   return (
     <>
       {children}
+
+      {isHome && (
+        <FloatingNavbar
+          onChatClick={() => setIsChatOpen(true)}
+          onProfileClick={() => setIsProfileOpen(true)}
+          onAdminClick={() => setIsAdminOpen(true)}
+        />
+      )}
 
       <PopupPortal>
         <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => setIsLoginOpen(true)} />

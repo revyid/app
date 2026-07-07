@@ -11,12 +11,16 @@ import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { trackEvent } from '@/lib/auth';
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
+import { LogIn, LogOut, User } from 'lucide-react';
 
 function HomeSidebarContent() {
+  const { user, signOut } = useAuth();
+
   return (
     <>
       <ProfileHeader />
@@ -24,8 +28,30 @@ function HomeSidebarContent() {
       <AboutSection />
       <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
       <SocialLinks />
-      <div className="mt-auto pt-4 border-t border-outline/15">
-        <p className="text-label-sm text-muted-foreground/40 text-center">© 2026 revyid</p>
+      <div className="mt-auto pt-4 border-t border-outline/15 space-y-3">
+        {user ? (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden flex-shrink-0">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-label-sm font-medium text-foreground truncate">{user.display_name || user.email}</p>
+            </div>
+            <button onClick={signOut} className="p-1.5 rounded-lg hover:bg-surface-variant transition-colors text-muted-foreground hover:text-foreground" aria-label="Sign out">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <a href="/auth" className="flex items-center gap-2 px-3 py-2 rounded-xl text-body-sm text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors">
+            <LogIn className="w-4 h-4" />
+            Sign In
+          </a>
+        )}
+        <p className="text-label-sm text-muted-foreground/40 text-center">Built with React & Next.js · © 2026 revyid</p>
       </div>
     </>
   );

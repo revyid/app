@@ -13,7 +13,7 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
         <div className="absolute inset-0 m3-ripple pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity rounded-[inherit]" />
 
         <div className="relative flex items-start gap-5 p-6">
-          <div className="w-14 h-14 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/30 bg-primary rounded-[12px] transition-all duration-300 group-hover:rotate-y-10 group-hover:rounded-[16px]">
+          <div className="w-14 h-14 flex items-center justify-center flex-shrink-0 bg-primary rounded-[12px] transition-all duration-300 group-hover:rotate-y-10 group-hover:rounded-[16px]">
             <span className="text-primary-foreground font-bold text-xl">
               {experience.company.charAt(0)}
             </span>
