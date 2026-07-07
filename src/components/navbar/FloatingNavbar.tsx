@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
@@ -88,32 +88,39 @@ export const FloatingNavbar = memo(function FloatingNavbar({
       className="fixed bottom-6 left-4 right-4 lg:left-auto lg:right-8 z-40 flex justify-center lg:justify-end w-auto pointer-events-none"
     >
       <div className="pointer-events-auto px-1 py-2">
-        <div
-          ref={pillRef}
-          className="navbar-pill flex items-center justify-center gap-0.5 sm:gap-1.5 px-1.5 py-1.5 sm:px-2 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
-        >
-          {/* Nav Items */}
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeItem === item.id;
+        <LayoutGroup id="nav-pill">
+          <div
+            ref={pillRef}
+            className="navbar-pill flex items-center justify-center gap-0.5 sm:gap-1.5 px-1.5 py-1.5 sm:px-2 sm:py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30 w-max"
+          >
+            {/* Nav Items */}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeItem === item.id;
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                aria-label={item.label}
-                className={`nav-item relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all duration-200 z-10 cursor-pointer text-sm sm:text-base active:scale-95 ${
-                  isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <span className={`nav-active-bg absolute inset-0 rounded-full bg-secondary-container -z-10 transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`} />
-                <Icon className="w-5 h-5" />
-                <span className={`nav-label text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${isActive ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  aria-label={item.label}
+                  className={`nav-item relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full z-10 cursor-pointer text-sm sm:text-base active:scale-95 ${
+                    isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground transition-colors duration-150'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active-pill"
+                      className="absolute inset-0 rounded-full bg-secondary-container -z-10"
+                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                    />
+                  )}
+                  <Icon className="w-5 h-5" />
+                  <span className={`text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${isActive ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
 
           {/* Divider */}
           <div className="w-px h-6 sm:h-7 bg-outline/30 mx-0.5" />
@@ -166,6 +173,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
             )}
           </button>
         </div>
+        </LayoutGroup>
       </div>
     </motion.nav>
   );

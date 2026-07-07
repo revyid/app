@@ -57,14 +57,14 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </main>
         </div>
 
-        <div className="lg:hidden text-center space-y-2 py-8 pb-24 border-t border-outline/20 mx-4">
-          <p className="text-label-sm text-muted-foreground/50">Built with React & Next.js</p>
-          <div className="flex items-center justify-center gap-3 text-label-sm">
-            <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors">Explore Work</a>
-            <span className="w-1 h-1 rounded-full bg-outline/40" />
-            <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Work With Me</a>
+        <div className="lg:hidden text-center space-y-1.5 py-6 pb-24 border-t border-outline/15 mx-4">
+          <p className="text-label-sm text-muted-foreground/40">Built with React & Next.js</p>
+          <div className="flex items-center justify-center gap-2 text-label-sm">
+            <a href="#projects" className="text-muted-foreground/60 hover:text-primary transition-colors">Explore Work</a>
+            <span className="w-0.5 h-0.5 rounded-full bg-outline/30" />
+            <a href="#contact" className="text-muted-foreground/60 hover:text-primary transition-colors">Work With Me</a>
           </div>
-          <p className="text-label-sm text-muted-foreground/50">&copy; 2026 revyid</p>
+          <p className="text-label-sm text-muted-foreground/40">&copy; 2026 revyid</p>
         </div>
       </div>
 

@@ -92,7 +92,7 @@ export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !loadCache());
 
   const refresh = useCallback(async () => {
     const cached = loadCache();
