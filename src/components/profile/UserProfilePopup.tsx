@@ -223,7 +223,7 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest }: UserProfil
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed bottom-0 left-0 right-0 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60]"
+            className="fixed bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60]"
           >
             <BottomSheet onClose={onClose}>
               <div className="bg-surface dark:bg-surface border border-outline/20 rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 overflow-hidden noise-grain max-h-[85vh] overflow-y-auto scrollbar-thin" data-lenis-prevent>

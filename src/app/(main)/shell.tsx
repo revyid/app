@@ -19,35 +19,12 @@ import { LanguagesSection } from '@/components/sections/LanguagesSection';
 import { Mail, Briefcase, GraduationCap, FolderKanban, MessageSquare } from 'lucide-react';
 
 function HomeSidebarContent() {
-  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   return (
     <>
       <ProfileHeader />
 
       <div className="h-px bg-outline/20" />
       <AboutSection />
-
-      <div className="h-px bg-outline/20" />
-      <div>
-        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">Quick Links</p>
-        <nav className="space-y-0.5">
-          {[
-            { id: 'skills', label: 'Skills', icon: FolderKanban },
-            { id: 'projects', label: 'Projects', icon: Briefcase },
-            { id: 'experience', label: 'Experience', icon: GraduationCap },
-            { id: 'contact', label: 'Contact', icon: Mail },
-          ].map(item => (
-            <button key={item.id} onClick={() => scrollTo(item.id)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors text-left">
-              <div className="w-7 h-7 rounded-lg bg-surface-variant/50 flex items-center justify-center">
-                <item.icon className="w-3.5 h-3.5" />
-              </div>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
 
       <div className="h-px bg-outline/20" />
       <LanguagesSection />
@@ -97,7 +74,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:pl-[420px] lg:pr-8 py-8 lg:py-12 pb-24">
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">
             Skip to content
           </a>

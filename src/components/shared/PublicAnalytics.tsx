@@ -342,14 +342,23 @@ function PlatformChart({ agents }: { agents: string[] }) {
         <div className="h-48 flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="space-y-2.5">
         {sorted.filter(([key]) => key !== 'Bot' && key !== 'bot').slice(0, 5).map(([key, count], i) => {
           const pct = total > 0 ? Math.round((count / total) * 100) : 0;
           return (
-            <div key={key} className="flex items-center gap-1.5 text-label-sm">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i] || colors[0] }} />
-              <span className="text-muted-foreground">{key}</span>
-              <span className="text-foreground font-medium">{pct}%</span>
+            <div key={key} className="flex items-center gap-3 text-label-sm">
+              <span className="text-foreground font-medium w-20 truncate">{key}</span>
+              <div className="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${pct}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.08 }}
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: colors[i] || colors[0] }}
+                />
+              </div>
+              <span className="text-muted-foreground font-mono w-10 text-right">{pct}%</span>
             </div>
           );
         })}
