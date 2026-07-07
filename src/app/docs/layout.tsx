@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { PageTransition } from '@/components/shared/PageTransition';
 
@@ -15,20 +15,26 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: '/docs', label: 'Overview', icon: BookOpen },
-  { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
-    { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
-    { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
+  { href: '/', label: 'Home', icon: BookOpen },
+  { href: '/dashboard', label: 'Dashboard', icon: Globe, children: [
+    { href: '/dashboard/api-keys', label: 'API Keys', icon: Globe },
   ]},
-  { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
-  { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
+  { href: '/docs', label: 'Docs', icon: BookOpen, children: [
+    { href: '/docs', label: 'Overview', icon: BookOpen },
+    { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
+      { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
+      { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
+    ]},
+    { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
+    { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
+  ]},
 ];
 
-function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
+function NavItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const [open, setOpen] = useState(true);
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = pathname === item.href || (item.href !== '/docs' && pathname.startsWith(item.href));
+  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
 
   return (
     <div>
@@ -50,33 +56,11 @@ function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
       {hasChildren && open && (
         <div className="ml-3 border-l border-outline/10 pl-2 mt-0.5">
           {item.children!.map(child => (
-            <SidebarItem key={child.href} item={child} pathname={pathname} />
+            <NavItem key={child.href} item={child} pathname={pathname} />
           ))}
         </div>
       )}
     </div>
-  );
-}
-
-function DocsSidebarContent({ pathname }: { pathname: string }) {
-  return (
-    <>
-      <div>
-        <p className="text-body-sm font-semibold text-foreground mb-1">Docs</p>
-        <p className="text-label-sm text-muted-foreground/50">v1.0</p>
-      </div>
-      <div>
-        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-1.5 px-1">Reference</p>
-        <nav className="space-y-0.5">
-          {NAV.map(item => (
-            <SidebarItem key={item.href} item={item} pathname={pathname} />
-          ))}
-        </nav>
-      </div>
-      <div className="mt-auto pt-4 border-t border-outline/15">
-        <p className="text-label-sm text-muted-foreground/40 text-center">© 2026 revyid</p>
-      </div>
-    </>
   );
 }
 
@@ -87,7 +71,11 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
         <Sidebar>
-          <DocsSidebarContent pathname={pathname} />
+          <nav className="space-y-0.5">
+            {NAV.map(item => (
+              <NavItem key={item.href} item={item} pathname={pathname} />
+            ))}
+          </nav>
         </Sidebar>
         <main className="max-w-4xl mx-auto">
           <PageTransition>{children}</PageTransition>

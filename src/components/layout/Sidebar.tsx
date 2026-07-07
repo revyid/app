@@ -1,68 +1,54 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
+import { Menu, X, MessageCircle, Sun, Moon, User } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   children: ReactNode;
+  onChatClick?: () => void;
+  onProfileClick?: () => void;
 }
 
-const CRUMB_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard',
-  'api-keys': 'API Keys',
-  docs: 'Docs',
-  'api-reference': 'API Reference',
-  github: 'GitHub API',
-  shorten: 'URL Shortener',
-  sandbox: 'Sandbox',
-  'curl-ts': 'curl-ts',
-};
+function SidebarFooter({ onChatClick, onProfileClick }: { onChatClick?: () => void; onProfileClick?: () => void }) {
+  const { effectiveTheme, toggleTheme } = useTheme();
+  const { user } = useAuth();
 
-function SidebarShell({ children, crumbs, pathname }: { children: ReactNode; crumbs: ReactNode; pathname: string }) {
   return (
-    <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
-      {crumbs}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={pathname}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="space-y-2.5 flex-1 flex flex-col"
-        >
-          {children}
-        </motion.div>
-      </AnimatePresence>
+    <div className="mt-auto pt-3 border-t border-outline/15">
+      <div className="flex items-center justify-center gap-1">
+        <button onClick={onChatClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Chat">
+          <MessageCircle className="w-[18px] h-[18px]" />
+        </button>
+        <button onClick={toggleTheme} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Toggle theme">
+          {effectiveTheme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+        </button>
+        <button onClick={onProfileClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors overflow-hidden" aria-label="Profile">
+          {user?.avatar_url ? (
+            <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <User className="w-[18px] h-[18px]" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }
 
-export function Sidebar({ children }: SidebarProps) {
+export function Sidebar({ children, onChatClick, onProfileClick }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
-
-  const crumbs = useMemo(() => {
-    if (pathname === '/') return null;
-    const segments = pathname.split('/').filter(Boolean);
-    const items: { label: string; href?: string }[] = [{ label: 'home', href: '/' }];
-    segments.forEach((seg, i) => {
-      const label = CRUMB_LABELS[seg] || seg;
-      const href = i < segments.length - 1 ? '/' + segments.slice(0, i + 1).join('/') : undefined;
-      items.push({ label, href });
-    });
-    return <Breadcrumbs items={items} />;
-  }, [pathname]);
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:block fixed left-8 top-4 bottom-4 w-72 z-10">
         <div className="h-full flex items-center">
-          <SidebarShell crumbs={crumbs} pathname={pathname}>{children}</SidebarShell>
+          <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
+            {children}
+            <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} />
+          </div>
         </div>
       </aside>
 
@@ -104,19 +90,8 @@ export function Sidebar({ children }: SidebarProps) {
                     <X className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
-                {crumbs}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className="space-y-2.5"
-                  >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
+                {children}
+                <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} />
               </div>
             </motion.aside>
           </>
