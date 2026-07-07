@@ -9,13 +9,15 @@ import { CommandPalette } from '@/components/command/CommandPalette';
 import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useTheme } from '@/contexts/ThemeContext';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { trackEvent } from '@/lib/auth';
 
 function ShellInner({ children }: { children: React.ReactNode }) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isPreloaderDone, setIsPreloaderDone] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
   const [nawaMode, setNawaMode] = useState(false);
+  const { isLoading } = usePortfolio();
 
   const { toggleTheme } = useTheme();
 
@@ -38,7 +40,12 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 overflow-x-clip ${nawaMode ? 'nawa-mode' : ''}`}>
-        {isLoading && <WelcomePreloader onComplete={() => setIsLoading(false)} />}
+        {isLoading && (
+          <WelcomePreloader
+            isDataReady={!isLoading}
+            onComplete={() => setIsPreloaderDone(true)}
+          />
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">

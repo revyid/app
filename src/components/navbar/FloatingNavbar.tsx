@@ -102,15 +102,13 @@ export const FloatingNavbar = memo(function FloatingNavbar({
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
                 aria-label={item.label}
-                className={`nav-item relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors duration-150 z-10 cursor-pointer text-sm sm:text-base active:scale-95 ${
+                className={`nav-item relative flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all duration-200 z-10 cursor-pointer text-sm sm:text-base active:scale-95 ${
                   isActive ? 'text-secondary-container-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {isActive && (
-                  <span className="absolute inset-0 rounded-full bg-secondary-container -z-10 nav-active-bg" />
-                )}
+                <span className={`nav-active-bg absolute inset-0 rounded-full bg-secondary-container -z-10 transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`} />
                 <Icon className="w-5 h-5" />
-                <span className={`nav-label text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline ${isActive ? 'nav-label-open' : ''}`}>
+                <span className={`nav-label text-label-sm font-medium whitespace-nowrap overflow-hidden hidden sm:inline transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${isActive ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
                   {item.label}
                 </span>
               </button>
