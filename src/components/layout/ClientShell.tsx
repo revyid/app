@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FloatingNavbar } from '@/components/navbar/FloatingNavbar';
 import { ChatPopup } from '@/components/chat/ChatPopup';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
 import { AdminPanel } from '@/components/admin/AdminPanel';
@@ -22,12 +21,6 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-
-      <FloatingNavbar
-        onChatClick={() => setIsChatOpen(true)}
-        onProfileClick={() => setIsProfileOpen(true)}
-        onAdminClick={() => setIsAdminOpen(true)}
-      />
 
       <PopupPortal>
         <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => setIsLoginOpen(true)} />

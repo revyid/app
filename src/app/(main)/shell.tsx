@@ -14,7 +14,6 @@ import { usePortfolio } from '@/contexts/PortfolioContext';
 import { trackEvent } from '@/lib/auth';
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
-import { LanguagesSection } from '@/components/sections/LanguagesSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
 
 function HomeSidebarContent() {
@@ -22,30 +21,11 @@ function HomeSidebarContent() {
     <>
       <ProfileHeader />
       <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
-      <div>
-        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">About</p>
-        <AboutSection />
-      </div>
+      <AboutSection />
       <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
-      <div>
-        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">Languages</p>
-        <LanguagesSection />
-      </div>
-      <div className="h-px bg-gradient-to-r from-transparent via-outline/20 to-transparent" />
-      <div>
-        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">Connect</p>
-        <SocialLinks />
-      </div>
+      <SocialLinks />
       <div className="mt-auto pt-4 border-t border-outline/15">
-        <div className="text-center space-y-1.5">
-          <p className="text-label-sm text-muted-foreground/40">Built with React & Next.js</p>
-          <div className="flex items-center justify-center gap-2 text-label-sm">
-            <a href="#projects" className="text-muted-foreground/60 hover:text-primary transition-colors">Explore Work</a>
-            <span className="w-0.5 h-0.5 rounded-full bg-outline/30" />
-            <a href="#contact" className="text-muted-foreground/60 hover:text-primary transition-colors">Work With Me</a>
-          </div>
-          <p className="text-label-sm text-muted-foreground/40">© 2026 revyid</p>
-        </div>
+        <p className="text-label-sm text-muted-foreground/40 text-center">© 2026 revyid</p>
       </div>
     </>
   );
@@ -98,16 +78,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
               <PageTransition>{children}</PageTransition>
             </ErrorBoundary>
           </main>
-        </div>
-
-        <div className="lg:hidden text-center space-y-1.5 py-6 pb-24 border-t border-outline/15 mx-4">
-          <p className="text-label-sm text-muted-foreground/40">Built with React & Next.js</p>
-          <div className="flex items-center justify-center gap-2 text-label-sm">
-            <a href="#projects" className="text-muted-foreground/60 hover:text-primary transition-colors">Explore Work</a>
-            <span className="w-0.5 h-0.5 rounded-full bg-outline/30" />
-            <a href="#contact" className="text-muted-foreground/60 hover:text-primary transition-colors">Work With Me</a>
-          </div>
-          <p className="text-label-sm text-muted-foreground/40">&copy; 2026 revyid</p>
         </div>
       </div>
 
