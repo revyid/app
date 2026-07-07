@@ -1,57 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { ProfileHeader } from '@/components/sections/ProfileHeader';
-import { AboutSection } from '@/components/sections/AboutSection';
-import { LanguagesSection } from '@/components/sections/LanguagesSection';
-import { SocialLinks } from '@/components/sections/SocialLinks';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 
 interface SidebarProps {
-  ready?: boolean;
+  children: ReactNode;
 }
 
-function SidebarContent() {
+const CRUMB_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  'api-keys': 'API Keys',
+  docs: 'Docs',
+  'api-reference': 'API Reference',
+  github: 'GitHub API',
+  shorten: 'URL Shortener',
+  sandbox: 'Sandbox',
+  'curl-ts': 'curl-ts',
+};
+
+function SidebarShell({ children, crumbs }: { children: ReactNode; crumbs: ReactNode }) {
   return (
-    <>
-      <ProfileHeader />
-      <div className="h-px bg-outline/15" />
-      <AboutSection />
-      <div className="h-px bg-outline/15" />
-      <LanguagesSection />
-      <div className="h-px bg-outline/15" />
-      <SocialLinks />
-      <div className="mt-auto pt-4 border-t border-outline/15">
-        <div className="text-center space-y-1.5">
-          <p className="text-label-sm text-muted-foreground/40">
-            Built with React & Next.js
-          </p>
-          <div className="flex items-center justify-center gap-2 text-label-sm">
-            <a href="#projects" className="text-muted-foreground/60 hover:text-primary transition-colors">Explore Work</a>
-            <span className="w-0.5 h-0.5 rounded-full bg-outline/30" />
-            <a href="#contact" className="text-muted-foreground/60 hover:text-primary transition-colors">Work With Me</a>
-          </div>
-          <p className="text-label-sm text-muted-foreground/40">
-            © 2026 revyid
-          </p>
-        </div>
-      </div>
-    </>
+    <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
+      {crumbs}
+      {children}
+    </div>
   );
 }
 
-export function Sidebar(_props: SidebarProps) {
+export function Sidebar({ children }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  const crumbs = useMemo(() => {
+    if (pathname === '/') return null;
+    const segments = pathname.split('/').filter(Boolean);
+    const items: { label: string; href?: string }[] = [{ label: 'Home', href: '/' }];
+    segments.forEach((seg, i) => {
+      const label = CRUMB_LABELS[seg] || seg;
+      const href = i < segments.length - 1 ? '/' + segments.slice(0, i + 1).join('/') : undefined;
+      items.push({ label, href });
+    });
+    return <Breadcrumbs items={items} />;
+  }, [pathname]);
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:block fixed left-8 top-4 bottom-4 w-72 z-10">
         <div className="h-full flex items-center">
-          <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
-            <SidebarContent />
-          </div>
+          <SidebarShell crumbs={crumbs}>{children}</SidebarShell>
         </div>
       </aside>
 
@@ -93,7 +93,8 @@ export function Sidebar(_props: SidebarProps) {
                     <X className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
-                <SidebarContent />
+                {crumbs}
+                {children}
               </div>
             </motion.aside>
           </>

@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
  * - Ripple state on interaction
  */
 
-interface M3SwitchProps {
+interface ToggleSwitchProps {
   checked?: boolean;
   defaultChecked?: boolean;
   onChange?: (checked: boolean) => void;
@@ -22,7 +22,7 @@ interface M3SwitchProps {
   showIcons?: boolean;
 }
 
-export function M3Switch({
+export function ToggleSwitch({
   checked: controlledChecked,
   defaultChecked = false,
   onChange,
@@ -30,7 +30,7 @@ export function M3Switch({
   label,
   className,
   showIcons = true,
-}: M3SwitchProps) {
+}: ToggleSwitchProps) {
   const [internalChecked, setInternalChecked] = useState(defaultChecked);
   const isControlled = controlledChecked !== undefined;
   const isChecked = isControlled ? controlledChecked : internalChecked;

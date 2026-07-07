@@ -328,15 +328,15 @@ const TOTAL_SHAPES = morphSequence.length - 1; // 7 transitions
 const TOTAL_DURATION_S = (DURATION_PER_SHAPE_MS * TOTAL_SHAPES) / 1000; // 4.55s
 const ROTATION_PER_SHAPE = 140; // 50° constant + 90° spring
 
-interface M3ExpressiveIndicatorProps {
+interface LoadingIndicatorProps {
   className?: string;
   duration?: number;
 }
 
-export function M3ExpressiveIndicator({
+export function LoadingIndicator({
   className = "w-16 h-16",
   duration = TOTAL_DURATION_S,
-}: M3ExpressiveIndicatorProps) {
+}: LoadingIndicatorProps) {
   const rotations = Array.from(
     { length: TOTAL_SHAPES + 1 },
     (_, i) => i * ROTATION_PER_SHAPE,
@@ -369,4 +369,4 @@ export function M3ExpressiveIndicator({
 }
 
 // Export all shapes for use in other components
-export { shapes as M3Shapes };
+export { shapes as LoadingShapes };

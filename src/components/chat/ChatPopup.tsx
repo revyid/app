@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchMessages, sendMessage, subscribeToMessages, deleteMessage, deleteMessageAdmin, type ChatMessage } from '@/lib/supabase';
 import { modalBackdrop } from '@/lib/motion-presets';
 import { BottomSheet } from '@/components/shared/BottomSheet';
-import { M3LinearProgressIndicator } from '@/components/shared/M3LinearProgressIndicator';
+import { LinearProgress } from '@/components/shared/LinearProgress';
 import { Button, IconButton } from '@/components/ui/button';
 
 interface ChatPopupProps {
@@ -120,7 +120,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
                     <>
                       {isLoading && (
                         <div className="absolute top-0 left-0 right-0 -mt-1 z-10">
-                          <M3LinearProgressIndicator color="primary" />
+                          <LinearProgress color="primary" />
                         </div>
                       )}
                       <div className="p-4 flex gap-2">

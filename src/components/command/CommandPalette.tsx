@@ -54,7 +54,7 @@ export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, 
   const commands: CommandItem[] = useMemo(() => [
     { id: 'home', title: 'Go to Home', icon: Home, shortcut: 'Ctrl+Alt+H', category: 'Navigation', action: () => scrollToSection('home') },
     { id: 'projects', title: 'Go to Works', icon: Layers, shortcut: 'Ctrl+Alt+P', category: 'Navigation', action: () => scrollToSection('projects') },
-    { id: 'experience', title: 'Go to Resume', icon: Briefcase, category: 'Navigation', action: () => scrollToSection('experience') },
+    { id: 'experience', title: 'Go to Experience', icon: Briefcase, category: 'Navigation', action: () => scrollToSection('experience') },
     { id: 'stats', title: 'Go to Stats', icon: BarChart3, category: 'Navigation', action: () => scrollToSection('stats') },
     { id: 'education', title: 'Go to Education', icon: GraduationCap, category: 'Navigation', action: () => scrollToSection('education') },
     { id: 'contact', title: 'Go to Contact', icon: Mail, category: 'Navigation', action: () => scrollToSection('contact') },

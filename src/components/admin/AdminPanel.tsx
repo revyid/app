@@ -14,7 +14,7 @@ import { SiteSettings } from './SiteSettings';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { UserManagement } from './UserManagement';
 import { ImageUpload } from '@/components/shared/ImageUpload';
-import { M3ExpressiveIndicator } from '@/components/shared/M3ExpressiveIndicator';
+import { LoadingIndicator } from '@/components/shared/LoadingIndicator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -58,7 +58,7 @@ function SaveButton({ saving, saved, onSave }: { saving: boolean; saved: boolean
   return (
     <div className="flex justify-end pt-2">
       <Button size="sm" onClick={onSave} disabled={saving} className="gap-2">
-        {saving ? <M3ExpressiveIndicator className="w-4 h-4" /> : <Save className="w-3.5 h-3.5" />}
+        {saving ? <LoadingIndicator className="w-4 h-4" /> : <Save className="w-3.5 h-3.5" />}
         {saved ? 'Saved!' : 'Save'}
       </Button>
     </div>

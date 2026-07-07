@@ -11,6 +11,35 @@ import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { trackEvent } from '@/lib/auth';
+import { ProfileHeader } from '@/components/sections/ProfileHeader';
+import { AboutSection } from '@/components/sections/AboutSection';
+import { LanguagesSection } from '@/components/sections/LanguagesSection';
+import { SocialLinks } from '@/components/sections/SocialLinks';
+
+function HomeSidebarContent() {
+  return (
+    <>
+      <ProfileHeader />
+      <div className="h-px bg-outline/15" />
+      <AboutSection />
+      <div className="h-px bg-outline/15" />
+      <LanguagesSection />
+      <div className="h-px bg-outline/15" />
+      <SocialLinks />
+      <div className="mt-auto pt-4 border-t border-outline/15">
+        <div className="text-center space-y-1.5">
+          <p className="text-label-sm text-muted-foreground/40">Built with React & Next.js</p>
+          <div className="flex items-center justify-center gap-2 text-label-sm">
+            <a href="#projects" className="text-muted-foreground/60 hover:text-primary transition-colors">Explore Work</a>
+            <span className="w-0.5 h-0.5 rounded-full bg-outline/30" />
+            <a href="#contact" className="text-muted-foreground/60 hover:text-primary transition-colors">Work With Me</a>
+          </div>
+          <p className="text-label-sm text-muted-foreground/40">© 2026 revyid</p>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function ShellInner({ children }: { children: React.ReactNode }) {
   const [isPreloaderDone, setIsPreloaderDone] = useState(false);
@@ -51,7 +80,9 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-xl focus:text-label-lg">
             Skip to content
           </a>
-          <Sidebar ready={!isLoading} />
+          <Sidebar>
+            <HomeSidebarContent />
+          </Sidebar>
           <main id="main-content">
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>

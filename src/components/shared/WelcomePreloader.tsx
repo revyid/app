@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { SPRING_SNAPPY } from '@/lib/motion-presets';
-import { M3ExpressiveIndicator } from './M3ExpressiveIndicator';
+import { LoadingIndicator } from './LoadingIndicator';
 
 interface WelcomePreloaderProps {
   onComplete: () => void;
@@ -33,9 +33,8 @@ export function WelcomePreloader({ onComplete, isDataReady }: WelcomePreloaderPr
 
   if (!isDataReady && !isExiting) {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface gap-6">
-        <M3ExpressiveIndicator className="w-20 h-20" />
-        <p className="text-body-sm text-muted-foreground animate-pulse">Loading...</p>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface">
+        <LoadingIndicator className="w-14 h-14" />
       </div>
     );
   }
@@ -45,9 +44,9 @@ export function WelcomePreloader({ onComplete, isDataReady }: WelcomePreloaderPr
       initial={{ y: 0 }}
       animate={{ y: isExiting ? '-100%' : 0 }}
       transition={{ ...SPRING_SNAPPY, damping: 20 }}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface gap-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-surface"
     >
-      <M3ExpressiveIndicator className="w-20 h-20" />
+      <LoadingIndicator className="w-14 h-14" />
     </motion.div>
   );
 }

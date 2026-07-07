@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-interface M3LinearProgressIndicatorProps {
+interface LinearProgressProps {
   className?: string;
   color?: 'primary' | 'secondary' | 'tertiary' | 'error';
   /** If provided, show determinate progress (0-100) */
@@ -20,13 +20,13 @@ interface M3LinearProgressIndicatorProps {
  * - Active indicator gap support
  * - Determinate mode with smooth animation
  */
-export function M3LinearProgressIndicator({
+export function LinearProgress({
   className = '',
   color = 'primary',
   value,
   showTrackStop = true,
   trackGap = 4,
-}: M3LinearProgressIndicatorProps) {
+}: LinearProgressProps) {
 
   const trackColorClass =
     color === 'primary' ? 'bg-primary/20' :
