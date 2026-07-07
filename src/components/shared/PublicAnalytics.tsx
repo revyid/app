@@ -298,6 +298,7 @@ function PlatformChart({ agents }: { agents: string[] }) {
   const sorted = Object.entries(currentData).sort(([, a], [, b]) => b - a);
   const total = sorted.reduce((s, [, c]) => s + c, 0);
   const chartData = sorted.slice(0, 6).map(([name, count]) => ({ name, count, pct: total > 0 ? Math.round((count / total) * 100) : 0 }));
+  const colors = ['hsl(var(--primary))', 'hsl(var(--tertiary))', 'hsl(var(--secondary))', '#f59e0b', 'hsl(var(--error))'];
 
   const deviceIcons: Record<string, React.ReactNode> = {
     desktop: <Monitor className="w-4 h-4" />,
@@ -341,29 +342,17 @@ function PlatformChart({ agents }: { agents: string[] }) {
         <div className="h-48 flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
       )}
 
-      <div className="space-y-2">
-        {sorted.slice(0, 4).map(([key, count], i) => (
-          <div key={key} className="flex items-center gap-3">
-            <div className="w-5 text-muted-foreground flex-shrink-0">
-              {activeTab === 'device' ? deviceIcons[key] : <span className="text-label-sm font-mono">{i + 1}</span>}
+      <div className="flex flex-wrap gap-3">
+        {sorted.filter(([key]) => key !== 'Bot' && key !== 'bot').slice(0, 5).map(([key, count], i) => {
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          return (
+            <div key={key} className="flex items-center gap-1.5 text-label-sm">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i] || colors[0] }} />
+              <span className="text-muted-foreground">{key}</span>
+              <span className="text-foreground font-medium">{pct}%</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between text-body-sm mb-1">
-                <span className="font-medium text-foreground truncate">{key}</span>
-                <span className="text-label-sm text-muted-foreground shrink-0 ml-2">{count} <span className="text-muted-foreground/60">({Math.round((count / total) * 100)}%)</span></span>
-              </div>
-              <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${(count / total) * 100}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: i * 0.1 }}
-                  className="h-full bg-primary rounded-full"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );

@@ -76,10 +76,14 @@ function saveCache(data: PortfolioData) {
   } catch { /* quota exceeded — ignore */ }
 }
 
+function clearCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch {}
+}
+
 interface PortfolioContextType {
   data: PortfolioData;
   isLoading: boolean;
-  refresh: () => Promise<void>;
+  refresh: (force?: boolean) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
@@ -94,9 +98,10 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
   const [isLoading, setIsLoading] = useState(() => !loadCache());
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (force?: boolean) => {
+    if (force) clearCache();
     const cached = loadCache();
-    if (cached) {
+    if (cached && !force) {
       setData(cached);
       setIsLoading(false);
       // still refresh in background

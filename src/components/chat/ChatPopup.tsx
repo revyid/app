@@ -25,13 +25,14 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest }: ChatPopupProps) {
   const isSignedIn = !!user;
 
   useEffect(() => {
+    if (!isOpen) return;
     fetchMessages().then(setMessages);
     const channel = subscribeToMessages(
       (msg) => setMessages(prev => [...prev, msg]),
       (id) => setMessages(prev => prev.filter(m => m.id !== id))
     );
     return () => { channel.unsubscribe(); };
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

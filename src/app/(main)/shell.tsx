@@ -15,22 +15,48 @@ import { trackEvent } from '@/lib/auth';
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
+import { LanguagesSection } from '@/components/sections/LanguagesSection';
+import { Mail, Briefcase, GraduationCap, FolderKanban, MessageSquare } from 'lucide-react';
 
 function HomeSidebarContent() {
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   return (
     <>
       <ProfileHeader />
+
       <div className="h-px bg-outline/20" />
       <AboutSection />
+
+      <div className="h-px bg-outline/20" />
+      <div>
+        <p className="text-label-sm font-medium text-muted-foreground/50 uppercase tracking-wider mb-2 px-1">Quick Links</p>
+        <nav className="space-y-0.5">
+          {[
+            { id: 'skills', label: 'Skills', icon: FolderKanban },
+            { id: 'projects', label: 'Projects', icon: Briefcase },
+            { id: 'experience', label: 'Experience', icon: GraduationCap },
+            { id: 'contact', label: 'Contact', icon: Mail },
+          ].map(item => (
+            <button key={item.id} onClick={() => scrollTo(item.id)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors text-left">
+              <div className="w-7 h-7 rounded-lg bg-surface-variant/50 flex items-center justify-center">
+                <item.icon className="w-3.5 h-3.5" />
+              </div>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="h-px bg-outline/20" />
+      <LanguagesSection />
+
       <div className="h-px bg-outline/20" />
       <SocialLinks />
-      <div className="text-center space-y-2 pt-2 pb-1">
-        <p className="text-label-sm text-muted-foreground/50">
-          Built with React & Next.js
-        </p>
-        <p className="text-label-sm text-muted-foreground/50">
-          © 2026 revyid
-        </p>
+
+      <div className="mt-auto pt-3 border-t border-outline/15">
+        <p className="text-label-sm text-muted-foreground/40 text-center">Built with React & Next.js · © 2026 revyid</p>
       </div>
     </>
   );
