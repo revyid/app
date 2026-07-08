@@ -17,6 +17,15 @@ import { ImageUpload } from '@/components/shared/ImageUpload';
 import { LoadingIndicator } from '@/components/shared/LoadingIndicator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────
+function LoadingPlaceholder() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-4">
+      <LoadingIndicator className="w-12 h-12" />
+      <p className="text-sm text-muted-foreground">Loading…</p>
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
@@ -480,6 +489,16 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { data, dbData, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
+  const [dbLoading, setDbLoading] = useState(false);
+
+  // On open: always fetch fresh data from DB
+  useEffect(() => {
+    if (!isOpen || !user?.is_admin) return;
+    setDbLoading(true);
+    refresh(true).finally(() => setDbLoading(false));
+  }, [isOpen]);
+
+  const isDbReady = !dbLoading && dbData !== null;
 
   // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
   const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
@@ -575,7 +594,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   ) : activeTab === 'portfolio' ? (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      {dbData === null ? (
+                      {!isDbReady ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-4">
                           <LoadingIndicator className="w-12 h-12" />
                           <p className="text-sm text-muted-foreground">Loading from database…</p>
@@ -596,13 +615,13 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       )}
                     </div>
                   ) : activeTab === 'themes' ? (
-                    <ThemeBuilder />
+                    dbLoading ? <LoadingPlaceholder /> : <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
-                    <AnalyticsDashboard />
+                    dbLoading ? <LoadingPlaceholder /> : <AnalyticsDashboard />
                   ) : activeTab === 'users' ? (
-                    <UserManagement />
+                    dbLoading ? <LoadingPlaceholder /> : <UserManagement />
                   ) : (
-                    <SiteSettings />
+                    dbLoading ? <LoadingPlaceholder /> : <SiteSettings />
                   )}
                 </div>
               </div>

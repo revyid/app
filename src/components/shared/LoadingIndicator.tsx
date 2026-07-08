@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+// LoadingIndicator — SVG SMIL shape morphing animation
 
 /**
  * M3 Expressive Loading Indicator
@@ -337,33 +337,41 @@ export function LoadingIndicator({
   className = "w-16 h-16",
   duration = TOTAL_DURATION_S,
 }: LoadingIndicatorProps) {
-  const rotations = Array.from(
-    { length: TOTAL_SHAPES + 1 },
-    (_, i) => i * ROTATION_PER_SHAPE,
-  );
+  const id = `morph-${Math.random().toString(36).slice(2, 7)}`;
+  const keyTimes = morphSequence
+    .map((_, i) => (i / (morphSequence.length - 1)).toFixed(3))
+    .join(';');
+  const values = morphSequence.join(';');
+  const rotEnd = TOTAL_SHAPES * ROTATION_PER_SHAPE;
 
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
-      <motion.svg
+      <svg
         viewBox="0 0 100 100"
         className="w-full h-full fill-primary drop-shadow-sm"
-        animate={{ rotate: rotations }}
-        transition={{
-          duration: duration,
-          ease: "linear",
-          repeat: Infinity,
-        }}
+        style={{ transformOrigin: '50px 50px' }}
       >
-        <motion.path
-          d={morphSequence[0]}
-          animate={{ d: morphSequence }}
-          transition={{
-            duration: duration,
-            ease: [0.2, 0.0, 0, 1.0],
-            repeat: Infinity,
-          }}
-        />
-      </motion.svg>
+        <path d={morphSequence[0]}>
+          {/* Shape morph */}
+          <animate
+            attributeName="d"
+            values={values}
+            keyTimes={keyTimes}
+            dur={`${duration}s`}
+            calcMode="spline"
+            keySplines={Array(morphSequence.length - 1).fill('0.2 0 0 1').join(';')}
+            repeatCount="indefinite"
+          />
+          {/* Rotation */}
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            values={`0 50 50;${rotEnd} 50 50`}
+            dur={`${duration}s`}
+            repeatCount="indefinite"
+          />
+        </path>
+      </svg>
     </div>
   );
 }
