@@ -9,13 +9,12 @@ import { createClient } from '@supabase/supabase-js';
 import { resetSupabase } from './supabase';
 
 // ─── Timeout Helper ─────────────────────────────────────────────────
-function withTimeout<T>(promise: Promise<T>, ms: number, label = 'Request'): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
-    ),
-  ]);
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, label = 'Request'): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 // ─── Error Helpers ──────────────────────────────────────────────────
@@ -300,7 +299,7 @@ export async function getAllPortfolioData(): Promise<Record<string, unknown>> {
   try {
     const client = await getSupabase();
     const { data, error } = await withTimeout(
-      client.rpc('get_all_portfolio_data'),
+      client.rpc('get_all_portfolio_data').then(),
       10000,
       'Portfolio fetch'
     );
@@ -325,7 +324,7 @@ export async function upsertPortfolioSection(
         p_token: token,
         p_section: section,
         p_data: data,
-      }),
+      }).then(),
       10000,
       'Portfolio save'
     );
