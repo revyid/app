@@ -89,7 +89,6 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
   const [timeRange, setTimeRange] = useState<'daily' | 'hourly'>('daily');
   const [mode, setMode] = useState<'all' | 'platform'>('all');
 
-  // Parse platforms from agents
   const platformBreakdown = useMemo(() => {
     if (!Array.isArray(agents) || agents.length === 0) return [];
     const count: Record<string, number> = {};
@@ -114,10 +113,7 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
   const chartData = mode === 'platform'
     ? rawChartData.map(d => {
         const row: any = { name: d.name };
-        platformBreakdown.forEach(p => {
-          row[p.name] = Math.round(d.views * p.ratio);
-        });
-        row._total = d.views;
+        platformBreakdown.forEach(p => { row[p.name] = Math.round(d.views * p.ratio); });
         return row;
       })
     : rawChartData;
@@ -129,14 +125,15 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
   const isUp = Number(change) >= 0;
 
   return (
-    <Card className="p-4 sm:p-6 hover:bg-surface-container/50 transition-colors">
+    <Card className="p-4 sm:p-6 hover:bg-surface-container/50 transition-colors col-span-full">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-full bg-primary-container">
             <div className="text-primary-container-foreground"><BarChart3 className="w-5 h-5" /></div>
           </div>
           <div>
-            <h3 className="text-title-sm font-semibold text-foreground">Traffic Overview</h3>
+            <h3 className="text-title-sm font-semibold text-foreground">Traffic & Audience</h3>
             <div className="flex items-center gap-1.5 text-label-sm">
               <span className="text-muted-foreground">{total.toLocaleString()} total</span>
               <span className={`flex items-center gap-0.5 font-medium ${isUp ? 'text-success' : 'text-error'}`}>
@@ -146,7 +143,7 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
             </div>
           </div>
         </div>
-        <div className="flex gap-1 self-start">
+        <div className="flex gap-1 flex-wrap self-start">
           <div className="flex gap-1 p-1 bg-surface-variant rounded-lg">
             {(['daily', 'hourly'] as const).map(v => (
               <button key={v} onClick={() => setTimeRange(v)}
@@ -178,68 +175,58 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
         </div>
       )}
 
-      <div className="h-56">
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--outline) / 0.08)" vertical={false} />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={{ stroke: 'hsl(var(--outline) / 0.15)' }}
-                tickLine={false}
-                label={{ value: timeRange === 'daily' ? 'Day' : 'Hour', position: 'insideBottomRight', offset: -5, fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={{ stroke: 'hsl(var(--outline) / 0.15)' }}
-                tickLine={false}
-                label={{ value: 'Views', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  return (
-                    <div className="bg-surface border border-outline/20 rounded-xl px-3 py-2 shadow-elevation-3">
-                      <p className="text-label-sm text-muted-foreground mb-1">{label}</p>
-                      {payload.map((p: any, i: number) => (
-                        <div key={i} className="flex items-center gap-2 text-body-sm">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-                          <span className="text-muted-foreground">{p.name}:</span>
-                          <span className="font-bold" style={{ color: p.color }}>{p.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }}
-              />
-              {mode === 'all' ? (
-                <Line
-                  type="monotone"
-                  dataKey="views"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2.5}
-                  dot={{ r: 3, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+      {/* Two-column layout: chart + audience */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chart — takes 2/3 */}
+        <div className="lg:col-span-2 h-56">
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--outline) / 0.08)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  axisLine={{ stroke: 'hsl(var(--outline) / 0.15)' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  axisLine={{ stroke: 'hsl(var(--outline) / 0.15)' }} tickLine={false} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <div className="bg-surface border border-outline/20 rounded-xl px-3 py-2 shadow-elevation-3">
+                        <p className="text-label-sm text-muted-foreground mb-1">{label}</p>
+                        {payload.map((p: any, i: number) => (
+                          <div key={i} className="flex items-center gap-2 text-body-sm">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                            <span className="text-muted-foreground">{p.name}:</span>
+                            <span className="font-bold" style={{ color: p.color }}>{p.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
                 />
-              ) : (
-                platformBreakdown.map((p, i) => (
-                  <Line
-                    key={p.name}
-                    type="monotone"
-                    dataKey={p.name}
-                    stroke={platformColors[i]}
-                    strokeWidth={2}
-                    dot={{ r: 2, fill: platformColors[i], strokeWidth: 0 }}
-                    activeDot={{ r: 4, fill: platformColors[i], stroke: 'hsl(var(--background))', strokeWidth: 2 }}
-                  />
-                ))
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
-        )}
+                {mode === 'all' ? (
+                  <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2.5}
+                    dot={{ r: 3, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
+                ) : (
+                  platformBreakdown.map((p, i) => (
+                    <Line key={p.name} type="monotone" dataKey={p.name} stroke={platformColors[i]}
+                      strokeWidth={2} dot={{ r: 2, fill: platformColors[i], strokeWidth: 0 }}
+                      activeDot={{ r: 4, fill: platformColors[i], stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
+                  ))
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
+          )}
+        </div>
+
+        {/* Audience breakdown — takes 1/3 */}
+        <div className="lg:border-l lg:border-outline/10 lg:pl-6">
+          <p className="text-label-sm font-medium text-muted-foreground mb-3">Audience</p>
+          <PlatformBreakdown agents={agents} />
+        </div>
       </div>
     </Card>
   );
@@ -275,7 +262,7 @@ function VisitorCounter({ today, unique }: { today: number; unique: number }) {
   );
 }
 
-function PlatformChart({ agents }: { agents: string[] }) {
+function PlatformBreakdown({ agents }: { agents: string[] }) {
   const [activeTab, setActiveTab] = useState<'os' | 'browser' | 'device'>('os');
 
   const parsed = agents.map(parseUserAgent);
@@ -297,53 +284,49 @@ function PlatformChart({ agents }: { agents: string[] }) {
   const currentData = activeTab === 'os' ? osCount : activeTab === 'browser' ? browserCount : deviceCount;
   const sorted = Object.entries(currentData).sort(([, a], [, b]) => b - a);
   const total = sorted.reduce((s, [, c]) => s + c, 0);
-  const chartData = sorted.slice(0, 6).map(([name, count]) => ({ name, count, pct: total > 0 ? Math.round((count / total) * 100) : 0 }));
+  const items = sorted.filter(([k]) => k !== 'Bot' && k !== 'bot').slice(0, 5);
   const colors = ['hsl(var(--primary))', 'hsl(var(--tertiary))', 'hsl(var(--secondary))', '#f59e0b', 'hsl(var(--error))'];
 
   return (
-    <Card className="p-4 sm:p-6 hover:bg-surface-container/50 transition-colors">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-full bg-tertiary-container">
-            <div className="text-tertiary-container-foreground"><Globe className="w-5 h-5" /></div>
-          </div>
-          <h3 className="text-title-sm font-semibold text-foreground">Audience</h3>
-        </div>
-        <div className="flex gap-1 p-1 bg-surface-variant rounded-lg self-start">
-          {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-label-sm font-medium transition-all ${activeTab === tab.id ? 'bg-surface shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-              {tab.icon} <span className="hidden xs:inline">{tab.label}</span>{tab.label}
-            </button>
-          ))}
-        </div>
+    <div>
+      {/* Tab switcher */}
+      <div className="flex gap-1 p-1 bg-surface-variant rounded-lg mb-4 w-fit">
+        {tabs.map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-label-sm font-medium transition-all ${activeTab === tab.id ? 'bg-surface shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+            {tab.icon} {tab.label}
+          </button>
+        ))}
       </div>
 
-      {chartData.length > 0 ? (
+      {items.length > 0 ? (
         <div className="space-y-2.5">
-          {chartData.filter(({ name }) => name !== 'Bot' && name !== 'bot').map(({ name, pct }, i) => (
-            <div key={name} className="space-y-1">
-              <div className="flex items-center justify-between text-label-sm">
-                <span className="text-foreground font-medium">{name}</span>
-                <span className="text-muted-foreground font-mono">{pct}%</span>
+          {items.map(([name, count], i) => {
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            return (
+              <div key={name} className="space-y-1">
+                <div className="flex items-center justify-between text-label-sm">
+                  <span className="text-foreground font-medium">{name}</span>
+                  <span className="text-muted-foreground font-mono">{pct}%</span>
+                </div>
+                <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${pct}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: i * 0.08 }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: colors[i] || colors[0] }}
+                  />
+                </div>
               </div>
-              <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${pct}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.08 }}
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: colors[i] || colors[0] }}
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="h-48 flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
+        <p className="text-body-sm text-muted-foreground text-center py-4">No data yet</p>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -560,10 +543,7 @@ export function PublicAnalytics() {
       <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
         <SectionLabel text="Live Stats & Activity" />
       </motion.div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-6"><Skeleton className="h-64" /></Card>
-        <Card className="p-6"><Skeleton className="h-64" /></Card>
-      </div>
+      <Card className="p-6"><Skeleton className="h-64" /></Card>
     </motion.section>
   );
 
@@ -572,10 +552,7 @@ export function PublicAnalytics() {
       <motion.div variants={itemVariants} className="flex items-center justify-between mb-5">
         <SectionLabel text="Live Stats & Activity" />
       </motion.div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-6"><Skeleton className="h-64" /></Card>
-        <Card className="p-6"><Skeleton className="h-64" /></Card>
-      </div>
+      <Card className="p-6"><Skeleton className="h-64" /></Card>
     </motion.section>
   );
 
@@ -604,10 +581,9 @@ export function PublicAnalytics() {
         </div>
       </motion.div>
 
-      {/* Charts row */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      {/* Charts row — full width */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 mb-4">
         <TrafficChart dailyViews={analytics?.daily_views || []} hourlyViews={analytics?.hourly_views || []} agents={analytics?.user_agents || []} />
-        <PlatformChart agents={analytics?.user_agents || []} />
       </motion.div>
 
       {/* GitHub row */}

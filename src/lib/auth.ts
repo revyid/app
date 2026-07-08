@@ -482,10 +482,45 @@ export async function deleteShortUrl(slug: string): Promise<boolean> {
   const token = getStoredToken();
   if (!token) return false;
   try {
-    const res = await fetch(`/api/shorten?slug=${slug}`, { method: 'DELETE', headers: { 'x-api-key': await getStoredSiteApiKey() || '' } });
+    // Validate session to get user
+    const session = await validateSession(token);
+    if (!session.user) return false;
+
+    // Get site API key from DB for auth
+    const siteKey = await getSiteSetting('site_api_key');
+    if (!siteKey) return false;
+
+    const res = await fetch(`/api/shorten?slug=${encodeURIComponent(slug)}`, {
+      method: 'DELETE',
+      headers: { 'x-api-key': siteKey },
+    });
+    if (!res.ok) return false;
     const data = await res.json();
-    return data?.ok === true;
+    return data?.ok === true || data?.deleted === true || res.status === 200;
   } catch {
     return false;
+  }
+}
+
+export async function updateShortUrl(slug: string, newOriginalUrl: string, newSlug?: string): Promise<{ ok?: boolean; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+  try {
+    const session = await validateSession(token);
+    if (!session.user) return { error: 'Invalid session' };
+
+    const siteKey = await getSiteSetting('site_api_key');
+    if (!siteKey) return { error: 'No API key configured' };
+
+    const res = await fetch(`/api/shorten?slug=${encodeURIComponent(slug)}`, {
+      method: 'PATCH',
+      headers: { 'x-api-key': siteKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: newOriginalUrl, new_slug: newSlug }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: data.error || 'Failed to update' };
+    return { ok: true };
+  } catch (e: any) {
+    return { error: e.message };
   }
 }

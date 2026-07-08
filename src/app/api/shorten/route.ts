@@ -195,11 +195,67 @@ export async function DELETE(request: Request) {
   }
 
   const supabase = getSupabase();
-  const { data } = await supabase.rpc('delete_short_url', { p_user_id: auth.userId, p_slug: slug });
 
-  if (data?.error) {
-    return NextResponse.json({ error: data.error }, { status: 404, headers: cors });
+  // Admin (site key) can delete any; user key can only delete own
+  let query = supabase.from('short_urls').delete().eq('slug', slug);
+  if (!auth.isSiteKey && auth.userId) {
+    query = query.eq('user_id', auth.userId);
   }
 
-  return NextResponse.json(data, { headers: cors });
+  const { error, count } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500, headers: cors });
+  }
+
+  return NextResponse.json({ ok: true, deleted: true }, { headers: cors });
+}
+
+export async function PATCH(request: Request) {
+  const origin = request.headers.get('origin') || '';
+  const cors = getCorsHeaders(origin);
+  const url = new URL(request.url);
+  const slug = url.searchParams.get('slug');
+  const apiKey = request.headers.get('x-api-key');
+
+  if (!slug) return NextResponse.json({ error: 'Missing ?slug=' }, { status: 400, headers: cors });
+  if (!apiKey) return NextResponse.json({ error: 'API key required' }, { status: 401, headers: cors });
+
+  const auth = await validateApiKey(apiKey);
+  if (!auth.valid) return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: cors });
+
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: cors });
+  }
+
+  const { url: newUrl, new_slug: newSlug } = body;
+
+  if (!newUrl) return NextResponse.json({ error: 'Missing url' }, { status: 400, headers: cors });
+  if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+    return NextResponse.json({ error: 'Invalid URL (must start with http:// or https://)' }, { status: 400, headers: cors });
+  }
+
+  const supabase = getSupabase();
+  const updates: any = { original_url: newUrl };
+
+  if (newSlug) {
+    const cleaned = newSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (cleaned.length < 3 || cleaned.length > 16) {
+      return NextResponse.json({ error: 'Slug must be 3–16 alphanumeric characters' }, { status: 400, headers: cors });
+    }
+    // Check slug not taken by another record
+    const { data: existing } = await supabase.from('short_urls').select('id').eq('slug', cleaned).neq('slug', slug).single();
+    if (existing) return NextResponse.json({ error: 'Slug already taken' }, { status: 400, headers: cors });
+    updates.slug = cleaned;
+  }
+
+  let query = supabase.from('short_urls').update(updates).eq('slug', slug);
+  if (!auth.isSiteKey && auth.userId) query = query.eq('user_id', auth.userId);
+
+  const { error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: cors });
+
+  return NextResponse.json({ ok: true }, { headers: cors });
 }
