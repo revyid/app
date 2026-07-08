@@ -486,29 +486,19 @@ interface AdminPanelProps {
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, dbData, refresh } = usePortfolio();
+  const { data, dbData, isLoading: portfolioLoading, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
-  const [dbLoading, setDbLoading] = useState(false);
-  const [dbError, setDbError] = useState(false);
 
-  // On open: fetch fresh from DB only if dbData not yet loaded
+  // Trigger DB fetch on first open if data hasn't loaded yet
   useEffect(() => {
     if (!isOpen || !user?.is_admin) return;
-    if (dbData !== null) { setDbLoading(false); setDbError(false); return; }
-    setDbLoading(true);
-    setDbError(false);
-    const timeout = setTimeout(() => {
-      setDbLoading(false);
-      setDbError(true);
-    }, 15000);
-    refresh(true)
-      .then(() => { setDbError(false); })
-      .catch(() => { setDbError(true); })
-      .finally(() => { setDbLoading(false); clearTimeout(timeout); });
-  }, [isOpen, user?.is_admin, dbData]);
+    if (dbData === null && !portfolioLoading) {
+      refresh(true);
+    }
+  }, [isOpen, user?.is_admin]);
 
-  const isDbReady = !dbLoading && dbData !== null && !dbError;
+  const isDbReady = dbData !== null && !portfolioLoading;
 
   // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
   const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
@@ -604,14 +594,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   ) : activeTab === 'portfolio' ? (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      {dbError ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-4">
-                          <p className="text-sm text-muted-foreground">Failed to load portfolio data.</p>
-                          <Button size="sm" onClick={() => { setDbError(false); setDbLoading(true); refresh(true).finally(() => setDbLoading(false)); }}>
-                            Retry
-                          </Button>
-                        </div>
-                      ) : !isDbReady ? (
+                      {!isDbReady ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-4">
                           <LoadingIndicator className="w-12 h-12" />
                           <p className="text-sm text-muted-foreground">Loading from database…</p>
@@ -632,13 +615,13 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       )}
                     </div>
                   ) : activeTab === 'themes' ? (
-                    dbLoading ? <LoadingPlaceholder /> : <ThemeBuilder />
+                    portfolioLoading ? <LoadingPlaceholder /> : <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
-                    dbLoading ? <LoadingPlaceholder /> : <AnalyticsDashboard />
+                    portfolioLoading ? <LoadingPlaceholder /> : <AnalyticsDashboard />
                   ) : activeTab === 'users' ? (
-                    dbLoading ? <LoadingPlaceholder /> : <UserManagement />
+                    portfolioLoading ? <LoadingPlaceholder /> : <UserManagement />
                   ) : (
-                    dbLoading ? <LoadingPlaceholder /> : <SiteSettings />
+                    portfolioLoading ? <LoadingPlaceholder /> : <SiteSettings />
                   )}
                 </div>
               </div>
