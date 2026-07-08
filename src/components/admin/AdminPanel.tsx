@@ -478,6 +478,7 @@ interface AdminPanelProps {
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
   const { data, refresh } = usePortfolio();
+  console.log('[AdminPanel] data.profile.name:', data.profile.name);
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
