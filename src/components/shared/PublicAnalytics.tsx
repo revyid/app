@@ -300,13 +300,6 @@ function PlatformChart({ agents }: { agents: string[] }) {
   const chartData = sorted.slice(0, 6).map(([name, count]) => ({ name, count, pct: total > 0 ? Math.round((count / total) * 100) : 0 }));
   const colors = ['hsl(var(--primary))', 'hsl(var(--tertiary))', 'hsl(var(--secondary))', '#f59e0b', 'hsl(var(--error))'];
 
-  const deviceIcons: Record<string, React.ReactNode> = {
-    desktop: <Monitor className="w-4 h-4" />,
-    mobile: <Smartphone className="w-4 h-4" />,
-    tablet: <Tablet className="w-4 h-4" />,
-    bot: <Globe className="w-4 h-4" />,
-  };
-
   return (
     <Card className="p-4 sm:p-6 hover:bg-surface-container/50 transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -327,28 +320,14 @@ function PlatformChart({ agents }: { agents: string[] }) {
       </div>
 
       {chartData.length > 0 ? (
-        <div className="h-48 mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--outline) / 0.1)" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <div className="h-48 flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
-      )}
-
-      <div className="space-y-2.5">
-        {sorted.filter(([key]) => key !== 'Bot' && key !== 'bot').slice(0, 5).map(([key, count], i) => {
-          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-          return (
-            <div key={key} className="flex items-center gap-3 text-label-sm">
-              <span className="text-foreground font-medium w-20 truncate">{key}</span>
-              <div className="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+        <div className="space-y-2.5">
+          {chartData.filter(({ name }) => name !== 'Bot' && name !== 'bot').map(({ name, pct }, i) => (
+            <div key={name} className="space-y-1">
+              <div className="flex items-center justify-between text-label-sm">
+                <span className="text-foreground font-medium">{name}</span>
+                <span className="text-muted-foreground font-mono">{pct}%</span>
+              </div>
+              <div className="h-1.5 bg-surface-variant rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   whileInView={{ width: `${pct}%` }}
@@ -358,11 +337,12 @@ function PlatformChart({ agents }: { agents: string[] }) {
                   style={{ backgroundColor: colors[i] || colors[0] }}
                 />
               </div>
-              <span className="text-muted-foreground font-mono w-10 text-right">{pct}%</span>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="h-48 flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
+      )}
     </Card>
   );
 }

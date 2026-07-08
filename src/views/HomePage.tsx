@@ -3,7 +3,6 @@ import { IntroSection } from '@/components/sections/IntroSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { useActiveSection } from '@/contexts/ActiveSectionContext';
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 
 const ProjectsSection = lazy(() => import('@/components/sections/ProjectsSection').then(m => ({ default: m.ProjectsSection })));
 const ExperienceSection = lazy(() => import('@/components/sections/ExperienceSection').then(m => ({ default: m.ExperienceSection })));
@@ -33,7 +32,6 @@ export function HomePage() {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: 'Home' }]} />
       <IntroSection />
       <SectionDivider />
 

@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PageTransition } from '@/components/shared/PageTransition';
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
@@ -22,6 +23,9 @@ function HomeSidebarContent() {
   return (
     <>
       <ProfileHeader />
+
+      <div className="h-px bg-outline/20" />
+      <Breadcrumbs items={[{ label: '~' }, { label: 'home' }]} />
 
       <div className="h-px bg-outline/20" />
       <AboutSection />

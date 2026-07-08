@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, MessageCircle, User, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -76,7 +75,6 @@ const sidebarVariants = {
 
 export function Sidebar({ children, showFooter = false, onChatClick, onProfileClick, onAdminClick }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
 
   return (
     <>
@@ -84,19 +82,9 @@ export function Sidebar({ children, showFooter = false, onChatClick, onProfileCl
       <aside className="hidden lg:block fixed left-8 top-4 bottom-4 w-72 z-10">
         <div className="h-full flex items-center">
           <div className="squircle-card bg-surface border border-outline/20 p-4 space-y-2.5 noise-grain shadow-fluid w-full h-full overflow-y-auto overflow-x-hidden scrollbar-thin flex flex-col">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                variants={sidebarVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                className="space-y-2.5 flex-1 flex flex-col"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            <div className="space-y-2.5 flex-1 flex flex-col">
+              {children}
+            </div>
             {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
           </div>
         </div>
@@ -140,19 +128,9 @@ export function Sidebar({ children, showFooter = false, onChatClick, onProfileCl
                     <X className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    variants={sidebarVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className="space-y-2.5"
-                  >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
+                <div className="space-y-2.5">
+                  {children}
+                </div>
                 {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
               </div>
             </motion.aside>
