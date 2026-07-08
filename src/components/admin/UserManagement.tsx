@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Users, Shield, Key, Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Users, Shield, Key, Search, RefreshCw } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { getStoredToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any;
 
-async function rpcCall(client: SupabaseClient, name: string, params?: Record<string, unknown>) {
+async function rpcCall(client: SupabaseClient, name: string, params?: Record<string, unknown>): Promise<unknown> {
   const { data, error } = await client.rpc(name, params);
   if (error) throw error;
   return data;
@@ -34,49 +34,62 @@ interface UserApiKey {
 export function UserManagement() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [rateLimit, setRateLimit] = useState(100);
   const [userKeys, setUserKeys] = useState<Record<string, UserApiKey[]>>({});
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const token = getStoredToken();
-      if (!token) return;
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
       const supabase = await getSupabase();
       const data = await rpcCall(supabase, 'admin_list_users', { p_token: token });
-      if (data?.users) setUsers(data.users);
+      if (data && typeof data === 'object' && 'users' in data) {
+        setUsers((data as { users: AppUser[] }).users);
+      } else {
+        setUsers([]);
+      }
     } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to fetch users';
+      setError(msg);
       console.error('Failed to fetch users:', e);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const fetchUserKeys = async (userId: string) => {
+  const fetchUserKeys = useCallback(async (userId: string) => {
     try {
       const supabase = await getSupabase();
       const data = await rpcCall(supabase, 'admin_get_user_keys', { p_user_id: userId });
-      if (data?.keys) setUserKeys(prev => ({ ...prev, [userId]: data.keys }));
+      if (data && typeof data === 'object' && 'keys' in data) {
+        setUserKeys(prev => ({ ...prev, [userId]: (data as { keys: UserApiKey[] }).keys }));
+      }
     } catch (e) {
       console.error('Failed to fetch user keys:', e);
     }
-  };
+  }, []);
 
-  const toggleAdmin = async (userId: string, current: boolean) => {
+  const toggleAdmin = useCallback(async (userId: string, current: boolean) => {
     try {
       const supabase = await getSupabase();
       await rpcCall(supabase, 'admin_toggle_user_admin', { p_user_id: userId, p_is_admin: !current });
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_admin: !current } : u));
     } catch (e) {
       console.error('Failed to toggle admin:', e);
+      setError(e instanceof Error ? e.message : 'Failed to toggle admin');
     }
-  };
+  }, []);
 
-  const updateUserRateLimit = async (userId: string, limit: number) => {
+  const updateUserRateLimit = useCallback(async (userId: string, limit: number) => {
     try {
       const supabase = await getSupabase();
       await rpcCall(supabase, 'admin_set_user_rate_limit', { p_user_id: userId, p_rate_limit: limit });
@@ -86,8 +99,9 @@ export function UserManagement() {
       }));
     } catch (e) {
       console.error('Failed to update rate limit:', e);
+      setError(e instanceof Error ? e.message : 'Failed to update rate limit');
     }
-  };
+  }, []);
 
   const filteredUsers = users.filter(u =>
     u.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -96,9 +110,15 @@ export function UserManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Users className="w-5 h-5 text-primary" />
-        <h3 className="text-base font-semibold text-on-surface">User Management</h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
+          <h3 className="text-base font-semibold text-on-surface">User Management</h3>
+        </div>
+        <Button size="sm" variant="ghost" onClick={fetchUsers} className="gap-1">
+          <RefreshCw className="w-3.5 h-3.5" />
+          Refresh
+        </Button>
       </div>
 
       <div className="relative">
@@ -112,10 +132,22 @@ export function UserManagement() {
         />
       </div>
 
+      {error && (
+        <div className="p-3 rounded-xl bg-error-container text-on-error-container text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <Button size="sm" variant="outlined" onClick={() => setError(null)}>Dismiss</Button>
+        </div>
+      )}
+
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground text-sm">Loading users...</div>
+        <div className="flex flex-col items-center py-8 gap-3 text-muted-foreground text-sm">
+          <Users className="w-8 h-8 animate-pulse" />
+          <p>Loading users...</p>
+        </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground text-sm">No users found</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">
+          {search ? 'No users match your search' : 'No users found'}
+        </div>
       ) : (
         <div className="space-y-2">
           {filteredUsers.map((u) => (
@@ -126,6 +158,7 @@ export function UserManagement() {
                     src={u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.display_name || u.email)}&background=random`}
                     alt=""
                     className="w-8 h-8 rounded-full object-cover"
+                    loading="lazy"
                   />
                   <div>
                     <p className="text-sm font-medium text-on-surface">{u.display_name || u.email}</p>

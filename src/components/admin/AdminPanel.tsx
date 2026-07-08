@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generateId } from '@/lib/utils';
 import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePortfolio } from '@/contexts/PortfolioContext';
+import { usePortfolio, clearPortfolioCache } from '@/contexts/PortfolioContext';
 import { upsertPortfolioSection } from '@/lib/auth';
 import { Button, IconButton } from '@/components/ui/button';
 import { modalBackdrop, bottomSheetContent } from '@/lib/motion-presets';
@@ -120,20 +120,27 @@ function useSave(section: string, onSaved: () => void) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
 
-  const save = async (data: unknown) => {
+  const save = useCallback(async (data: unknown) => {
     setSaving(true);
     setError(undefined);
-    const result = await upsertPortfolioSection(section, data);
-    setSaving(false);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      // Force refresh after a short delay to ensure DB write completes
-      setTimeout(() => onSaved(), 300);
+    try {
+      const result = await upsertPortfolioSection(section, data);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        // Clear cache so fresh data is loaded on next refresh
+        clearPortfolioCache();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+        // Force refresh after a short delay to ensure DB write completes
+        setTimeout(() => onSaved(), 300);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [section, onSaved]);
 
   return { save, saving, saved, error };
 }
@@ -484,21 +491,43 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
+// Safety timeout to prevent infinite loading (10 seconds)
+const LOADING_TIMEOUT = 10000;
+
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, dbData, refresh } = usePortfolio();
+  const { dbData, isLoading: portfolioLoading, isFetching, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
-  const [fetching, setFetching] = useState(false);
+  // Local safety timeout to prevent infinite loading
+  const [timedOut, setTimedOut] = useState(false);
 
-  // Always fetch fresh from DB when panel opens
+  // Safety timeout: if loading takes too long, force unblock
+  useEffect(() => {
+    if (!isOpen || !user?.is_admin) {
+      setTimedOut(false);
+      return;
+    }
+    // Reset timeout when opening
+    setTimedOut(false);
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, LOADING_TIMEOUT);
+    return () => clearTimeout(timer);
+  }, [isOpen, user?.is_admin, activeTab]);
+
+  // Fetch fresh data when panel opens
   useEffect(() => {
     if (!isOpen || !user?.is_admin) return;
-    setFetching(true);
-    refresh(true).finally(() => setFetching(false));
+    refresh(true).catch(() => {
+      // Error already handled in context, just ensure we don't hang
+    });
   }, [isOpen, user?.is_admin]);
 
-  const isDbReady = !fetching && dbData !== null;
+  // dbData is ready when it's not null (can be {} for empty DB, which is valid)
+  // or when timed out (safety net)
+  const isDbReady = dbData !== null || timedOut;
+  const showLoading = portfolioLoading && !isDbReady && !timedOut;
 
   // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
   const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
@@ -594,10 +623,15 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   ) : activeTab === 'portfolio' ? (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      {!isDbReady ? (
+                      {showLoading ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-4">
                           <LoadingIndicator className="w-12 h-12" />
                           <p className="text-sm text-muted-foreground">Loading from database…</p>
+                          {timedOut && (
+                            <Button size="sm" variant="outlined" onClick={forceRefresh} className="mt-2">
+                              Retry
+                            </Button>
+                          )}
                         </div>
                       ) : (
                         <>
@@ -615,13 +649,13 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       )}
                     </div>
                   ) : activeTab === 'themes' ? (
-                    fetching ? <LoadingPlaceholder /> : <ThemeBuilder />
+                    isFetching ? <LoadingPlaceholder /> : <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
-                    fetching ? <LoadingPlaceholder /> : <AnalyticsDashboard />
+                    isFetching ? <LoadingPlaceholder /> : <AnalyticsDashboard />
                   ) : activeTab === 'users' ? (
-                    fetching ? <LoadingPlaceholder /> : <UserManagement />
+                    isFetching ? <LoadingPlaceholder /> : <UserManagement />
                   ) : (
-                    fetching ? <LoadingPlaceholder /> : <SiteSettings />
+                    isFetching ? <LoadingPlaceholder /> : <SiteSettings />
                   )}
                 </div>
               </div>

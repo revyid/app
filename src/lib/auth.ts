@@ -6,6 +6,22 @@
 
 import { getSupabase } from './supabase';
 import { createClient } from '@supabase/supabase-js';
+import { resetSupabase } from './supabase';
+
+// ─── Error Helpers ──────────────────────────────────────────────────
+function handleAuthError(err: unknown, fallback: string): string {
+  if (err instanceof Error) {
+    // Check for connection errors and reset client for retry
+    if (err.message.includes('Failed to fetch') ||
+        err.message.includes('NetworkError') ||
+        err.message.includes('timeout') ||
+        err.message.includes('not configured')) {
+      resetSupabase();
+    }
+    return err.message;
+  }
+  return fallback;
+}
 
 // ─── Types ──────────────────────────────────────────────────────────
 export interface AppUser {
@@ -62,34 +78,43 @@ export async function register(
   password: string,
   displayName?: string
 ): Promise<AuthResult> {
-  const client = await getSupabase();
-  const { data, error } = await client.rpc('register_user', {
-    p_email: email,
-    p_password: password,
-    p_display_name: displayName || null,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('register_user', {
+      p_email: email,
+      p_password: password,
+      p_display_name: displayName || null,
+    });
 
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
+    if (error) return { error: handleAuthError(error, 'Registration failed') };
+    if (data?.error) return { error: data.error };
 
-  storeToken(data.token);
-  return { token: data.token, user: data.user };
+    storeToken(data.token);
+    return { token: data.token, user: data.user };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Registration failed') };
+  }
 }
 
 export async function login(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  const { data, error } = await (await getSupabase()).rpc('login_user', {
-    p_email: email,
-    p_password: password,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('login_user', {
+      p_email: email,
+      p_password: password,
+    });
 
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
+    if (error) return { error: handleAuthError(error, 'Login failed') };
+    if (data?.error) return { error: data.error };
 
-  storeToken(data.token);
-  return { token: data.token, user: data.user };
+    storeToken(data.token);
+    return { token: data.token, user: data.user };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Login failed') };
+  }
 }
 
 export async function oauthLogin(
@@ -99,49 +124,64 @@ export async function oauthLogin(
   provider: 'google' | 'github',
   providerId: string
 ): Promise<AuthResult> {
-  const { data, error } = await (await getSupabase()).rpc('oauth_login', {
-    p_email: email,
-    p_display_name: displayName,
-    p_avatar_url: avatarUrl,
-    p_provider: provider,
-    p_provider_id: providerId,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('oauth_login', {
+      p_email: email,
+      p_display_name: displayName,
+      p_avatar_url: avatarUrl,
+      p_provider: provider,
+      p_provider_id: providerId,
+    });
 
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
+    if (error) return { error: handleAuthError(error, 'OAuth login failed') };
+    if (data?.error) return { error: data.error };
 
-  storeToken(data.token);
-  return { token: data.token, user: data.user };
+    storeToken(data.token);
+    return { token: data.token, user: data.user };
+  } catch (err) {
+    return { error: handleAuthError(err, 'OAuth login failed') };
+  }
 }
 
 export async function passkeyLogin(
   credentialId: string,
   oldToken: string
 ): Promise<AuthResult> {
-  const { data, error } = await (await getSupabase()).rpc('passkey_login', {
-    p_credential_id: credentialId,
-    p_old_token: oldToken,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('passkey_login', {
+      p_credential_id: credentialId,
+      p_old_token: oldToken,
+    });
 
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
+    if (error) return { error: handleAuthError(error, 'Passkey login failed') };
+    if (data?.error) return { error: data.error };
 
-  storeToken(data.token);
-  return { token: data.token, user: data.user };
+    storeToken(data.token);
+    return { token: data.token, user: data.user };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Passkey login failed') };
+  }
 }
 
 export async function validateSession(token?: string): Promise<AuthResult> {
   const t = token || getStoredToken();
   if (!t) return { error: 'No session' };
 
-  const { data, error } = await (await getSupabase()).rpc('validate_session', {
-    p_token: t,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('validate_session', {
+      p_token: t,
+    });
 
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
+    if (error) return { error: handleAuthError(error, 'Session validation failed') };
+    if (data?.error) return { error: data.error };
 
-  return { token: t, user: data.user };
+    return { token: t, user: data.user };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Session validation failed') };
+  }
 }
 
 export async function logout(): Promise<void> {
@@ -161,16 +201,21 @@ export async function updateProfile(
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data, error } = await (await getSupabase()).rpc('update_user_profile', {
-    p_token: token,
-    p_display_name: displayName || null,
-    p_avatar_url: avatarUrl || null,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('update_user_profile', {
+      p_token: token,
+      p_display_name: displayName || null,
+      p_avatar_url: avatarUrl || null,
+    });
 
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
+    if (error) return { error: handleAuthError(error, 'Profile update failed') };
+    if (data?.error) return { error: data.error };
 
-  return { user: data.user };
+    return { user: data.user };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Profile update failed') };
+  }
 }
 
 export async function updateSessionDevice(
@@ -195,39 +240,61 @@ export async function getUserSessions(): Promise<any[]> {
   const token = getStoredToken();
   if (!token) return [];
 
-  const { data, error } = await (await getSupabase()).rpc('get_user_sessions', {
-    p_token: token,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('get_user_sessions', {
+      p_token: token,
+    });
 
-  if (error || data?.error) return [];
-  return data?.sessions || [];
+    if (error || data?.error) return [];
+    return data?.sessions || [];
+  } catch (err) {
+    console.error('Failed to get user sessions:', handleAuthError(err, 'Failed'));
+    return [];
+  }
 }
 
 export async function revokeSession(sessionId: string): Promise<boolean> {
   const token = getStoredToken();
   if (!token) return false;
 
-  const { data, error } = await (await getSupabase()).rpc('revoke_session', {
-    p_token: token,
-    p_session_id: sessionId,
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('revoke_session', {
+      p_token: token,
+      p_session_id: sessionId,
+    });
 
-  if (error || data?.error) return false;
-  return true;
+    if (error || data?.error) return false;
+    return true;
+  } catch (err) {
+    console.error('Failed to revoke session:', handleAuthError(err, 'Failed'));
+    return false;
+  }
 }
 
 // ─── Admin Portfolio CRUD ────────────────────────────────────────────
 
 export async function getPortfolioSection(section: string): Promise<unknown> {
-  const { data, error } = await (await getSupabase()).rpc('get_portfolio_section', { p_section: section });
-  if (error) throw error;
-  return data;
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('get_portfolio_section', { p_section: section });
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    throw new Error(handleAuthError(err, 'Failed to load portfolio section'));
+  }
 }
 
 export async function getAllPortfolioData(): Promise<Record<string, unknown>> {
-  const { data, error } = await (await getSupabase()).rpc('get_all_portfolio_data');
-  if (error) throw error;
-  return (data as Record<string, unknown>) || {};
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('get_all_portfolio_data');
+    if (error) throw error;
+    return (data as Record<string, unknown>) || {};
+  } catch (err) {
+    throw new Error(handleAuthError(err, 'Failed to load portfolio data'));
+  }
 }
 
 export async function upsertPortfolioSection(
@@ -237,15 +304,20 @@ export async function upsertPortfolioSection(
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await (await getSupabase()).rpc('upsert_portfolio_section', {
-    p_token: token,
-    p_section: section,
-    p_data: data,
-  });
+  try {
+    const client = await getSupabase();
+    const { data: result, error } = await client.rpc('upsert_portfolio_section', {
+      p_token: token,
+      p_section: section,
+      p_data: data,
+    });
 
-  if (error) return { error: error.message };
-  if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
-  return {};
+    if (error) return { error: handleAuthError(error, 'Save failed') };
+    if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
+    return {};
+  } catch (err) {
+    return { error: handleAuthError(err, 'Save failed') };
+  }
 }
 
 export async function deletePortfolioItem(
@@ -255,15 +327,20 @@ export async function deletePortfolioItem(
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await (await getSupabase()).rpc('delete_portfolio_item', {
-    p_token: token,
-    p_section: section,
-    p_item_id: itemId,
-  });
+  try {
+    const client = await getSupabase();
+    const { data: result, error } = await client.rpc('delete_portfolio_item', {
+      p_token: token,
+      p_section: section,
+      p_item_id: itemId,
+    });
 
-  if (error) return { error: error.message };
-  if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
-  return {};
+    if (error) return { error: handleAuthError(error, 'Delete failed') };
+    if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
+    return {};
+  } catch (err) {
+    return { error: handleAuthError(err, 'Delete failed') };
+  }
 }
 
 // ─── Theme Management ────────────────────────────────────────────────
@@ -297,41 +374,57 @@ export async function upsertTheme(theme: ThemeData): Promise<{ id?: string; erro
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const { data: result, error } = await (await getSupabase()).rpc('upsert_theme', {
-    p_id: theme.id || null,
-    p_name: theme.name,
-    p_description: theme.description || null,
-    p_seed_color: theme.seed_color,
-    p_light_scheme: theme.light_scheme,
-    p_dark_scheme: theme.dark_scheme,
-    p_is_public: theme.is_public ?? true,
-    p_user_id: token
-  });
+  try {
+    const client = await getSupabase();
+    const { data: result, error } = await client.rpc('upsert_theme', {
+      p_id: theme.id || null,
+      p_name: theme.name,
+      p_description: theme.description || null,
+      p_seed_color: theme.seed_color,
+      p_light_scheme: theme.light_scheme,
+      p_dark_scheme: theme.dark_scheme,
+      p_is_public: theme.is_public ?? true,
+      p_user_id: token
+    });
 
-  if (error) return { error: error.message };
-  if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
-  return { id: result as string };
+    if (error) return { error: handleAuthError(error, 'Theme save failed') };
+    if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };
+    return { id: result as string };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Theme save failed') };
+  }
 }
 
 // ─── Site Settings ───────────────────────────────────────────────────
 export async function getSiteSetting(key: string): Promise<string | null> {
-  const { data, error } = await (await getSupabase()).rpc('get_site_setting', { p_key: key });
-  if (error) throw error;
-  return data;
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('get_site_setting', { p_key: key });
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.warn(`Failed to get site setting "${key}":`, handleAuthError(err, 'Failed'));
+    return null;
+  }
 }
 
 export async function updateSiteSetting(key: string, value: string): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error('Not authenticated');
 
-  const { data, error } = await (await getSupabase()).rpc('update_site_setting', {
-    p_token: token,
-    p_key: key,
-    p_value: value
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('update_site_setting', {
+      p_token: token,
+      p_key: key,
+      p_value: value
+    });
 
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+  } catch (err) {
+    throw new Error(handleAuthError(err, 'Failed to update setting'));
+  }
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────
@@ -367,30 +460,39 @@ export async function getAnalyticsSummary(days: number = 30): Promise<any> {
   const token = getStoredToken();
   if (!token) throw new Error('Not authenticated');
 
-  const { data, error } = await (await getSupabase()).rpc('get_analytics_summary', {
-    p_token: token,
-    p_days: days
-  });
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('get_analytics_summary', {
+      p_token: token,
+      p_days: days
+    });
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    throw new Error(handleAuthError(err, 'Failed to load analytics'));
+  }
 }
 
 export async function deleteTheme(themeId: string): Promise<{ error?: string }> {
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
 
-  const client = await getSupabase();
-  const { data: session } = await client.from('app_sessions').select('user_id').eq('token', token).eq('is_active', true).single();
-  if (!session) return { error: 'Invalid session' };
+  try {
+    const client = await getSupabase();
+    const { data: session } = await client.from('app_sessions').select('user_id').eq('token', token).eq('is_active', true).single();
+    if (!session) return { error: 'Invalid session' };
 
-  // Verify admin
-  const { data: user } = await client.from('app_users').select('is_admin').eq('id', session.user_id).single();
-  if (!user?.is_admin) return { error: 'Admin access required' };
+    // Verify admin
+    const { data: user } = await client.from('app_users').select('is_admin').eq('id', session.user_id).single();
+    if (!user?.is_admin) return { error: 'Admin access required' };
 
-  const { error } = await client.from('themes').delete().eq('id', themeId);
-  if (error) return { error: error.message };
-  return {};
+    const { error } = await client.from('themes').delete().eq('id', themeId);
+    if (error) return { error: error.message };
+    return {};
+  } catch (err) {
+    return { error: handleAuthError(err, 'Failed to delete theme') };
+  }
 }
 
 // ─── API Keys ─────────────────────────────────────────────────────
@@ -398,35 +500,58 @@ export async function deleteTheme(themeId: string): Promise<{ error?: string }> 
 export async function createApiKey(name: string): Promise<{ key?: string; id?: string; key_prefix?: string; error?: string }> {
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
-  const { data, error } = await (await getSupabase()).rpc('create_api_key', { p_token: token, p_name: name });
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
-  return { key: data.key, id: data.id, key_prefix: data.key_prefix };
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('create_api_key', { p_token: token, p_name: name });
+    if (error) return { error: handleAuthError(error, 'Failed to create API key') };
+    if (data?.error) return { error: data.error };
+    return { key: data.key, id: data.id, key_prefix: data.key_prefix };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Failed to create API key') };
+  }
 }
 
 export async function listApiKeys(): Promise<Array<{ id: string; name: string; key_prefix: string; rate_limit: number; is_active: boolean; created_at: string; last_used_at: string }>> {
   const token = getStoredToken();
   if (!token) return [];
-  const { data, error } = await (await getSupabase()).rpc('list_api_keys', { p_token: token });
-  if (error || data?.error) return [];
-  return data?.keys || [];
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('list_api_keys', { p_token: token });
+    if (error || data?.error) return [];
+    return data?.keys || [];
+  } catch (err) {
+    console.error('Failed to list API keys:', handleAuthError(err, 'Failed'));
+    return [];
+  }
 }
 
 export async function deleteApiKey(keyId: string): Promise<boolean> {
   const token = getStoredToken();
   if (!token) return false;
-  const { data, error } = await (await getSupabase()).rpc('delete_api_key', { p_token: token, p_key_id: keyId });
-  if (error) return false;
-  return data === true;
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('delete_api_key', { p_token: token, p_key_id: keyId });
+    if (error) return false;
+    return data === true;
+  } catch (err) {
+    console.error('Failed to delete API key:', handleAuthError(err, 'Failed'));
+    return false;
+  }
 }
 
 export async function getApiUsageToday(): Promise<number> {
   const token = getStoredToken();
   if (!token) return 0;
-  const user = await validateSession(token);
-  if (!user.user) return 0;
-  const { data } = await (await getSupabase()).rpc('get_api_usage_today', { p_user_id: user.user.id });
-  return data || 0;
+  try {
+    const user = await validateSession(token);
+    if (!user.user) return 0;
+    const client = await getSupabase();
+    const { data } = await client.rpc('get_api_usage_today', { p_user_id: user.user.id });
+    return data || 0;
+  } catch (err) {
+    console.error('Failed to get API usage:', handleAuthError(err, 'Failed'));
+    return 0;
+  }
 }
 
 // ─── Site API Key ──────────────────────────────────────────────────
@@ -434,18 +559,29 @@ export async function getApiUsageToday(): Promise<number> {
 export async function getSiteApiKey(): Promise<string | null> {
   const token = getStoredToken();
   if (!token) return null;
-  const { data, error } = await (await getSupabase()).rpc('get_site_api_key', { p_token: token });
-  if (error || data?.error) return null;
-  return data?.key || null;
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('get_site_api_key', { p_token: token });
+    if (error || data?.error) return null;
+    return data?.key || null;
+  } catch (err) {
+    console.error('Failed to get site API key:', handleAuthError(err, 'Failed'));
+    return null;
+  }
 }
 
 export async function regenerateSiteApiKey(): Promise<{ key?: string; error?: string }> {
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
-  const { data, error } = await (await getSupabase()).rpc('regenerate_site_api_key', { p_token: token });
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
-  return { key: data.key };
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('regenerate_site_api_key', { p_token: token });
+    if (error) return { error: handleAuthError(error, 'Failed to regenerate key') };
+    if (data?.error) return { error: data.error };
+    return { key: data.key };
+  } catch (err) {
+    return { error: handleAuthError(err, 'Failed to regenerate key') };
+  }
 }
 
 // ─── Short URLs ────────────────────────────────────────────────────

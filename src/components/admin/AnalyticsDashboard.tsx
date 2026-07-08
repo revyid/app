@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Users, Eye, ExternalLink, Activity } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { BarChart3, TrendingUp, Users, Eye, ExternalLink, Activity, RefreshCw } from 'lucide-react';
 import { getAnalyticsSummary } from '@/lib/auth';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface AnalyticsData {
   total_views: number;
@@ -11,34 +12,44 @@ interface AnalyticsData {
   referrers: Array<{ referrer: string; count: number }> | null;
 }
 
+const emptyData: AnalyticsData = {
+  total_views: 0,
+  unique_visitors: 0,
+  top_pages: null,
+  daily_views: null,
+  referrers: null,
+};
+
 export function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [days]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       setLoading(true);
-      setError(undefined);
+      setError(null);
       const result = await getAnalyticsSummary(days);
-      setData(result || { total_views: 0, unique_visitors: 0, top_pages: null, daily_views: null, referrers: null });
+      setData(result || emptyData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics');
-      setData({ total_views: 0, unique_visitors: 0, top_pages: null, daily_views: null, referrers: null });
+      const msg = err instanceof Error ? err.message : 'Failed to load analytics';
+      setError(msg);
+      setData(emptyData);
     } finally {
       setLoading(false);
     }
-  };
+  }, [days]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
         <Activity className="w-8 h-8 animate-pulse text-primary" />
+        <p className="text-sm text-muted-foreground">Loading analytics…</p>
       </div>
     );
   }
@@ -52,20 +63,27 @@ export function AnalyticsDashboard() {
           <BarChart3 className="w-5 h-5 text-primary" />
           <h3 className="text-base font-semibold text-on-surface">Analytics Dashboard</h3>
         </div>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="px-3 py-1.5 text-sm rounded-xl border border-outline/20 bg-surface-container text-on-surface"
-        >
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={loadAnalytics} className="gap-1">
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </Button>
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="px-3 py-1.5 text-sm rounded-xl border border-outline/20 bg-surface-container text-on-surface"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+          </select>
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-error-container text-on-error-container text-sm">
-          {error}
+        <div className="p-4 rounded-2xl bg-error-container text-on-error-container text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <Button size="sm" variant="outlined" onClick={loadAnalytics}>Retry</Button>
         </div>
       )}
 

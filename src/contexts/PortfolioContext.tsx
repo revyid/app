@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { getAllPortfolioData } from '@/lib/auth';
 import {
   profileData as staticProfile,
@@ -46,9 +46,24 @@ export interface PortfolioData {
   testimonials: Testimonial[];
 }
 
+// ─── Cache Configuration ────────────────────────────────────────────
 const CACHE_KEY = 'revy_portfolio_cache';
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_META_KEY = 'revy_portfolio_cache_meta';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes primary TTL
+const STALE_TTL = 15 * 60 * 1000; // 15 minutes stale TTL (serve stale while revalidate)
+const CACHE_VERSION = 1; // bump to invalidate all caches
 
+interface CacheMeta {
+  ts: number;
+  version: number;
+}
+
+interface CacheEntry {
+  data: PortfolioData;
+  meta: CacheMeta;
+}
+
+// ─── Default Data ───────────────────────────────────────────────────
 const defaultData: PortfolioData = {
   profile: staticProfile,
   intro: staticIntro,
@@ -62,30 +77,63 @@ const defaultData: PortfolioData = {
   testimonials: staticTestimonials,
 };
 
-function loadCache(): PortfolioData | null {
+// ─── Cache Helpers (memoized on module level) ────────────────────────
+function loadCacheEntry(): CacheEntry | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) return null;
-    return data;
-  } catch { return null; }
+    const metaRaw = localStorage.getItem(CACHE_META_KEY);
+    if (!raw || !metaRaw) return null;
+
+    const meta: CacheMeta = JSON.parse(metaRaw);
+    // Version check for cache invalidation
+    if (meta.version !== CACHE_VERSION) {
+      clearPortfolioCache();
+      return null;
+    }
+    const age = Date.now() - meta.ts;
+    // Beyond stale TTL → treat as expired
+    if (age > STALE_TTL) {
+      clearPortfolioCache();
+      return null;
+    }
+    const data: PortfolioData = JSON.parse(raw);
+    return { data, meta };
+  } catch {
+    clearPortfolioCache();
+    return null;
+  }
+}
+
+function isCacheStale(entry: CacheEntry): boolean {
+  return Date.now() - entry.meta.ts > CACHE_TTL;
 }
 
 function saveCache(data: PortfolioData) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
-  } catch { /* quota exceeded — ignore */ }
+    const meta: CacheMeta = { ts: Date.now(), version: CACHE_VERSION };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(CACHE_META_KEY, JSON.stringify(meta));
+  } catch {
+    /* quota exceeded — ignore */
+  }
 }
 
-function clearCache() {
-  try { localStorage.removeItem(CACHE_KEY); } catch {}
+export function clearPortfolioCache() {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(CACHE_META_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
+// ─── Context Type ───────────────────────────────────────────────────
 interface PortfolioContextType {
-  data: PortfolioData;         // for public display (fallback to static)
-  dbData: Partial<PortfolioData> | null;  // raw DB data, null = not loaded yet
-  isLoading: boolean;
+  data: PortfolioData; // merged (db + static fallback) for public display
+  dbData: Partial<PortfolioData> | null; // raw db data only, null = not fetched yet
+  isLoading: boolean; // initial load
+  isFetching: boolean; // background refresh in progress
+  error: string | null; // last error
   refresh: (force?: boolean) => Promise<void>;
 }
 
@@ -93,23 +141,16 @@ const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
   dbData: null,
   isLoading: true,
+  isFetching: false,
+  error: null,
   refresh: async () => {},
 });
 
 export const usePortfolio = () => useContext(PortfolioContext);
 
-export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
-  // Pre-populate dbData from cache so admin panel doesn't spin forever
-  const [dbData, setDbData] = useState<Partial<PortfolioData> | null>(() => {
-    const cached = loadCache();
-    if (!cached) return null;
-    // Strip static-only fallback fields — keep only what was in cache
-    return cached as Partial<PortfolioData>;
-  });
-  const [isLoading, setIsLoading] = useState(() => !loadCache());
-
-  const buildFresh = (raw: Record<string, unknown>): PortfolioData => ({
+// ─── Build Helpers ──────────────────────────────────────────────────
+function buildFresh(raw: Record<string, unknown>): PortfolioData {
+  return {
     profile: (raw.profile as ProfileData) ?? defaultData.profile,
     intro: (raw.intro as IntroData) ?? defaultData.intro,
     projects: (raw.projects as Project[]) ?? defaultData.projects,
@@ -120,62 +161,125 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
     languages: (raw.languages as Language[]) ?? defaultData.languages,
     testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
-  });
+  };
+}
 
-  // dbData: raw values exactly from DB (no fallback to static)
-  const buildDbData = (raw: Record<string, unknown>): Partial<PortfolioData> => ({
-    profile: raw.profile as ProfileData | undefined,
-    intro: raw.intro as IntroData | undefined,
-    projects: raw.projects as Project[] | undefined,
-    experiences: raw.experiences as Experience[] | undefined,
-    education: raw.education as Education[] | undefined,
-    skills: raw.skills as string[] | undefined,
-    social_links: raw.social_links as SocialLink[] | undefined,
-    contacts: raw.contacts as Contact[] | undefined,
-    languages: raw.languages as Language[] | undefined,
-    testimonials: raw.testimonials as Testimonial[] | undefined,
-  });
+function buildDbData(raw: Record<string, unknown>): Partial<PortfolioData> {
+  const result: Partial<PortfolioData> = {};
+  if (raw.profile !== undefined) result.profile = raw.profile as ProfileData;
+  if (raw.intro !== undefined) result.intro = raw.intro as IntroData;
+  if (raw.projects !== undefined) result.projects = raw.projects as Project[];
+  if (raw.experiences !== undefined) result.experiences = raw.experiences as Experience[];
+  if (raw.education !== undefined) result.education = raw.education as Education[];
+  if (raw.skills !== undefined) result.skills = raw.skills as string[];
+  if (raw.social_links !== undefined) result.social_links = raw.social_links as SocialLink[];
+  if (raw.contacts !== undefined) result.contacts = raw.contacts as Contact[];
+  if (raw.languages !== undefined) result.languages = raw.languages as Language[];
+  if (raw.testimonials !== undefined) result.testimonials = raw.testimonials as Testimonial[];
+  return result;
+}
 
+// ─── Provider ───────────────────────────────────────────────────────
+export function PortfolioProvider({ children }: { children: ReactNode }) {
+  // Initialize from cache only once
+  const initialEntry = useRef<CacheEntry | null>(loadCacheEntry());
+  const hasHydrated = useRef(false);
+
+  const [data, setData] = useState<PortfolioData>(() => initialEntry.current?.data ?? defaultData);
+  const [dbData, setDbData] = useState<Partial<PortfolioData> | null>(() => {
+    // If we have cache, use it as initial dbData so admin panel doesn't spin forever
+    if (initialEntry.current) {
+      return buildDbData(initialEntry.current.data as unknown as Record<string, unknown>);
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(() => !initialEntry.current);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Prevent duplicate fetches
+  const fetchInProgress = useRef(false);
   const refresh = useCallback(async (force?: boolean) => {
-    if (force) clearCache();
-    const cached = loadCache();
-    if (cached && !force) {
-      setData(cached);
+    // Prevent concurrent fetches
+    if (fetchInProgress.current) return;
+
+    if (force) clearPortfolioCache();
+
+    const cached = loadCacheEntry();
+
+    // Fast path: valid cache, no force → serve cache + background refresh
+    if (cached && !force && !isCacheStale(cached)) {
+      setData(cached.data);
+      setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
       setIsLoading(false);
-      // background refresh — also updates dbData
-      getAllPortfolioData().then(raw => {
+      // Silent background refresh
+      setIsFetching(true);
+      try {
+        const raw = await getAllPortfolioData();
         const r = raw as Record<string, unknown>;
         const fresh = buildFresh(r);
+        const dbOnly = buildDbData(r);
         setData(fresh);
-        setDbData(buildDbData(r));
+        setDbData(dbOnly);
         saveCache(fresh);
-      }).catch(() => {
-        // on error, set dbData to empty object so admin doesn't stay on loading
-        setDbData({});
-      });
+        setError(null);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Background refresh failed';
+        console.warn('[Portfolio] Background refresh failed:', msg);
+        // Keep existing data, don't show error for background refresh
+      } finally {
+        setIsFetching(false);
+      }
       return;
     }
+
+    // Stale cache → serve immediately + refresh in background
+    if (cached && !force && isCacheStale(cached)) {
+      setData(cached.data);
+      setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
+      setIsLoading(false);
+    }
+
+    // Fetch from network
+    fetchInProgress.current = true;
+    setIsFetching(true);
+    setError(null);
+
     try {
       const raw = await getAllPortfolioData();
       const r = raw as Record<string, unknown>;
       const fresh = buildFresh(r);
+      const dbOnly = buildDbData(r);
       setData(fresh);
-      setDbData(buildDbData(r));
+      setDbData(dbOnly);
       saveCache(fresh);
-    } catch {
-      // keep existing data, but unblock admin
-      setDbData({});
+      setError(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load portfolio data';
+      console.error('[Portfolio] Fetch failed:', msg);
+      setError(msg);
+      // If we have cached data, keep using it (stale-while-error)
+      if (!cached) {
+        // No cache at all → keep static defaults, but mark dbData as empty so admin doesn't hang
+        setDbData({});
+      }
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
+      fetchInProgress.current = false;
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
-    refresh();
+    if (!hasHydrated.current) {
+      hasHydrated.current = true;
+      refresh();
+    }
   }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, dbData, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, dbData, isLoading, isFetching, error, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
