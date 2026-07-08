@@ -39,15 +39,38 @@ function HomeSidebarContent() {
       <LanguagesSection />
       <div className="h-px bg-outline/20" />
       <SocialLinks />
-      <div className="mt-auto pt-3 border-t border-outline/15 space-y-2">
-        <div className="flex items-center justify-center gap-3 text-label-sm">
-          <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors font-medium">Work</a>
+      <div className="mt-auto pt-3 border-t border-outline/15 space-y-3">
+        <p className="text-label-sm text-muted-foreground/60 text-center">
+          Built with{' '}
+          <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">React</a>
+          {' & '}
+          <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">Next.js</a>
+        </p>
+        <div className="flex items-center justify-center gap-4 text-label-sm">
+          <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors font-medium">Explore Work</a>
           <span className="w-1 h-1 rounded-full bg-outline/40" />
-          <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">Contact</a>
+          <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">Work With Me</a>
         </div>
-        <p className="text-label-sm text-muted-foreground/40 text-center">Built with React & Next.js · © 2026 revyid</p>
+        <p className="text-label-sm text-muted-foreground/40 text-center">
+          © 2026 Portfolio by revyid
+        </p>
       </div>
     </>
+  );
+}
+
+/** Sidebar sections for mobile (shown at top of page) */
+export function MobileSidebarSections() {
+  return (
+    <div className="lg:hidden space-y-4 mb-6">
+      <ProfileHeader />
+      <div className="h-px bg-outline/20" />
+      <AboutSection />
+      <div className="h-px bg-outline/20" />
+      <LanguagesSection />
+      <div className="h-px bg-outline/20" />
+      <SocialLinks />
+    </div>
   );
 }
 
@@ -89,10 +112,12 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             Skip to content
           </a>
 
-          {/* Desktop sidebar — no footer buttons on home, handled by FloatingNavbar */}
-          <Sidebar>
-            <HomeSidebarContent />
-          </Sidebar>
+          {/* Desktop sidebar only */}
+          <div className="hidden lg:block">
+            <Sidebar showMobile={false}>
+              <HomeSidebarContent />
+            </Sidebar>
+          </div>
 
           <main id="main-content" className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
             <ErrorBoundary>
@@ -102,7 +127,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Mobile floating nav — no nav tree on home */}
+      {/* Mobile floating nav */}
       <MobileNavDrawer
         showNav={false}
         onChatClick={() => setIsChatOpen(true)}
@@ -115,7 +140,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           isOpen={isCommandPaletteOpen}
           onClose={() => setIsCommandPaletteOpen(false)}
           onLoginClick={() => setIsCommandPaletteOpen(false)}
-          onProfileClick={() => setIsCommandPaletteOpen(false)}
+          onProfileClick={() => setIsProfileOpen(false)}
           onChatClick={() => setIsChatOpen(true)}
         />
       )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, MessageCircle, User, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 interface SidebarProps {
   children: ReactNode;
   showFooter?: boolean;
+  showMobile?: boolean;
   onChatClick?: () => void;
   onProfileClick?: () => void;
   onAdminClick?: () => void;
@@ -25,7 +26,6 @@ function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatCl
     duration: 750,
     isDarkMode: isDark,
     onDarkModeChange: (dark: boolean) => {
-      // Library sudah toggle class dark di <html>, kita sync ThemeContext state
       setTheme(dark ? 'dark' : 'light');
     },
   });
@@ -70,13 +70,7 @@ function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatCl
   );
 }
 
-const sidebarVariants = {
-  initial: { opacity: 0, x: -12, filter: 'blur(4px)' },
-  animate: { opacity: 1, x: 0, filter: 'blur(0px)' },
-  exit: { opacity: 0, x: 12, filter: 'blur(4px)' },
-};
-
-export function Sidebar({ children, showFooter = false, onChatClick, onProfileClick, onAdminClick }: SidebarProps) {
+export function Sidebar({ children, showFooter = false, showMobile = true, onChatClick, onProfileClick, onAdminClick }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -97,49 +91,53 @@ export function Sidebar({ children, showFooter = false, onChatClick, onProfileCl
       <div className="hidden lg:block w-80 flex-shrink-0" />
 
       {/* Mobile menu button */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-full bg-surface border border-outline/20 shadow-elevation-2 active:scale-95 transition-transform"
-        aria-label="Open menu"
-      >
-        <Menu className="w-5 h-5 text-foreground" />
-      </button>
+      {showMobile && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-full bg-surface border border-outline/20 shadow-elevation-2 active:scale-95 transition-transform"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5 text-foreground" />
+        </button>
+      )}
 
       {/* Mobile drawer */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setMobileOpen(false)}
-              className="lg:hidden fixed inset-0 z-50 bg-black/40"
-            />
-            <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] z-50 bg-surface border-r border-outline/20 overflow-y-auto"
-            >
-              <div className="p-4 space-y-2.5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-title-sm font-semibold text-foreground">Menu</span>
-                  <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-full hover:bg-surface-variant transition-colors" aria-label="Close menu">
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </button>
+      {showMobile && (
+        <AnimatePresence>
+          {mobileOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setMobileOpen(false)}
+                className="lg:hidden fixed inset-0 z-50 bg-black/40"
+              />
+              <motion.aside
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="lg:hidden fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] z-50 bg-surface border-r border-outline/20 overflow-y-auto"
+              >
+                <div className="p-4 space-y-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-title-sm font-semibold text-foreground">Menu</span>
+                    <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-full hover:bg-surface-variant transition-colors" aria-label="Close menu">
+                      <X className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </div>
+                  <div className="space-y-2.5">
+                    {children}
+                  </div>
+                  {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
                 </div>
-                <div className="space-y-2.5">
-                  {children}
-                </div>
-                {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+      )}
     </>
   );
 }
