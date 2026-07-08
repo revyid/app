@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense, memo } from 'react';
 import { IntroSection } from '@/components/sections/IntroSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
+import { Footer } from '@/components/sections/Footer';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { useActiveSection } from '@/contexts/ActiveSectionContext';
 
@@ -74,6 +75,8 @@ export function HomePage() {
           <ContactFullSection />
         </Suspense>
       </div>
+
+      <Footer />
     </div>
   );
 }

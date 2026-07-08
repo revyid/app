@@ -7,18 +7,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Key, FileText, Home, ChevronRight } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileNavDrawer, type NavItem } from '@/components/layout/MobileNavDrawer';
 import { PageTransition } from '@/components/shared/PageTransition';
 import { ChatPopup } from '@/components/chat/ChatPopup';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
 import { AdminPanel } from '@/components/admin/AdminPanel';
 import { createPortal } from 'react-dom';
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: any;
-  children?: NavItem[];
-}
 
 const NAV: NavItem[] = [
   { href: '/', label: 'Home', icon: Home },
@@ -36,10 +30,10 @@ const NAV: NavItem[] = [
   ]},
 ];
 
-function NavItem({ item, pathname }: { item: NavItem; pathname: string }) {
+function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const [open, setOpen] = useState(true);
   const Icon = item.icon;
-  const hasChildren = item.children && item.children.length > 0;
+  const hasChildren = !!item.children?.length;
   const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
 
   return (
@@ -62,7 +56,7 @@ function NavItem({ item, pathname }: { item: NavItem; pathname: string }) {
       {hasChildren && open && (
         <div className="ml-3 border-l border-outline/10 pl-2 mt-0.5">
           {item.children!.map(child => (
-            <NavItem key={child.href} item={child} pathname={pathname} />
+            <DesktopNavItem key={child.href} item={child} pathname={pathname} />
           ))}
         </div>
       )}
@@ -82,24 +76,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:pl-80 lg:pr-8 py-8 lg:py-12 pb-24">
-        <Sidebar
-          showFooter
-          onChatClick={() => setIsChatOpen(true)}
-          onProfileClick={() => setIsProfileOpen(true)}
-          onAdminClick={() => setIsAdminOpen(true)}
-        >
-          <nav className="space-y-0.5">
-            {NAV.map(item => (
-              <NavItem key={item.href} item={item} pathname={pathname} />
-            ))}
-          </nav>
-        </Sidebar>
-        <main className="max-w-6xl mx-auto">
-          <PageTransition>{children}</PageTransition>
-        </main>
-      </div>
+    <div className="min-h-screen bg-background flex">
+      <Sidebar
+        showFooter
+        onChatClick={() => setIsChatOpen(true)}
+        onProfileClick={() => setIsProfileOpen(true)}
+        onAdminClick={() => setIsAdminOpen(true)}
+      >
+        <nav className="space-y-0.5">
+          {NAV.map(item => (
+            <DesktopNavItem key={item.href} item={item} pathname={pathname} />
+          ))}
+        </nav>
+      </Sidebar>
+
+      <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
+        <PageTransition>{children}</PageTransition>
+      </main>
+
+      {/* Mobile floating nav */}
+      <MobileNavDrawer
+        nav={NAV}
+        onChatClick={() => setIsChatOpen(true)}
+        onProfileClick={() => setIsProfileOpen(true)}
+        onAdminClick={() => setIsAdminOpen(true)}
+      />
+
       <PopupPortal>
         <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => {}} side="left" />
         <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => {}} side="left" />

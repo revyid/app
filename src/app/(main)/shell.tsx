@@ -8,7 +8,6 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PageTransition } from '@/components/shared/PageTransition';
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
-import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
@@ -17,15 +16,11 @@ import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
 import { LanguagesSection } from '@/components/sections/LanguagesSection';
-import { Mail, Briefcase, GraduationCap, FolderKanban, MessageSquare } from 'lucide-react';
 
 function HomeSidebarContent() {
   return (
     <>
       <ProfileHeader />
-
-      <div className="h-px bg-outline/20" />
-      <Breadcrumbs items={[{ label: '~' }, { label: 'home' }]} />
 
       <div className="h-px bg-outline/20" />
       <AboutSection />
@@ -85,7 +80,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           <Sidebar>
             <HomeSidebarContent />
           </Sidebar>
-          <main id="main-content" className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
+          <main id="main-content" className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
             <ErrorBoundary>
               <PageTransition>{children}</PageTransition>
             </ErrorBoundary>
