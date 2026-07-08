@@ -404,8 +404,7 @@ interface AdminPanelProps { isOpen: boolean; onClose: () => void; }
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, isReady, refresh } = usePortfolio();
-  console.log('[AdminPanel] profile.name:', data.profile.name, '| isReady:', isReady, '| skills:', data.skills.length);
+  const { data, refresh } = usePortfolio();
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
   return (
@@ -441,9 +440,6 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   {!user?.is_admin ? (
                     <div className="text-center py-12 text-muted-foreground"><Shield className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">Admin access required.</p></div>
                   ) : activeTab === 'portfolio' ? (
-                    !isReady ? (
-                      <div className="flex items-center justify-center py-16"><LoadingIndicator className="w-6 h-6" /></div>
-                    ) : (
                       <div className="space-y-3">
                         <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
                         <ProfileSection initial={data.profile} onSaved={refresh} />
@@ -457,7 +453,6 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         <EducationSectionEditor initial={data.education} onSaved={refresh} />
                         <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={refresh} />
                       </div>
-                    )
                   ) : activeTab === 'themes' ? <ThemeBuilder /> : activeTab === 'analytics' ? <AnalyticsDashboard /> : activeTab === 'users' ? <UserManagement /> : <SiteSettings />}
                 </div>
               </div>

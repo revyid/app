@@ -2,6 +2,7 @@
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { PortfolioProvider } from '@/contexts/PortfolioContext';
 import { SmoothScroll } from '@/components/shared/SmoothScroll';
 
 export function RootProviders({ children }: { children: React.ReactNode }) {
@@ -9,7 +10,9 @@ export function RootProviders({ children }: { children: React.ReactNode }) {
     <SmoothScroll>
       <AuthProvider>
         <ThemeProvider>
-          {children}
+          <PortfolioProvider>
+            {children}
+          </PortfolioProvider>
         </ThemeProvider>
       </AuthProvider>
     </SmoothScroll>

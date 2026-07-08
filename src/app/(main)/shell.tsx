@@ -140,18 +140,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 }
 
 export function MainShell({ children }: { children: React.ReactNode }) {
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-
-  useEffect(() => {
-    const handler = () => setIsAdminOpen(true);
-    window.addEventListener('open-admin', handler);
-    return () => window.removeEventListener('open-admin', handler);
-  }, []);
-
   return (
-    <Providers>
-      <ShellInner>{children}</ShellInner>
-      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
-    </Providers>
+    <ShellInner>{children}</ShellInner>
   );
 }
