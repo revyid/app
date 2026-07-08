@@ -83,13 +83,15 @@ function clearCache() {
 }
 
 interface PortfolioContextType {
-  data: PortfolioData;
+  data: PortfolioData;         // for public display (fallback to static)
+  dbData: Partial<PortfolioData> | null;  // raw DB data, null = not loaded yet
   isLoading: boolean;
   refresh: (force?: boolean) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
+  dbData: null,
   isLoading: true,
   refresh: async () => {},
 });
@@ -98,7 +100,35 @@ export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
+  const [dbData, setDbData] = useState<Partial<PortfolioData> | null>(null);
   const [isLoading, setIsLoading] = useState(() => !loadCache());
+
+  const buildFresh = (raw: Record<string, unknown>): PortfolioData => ({
+    profile: (raw.profile as ProfileData) ?? defaultData.profile,
+    intro: (raw.intro as IntroData) ?? defaultData.intro,
+    projects: (raw.projects as Project[]) ?? defaultData.projects,
+    experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
+    education: (raw.education as Education[]) ?? defaultData.education,
+    skills: (raw.skills as string[]) ?? defaultData.skills,
+    social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
+    contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
+    languages: (raw.languages as Language[]) ?? defaultData.languages,
+    testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
+  });
+
+  // dbData: raw values exactly from DB (no fallback to static)
+  const buildDbData = (raw: Record<string, unknown>): Partial<PortfolioData> => ({
+    profile: raw.profile as ProfileData | undefined,
+    intro: raw.intro as IntroData | undefined,
+    projects: raw.projects as Project[] | undefined,
+    experiences: raw.experiences as Experience[] | undefined,
+    education: raw.education as Education[] | undefined,
+    skills: raw.skills as string[] | undefined,
+    social_links: raw.social_links as SocialLink[] | undefined,
+    contacts: raw.contacts as Contact[] | undefined,
+    languages: raw.languages as Language[] | undefined,
+    testimonials: raw.testimonials as Testimonial[] | undefined,
+  });
 
   const refresh = useCallback(async (force?: boolean) => {
     if (force) clearCache();
@@ -106,43 +136,25 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     if (cached && !force) {
       setData(cached);
       setIsLoading(false);
-      // still refresh in background
+      // background refresh
       getAllPortfolioData().then(raw => {
-        const fresh: PortfolioData = {
-          profile: (raw.profile as ProfileData) ?? defaultData.profile,
-          intro: (raw.intro as IntroData) ?? defaultData.intro,
-          projects: (raw.projects as Project[]) ?? defaultData.projects,
-          experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
-          education: (raw.education as Education[]) ?? defaultData.education,
-          skills: (raw.skills as string[]) ?? defaultData.skills,
-          social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
-          contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
-          languages: (raw.languages as Language[]) ?? defaultData.languages,
-          testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
-        };
+        const r = raw as Record<string, unknown>;
+        const fresh = buildFresh(r);
         setData(fresh);
+        setDbData(buildDbData(r));
         saveCache(fresh);
       }).catch(() => {});
       return;
     }
     try {
       const raw = await getAllPortfolioData();
-      const fresh: PortfolioData = {
-        profile: (raw.profile as ProfileData) ?? defaultData.profile,
-        intro: (raw.intro as IntroData) ?? defaultData.intro,
-        projects: (raw.projects as Project[]) ?? defaultData.projects,
-        experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
-        education: (raw.education as Education[]) ?? defaultData.education,
-        skills: (raw.skills as string[]) ?? defaultData.skills,
-        social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
-        contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
-        languages: (raw.languages as Language[]) ?? defaultData.languages,
-        testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
-      };
+      const r = raw as Record<string, unknown>;
+      const fresh = buildFresh(r);
       setData(fresh);
+      setDbData(buildDbData(r));
       saveCache(fresh);
     } catch {
-      // fall back to static data
+      // keep existing data
     } finally {
       setIsLoading(false);
     }
@@ -153,7 +165,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, dbData, isLoading, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );

@@ -102,9 +102,9 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Mobile floating nav */}
+      {/* Mobile floating nav — no nav tree on home */}
       <MobileNavDrawer
-        nav={HOME_NAV}
+        showNav={false}
         onChatClick={() => setIsChatOpen(true)}
         onProfileClick={() => setIsProfileOpen(true)}
         onAdminClick={() => setIsAdminOpen(true)}

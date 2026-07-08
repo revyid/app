@@ -477,9 +477,24 @@ interface AdminPanelProps {
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, refresh } = usePortfolio();
+  const { data, dbData, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
+
+  // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
+  const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
+  const adminData = {
+    profile:      dbData?.profile      ?? emptyProfile,
+    intro:        dbData?.intro        ?? { paragraphs: [] },
+    skills:       dbData?.skills       ?? [],
+    languages:    dbData?.languages    ?? [],
+    social_links: dbData?.social_links ?? [],
+    contacts:     dbData?.contacts     ?? [],
+    projects:     dbData?.projects     ?? [],
+    experiences:  dbData?.experiences  ?? [],
+    education:    dbData?.education    ?? [],
+    testimonials: dbData?.testimonials ?? [],
+  };
 
   return (
     <AnimatePresence>
@@ -560,16 +575,22 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   ) : activeTab === 'portfolio' ? (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      <ProfileSection initial={data.profile} onSaved={forceRefresh} />
-                      <IntroSectionEditor initial={data.intro} onSaved={forceRefresh} />
-                      <SkillsSectionEditor initial={data.skills} onSaved={forceRefresh} />
-                      <LanguagesSectionEditor initial={data.languages} onSaved={forceRefresh} />
-                      <SocialLinksSectionEditor initial={data.social_links} onSaved={forceRefresh} />
-                      <ContactsSectionEditor initial={data.contacts} onSaved={forceRefresh} />
-                      <ProjectsSectionEditor initial={data.projects} onSaved={forceRefresh} />
-                      <ExperiencesSectionEditor initial={data.experiences} onSaved={forceRefresh} />
-                      <EducationSectionEditor initial={data.education} onSaved={forceRefresh} />
-                      <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={forceRefresh} />
+                      {dbData === null ? (
+                        <div className="text-center py-8 text-muted-foreground text-sm">Loading data from database…</div>
+                      ) : (
+                        <>
+                          <ProfileSection initial={adminData.profile} onSaved={forceRefresh} />
+                          <IntroSectionEditor initial={adminData.intro} onSaved={forceRefresh} />
+                          <SkillsSectionEditor initial={adminData.skills} onSaved={forceRefresh} />
+                          <LanguagesSectionEditor initial={adminData.languages} onSaved={forceRefresh} />
+                          <SocialLinksSectionEditor initial={adminData.social_links} onSaved={forceRefresh} />
+                          <ContactsSectionEditor initial={adminData.contacts} onSaved={forceRefresh} />
+                          <ProjectsSectionEditor initial={adminData.projects} onSaved={forceRefresh} />
+                          <ExperiencesSectionEditor initial={adminData.experiences} onSaved={forceRefresh} />
+                          <EducationSectionEditor initial={adminData.education} onSaved={forceRefresh} />
+                          <TestimonialsSectionEditor initial={adminData.testimonials} onSaved={forceRefresh} />
+                        </>
+                      )}
                     </div>
                   ) : activeTab === 'themes' ? (
                     <ThemeBuilder />

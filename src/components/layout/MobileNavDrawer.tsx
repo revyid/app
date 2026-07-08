@@ -73,13 +73,14 @@ function TreeItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
 }
 
 interface MobileNavDrawerProps {
-  nav: NavItem[];
+  nav?: NavItem[];
+  showNav?: boolean;
   onChatClick?: () => void;
   onProfileClick?: () => void;
   onAdminClick?: () => void;
 }
 
-export function MobileNavDrawer({ nav, onChatClick, onProfileClick, onAdminClick }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ nav = [], showNav = true, onChatClick, onProfileClick, onAdminClick }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const { effectiveTheme, setTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -99,18 +100,21 @@ export function MobileNavDrawer({ nav, onChatClick, onProfileClick, onAdminClick
       {/* Floating pill trigger — mobile only */}
       <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-auto">
         <div className="flex items-center gap-1 px-2 py-2 bg-surface rounded-full shadow-elevation-4 border border-outline/30">
-          {/* Tree toggle */}
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-secondary-container text-secondary-container-foreground text-label-sm font-medium"
-          >
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-80">
-              <path d="M1 1h4v4H1V1zm0 9h4v4H1v-4zm5-4.5h8M6 3h8M6 12h8M3 5v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            Menu
-          </button>
-
-          <div className="w-px h-6 bg-outline/20" />
+          {/* Tree toggle — only show if nav enabled */}
+          {showNav && (
+            <>
+              <button
+                onClick={() => setOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-secondary-container text-secondary-container-foreground text-label-sm font-medium"
+              >
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-80">
+                  <path d="M1 1h4v4H1V1zm0 9h4v4H1v-4zm5-4.5h8M6 3h8M6 12h8M3 5v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                Menu
+              </button>
+              <div className="w-px h-6 bg-outline/20" />
+            </>
+          )}
 
           {/* Theme toggle */}
           <button ref={ref} onClick={toggleSwitchTheme} aria-label="Toggle theme"
