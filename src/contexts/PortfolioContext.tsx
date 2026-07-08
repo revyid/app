@@ -108,6 +108,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       // still refresh in background
       getAllPortfolioData().then(raw => {
+        console.log('[Portfolio] background fetch raw:', raw);
         const fresh: PortfolioData = {
           profile: (raw.profile as ProfileData) ?? defaultData.profile,
           intro: (raw.intro as IntroData) ?? defaultData.intro,
@@ -120,13 +121,15 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
           languages: (raw.languages as Language[]) ?? defaultData.languages,
           testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
         };
+        console.log('[Portfolio] background fresh.profile:', fresh.profile);
         setData(fresh);
         saveCache(fresh);
-      }).catch(() => {});
+      }).catch((err) => console.error('[Portfolio] background fetch failed:', err));
       return;
     }
     try {
       const raw = await getAllPortfolioData();
+      console.log('[Portfolio] network fetch raw:', raw);
       const fresh: PortfolioData = {
         profile: (raw.profile as ProfileData) ?? defaultData.profile,
         intro: (raw.intro as IntroData) ?? defaultData.intro,
@@ -139,9 +142,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         languages: (raw.languages as Language[]) ?? defaultData.languages,
         testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
       };
+      console.log('[Portfolio] network fresh.profile:', fresh.profile);
       setData(fresh);
       saveCache(fresh);
-    } catch {
+    } catch (err) {
+      console.error('[Portfolio] network fetch failed:', err);
       // fall back to static data
     } finally {
       setIsLoading(false);
