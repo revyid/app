@@ -405,7 +405,6 @@ interface AdminPanelProps { isOpen: boolean; onClose: () => void; }
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
   const { data, refresh } = usePortfolio();
-  console.log('[AdminPanel] data.profile.name:', data.profile.name, '| data.skills:', data.skills.length, '| data.projects:', data.projects.length);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
   return (
