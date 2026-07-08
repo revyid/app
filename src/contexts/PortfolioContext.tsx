@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { getAllPortfolioData } from '@/lib/auth';
 import {
   profileData as staticProfile,
@@ -70,13 +70,13 @@ function buildFresh(raw: Record<string, unknown>): PortfolioData {
 
 interface PortfolioContextType {
   data: PortfolioData;
-  isLoading: boolean;
+  isReady: boolean; // true setelah fetch pertama selesai
   refresh: () => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
-  isLoading: true,
+  isReady: false,
   refresh: async () => {},
 });
 
@@ -84,21 +84,20 @@ export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(defaultData);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
   const refresh = useCallback(async () => {
-    setIsLoading(true);
     try {
       const raw = await getAllPortfolioData();
       setData(buildFresh(raw as Record<string, unknown>));
     } catch { /* keep current */ }
-    finally { setIsLoading(false); }
+    finally { setIsReady(true); }
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, isReady, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
