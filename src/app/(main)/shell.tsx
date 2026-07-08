@@ -77,7 +77,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { isReady } = usePortfolio();
   const { toggleTheme } = useTheme();
@@ -134,7 +133,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
       <PopupPortal>
         <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => { setIsChatOpen(false); setIsLoginOpen(true); }} />
         <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => { setIsProfileOpen(false); setIsLoginOpen(true); }} />
-        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
         <CustomLogin isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       </PopupPortal>
     </>
@@ -142,9 +140,18 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 }
 
 export function MainShell({ children }: { children: React.ReactNode }) {
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsAdminOpen(true);
+    window.addEventListener('open-admin', handler);
+    return () => window.removeEventListener('open-admin', handler);
+  }, []);
+
   return (
     <Providers>
       <ShellInner>{children}</ShellInner>
+      <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </Providers>
   );
 }
