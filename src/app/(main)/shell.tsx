@@ -79,7 +79,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { isReady } = usePortfolio();
+  const { isLoading } = usePortfolio();
   const { toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -96,8 +96,8 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className="min-h-screen bg-background text-foreground transition-colors duration-300 overflow-x-clip">
-        {!isReady && (
-          <WelcomePreloader isDataReady={isReady} onComplete={() => {}} />
+        {isLoading && (
+          <WelcomePreloader isDataReady={!isLoading} onComplete={() => {}} />
         )}
 
         <div className="flex min-h-screen">

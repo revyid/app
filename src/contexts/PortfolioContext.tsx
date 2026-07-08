@@ -77,13 +77,13 @@ function buildFresh(raw: Record<string, unknown>): PortfolioData {
 
 interface PortfolioContextType {
   data: PortfolioData;
-  isReady: boolean;
+  isLoading: boolean;
   refresh: () => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
-  isReady: false,
+  isLoading: true,
   refresh: async () => {},
 });
 
@@ -91,12 +91,13 @@ export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(defaultData);
-  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const fetchingRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    if (fetchingRef.current) { console.log('[Portfolio] BLOCKED - already fetching'); return; }
+    if (fetchingRef.current) { console.log('[Portfolio] BLOCKED'); return; }
     fetchingRef.current = true;
+    setIsLoading(true);
     console.log('[Portfolio] START fetch');
 
     try {
@@ -108,21 +109,21 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         setData(fresh);
         console.log('[Portfolio] setData DONE');
       } else {
-        console.log('[Portfolio] RAW EMPTY - keeping default');
+        console.log('[Portfolio] RAW EMPTY');
       }
     } catch (err) {
       console.error('[Portfolio] FETCH ERROR:', err);
     } finally {
       fetchingRef.current = false;
-      setIsReady(true);
-      console.log('[Portfolio] isReady=true');
+      setIsLoading(false);
+      console.log('[Portfolio] DONE');
     }
   }, []);
 
   useEffect(() => { refresh(); }, []);
 
   return (
-    <PortfolioContext.Provider value={{ data, isReady, refresh }}>
+    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
