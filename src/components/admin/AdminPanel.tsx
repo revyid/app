@@ -576,7 +576,10 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
                       {dbData === null ? (
-                        <div className="text-center py-8 text-muted-foreground text-sm">Loading data from database…</div>
+                        <div className="flex flex-col items-center justify-center py-16 gap-4">
+                          <LoadingIndicator className="w-12 h-12" />
+                          <p className="text-sm text-muted-foreground">Loading from database…</p>
+                        </div>
                       ) : (
                         <>
                           <ProfileSection initial={adminData.profile} onSaved={forceRefresh} />

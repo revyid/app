@@ -100,7 +100,13 @@ export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
-  const [dbData, setDbData] = useState<Partial<PortfolioData> | null>(null);
+  // Pre-populate dbData from cache so admin panel doesn't spin forever
+  const [dbData, setDbData] = useState<Partial<PortfolioData> | null>(() => {
+    const cached = loadCache();
+    if (!cached) return null;
+    // Strip static-only fallback fields — keep only what was in cache
+    return cached as Partial<PortfolioData>;
+  });
   const [isLoading, setIsLoading] = useState(() => !loadCache());
 
   const buildFresh = (raw: Record<string, unknown>): PortfolioData => ({
@@ -136,14 +142,17 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     if (cached && !force) {
       setData(cached);
       setIsLoading(false);
-      // background refresh
+      // background refresh — also updates dbData
       getAllPortfolioData().then(raw => {
         const r = raw as Record<string, unknown>;
         const fresh = buildFresh(r);
         setData(fresh);
         setDbData(buildDbData(r));
         saveCache(fresh);
-      }).catch(() => {});
+      }).catch(() => {
+        // on error, set dbData to empty object so admin doesn't stay on loading
+        setDbData({});
+      });
       return;
     }
     try {
@@ -154,7 +163,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setDbData(buildDbData(r));
       saveCache(fresh);
     } catch {
-      // keep existing data
+      // keep existing data, but unblock admin
+      setDbData({});
     } finally {
       setIsLoading(false);
     }
