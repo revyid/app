@@ -199,9 +199,22 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
   // Prevent duplicate fetches
   const fetchInProgress = useRef(false);
+  const pendingForceRefresh = useRef(false);
   const refresh = useCallback(async (force?: boolean) => {
     // Prevent concurrent fetches
-    if (fetchInProgress.current) return;
+    if (fetchInProgress.current) {
+      // If a force refresh is requested while a fetch is in progress,
+      // clear the cache so the next refresh will fetch fresh data,
+      // and flag for retry after the current fetch completes.
+      if (force) {
+        clearPortfolioCache();
+        pendingForceRefresh.current = true;
+      }
+      return;
+    }
+
+    // Set guard BEFORE any early return — covers all branches including fast-path
+    fetchInProgress.current = true;
 
     if (force) clearPortfolioCache();
 
@@ -212,7 +225,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setData(cached.data);
       setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
       setIsLoading(false);
-      // Silent background refresh
+      // Silent background refresh (fetchInProgress already set above)
       setIsFetching(true);
       try {
         const raw = await getAllPortfolioData();
@@ -229,6 +242,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         // Keep existing data, don't show error for background refresh
       } finally {
         setIsFetching(false);
+        fetchInProgress.current = false;
+        // Retry if a force refresh was blocked during this fetch
+        if (pendingForceRefresh.current) {
+          pendingForceRefresh.current = false;
+          refresh(true);
+        }
       }
       return;
     }
@@ -240,8 +259,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
 
-    // Fetch from network
-    fetchInProgress.current = true;
+    // Fetch from network (fetchInProgress already set above)
     setIsFetching(true);
     setError(null);
 
@@ -267,6 +285,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setIsFetching(false);
       fetchInProgress.current = false;
+      // Retry if a force refresh was blocked during this fetch
+      if (pendingForceRefresh.current) {
+        pendingForceRefresh.current = false;
+        refresh(true);
+      }
     }
   }, []);
 
