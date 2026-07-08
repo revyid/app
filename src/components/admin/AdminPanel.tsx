@@ -477,7 +477,7 @@ interface AdminPanelProps {
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, refresh } = usePortfolio();
+  const { data, isLoading, refresh } = usePortfolio();
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
   return (
@@ -557,6 +557,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       <p className="text-sm">Admin access required.</p>
                     </div>
                   ) : activeTab === 'portfolio' ? (
+                    isLoading ? <div /> : (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
                       <ProfileSection initial={data.profile} onSaved={refresh} />
@@ -570,6 +571,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       <EducationSectionEditor initial={data.education} onSaved={refresh} />
                       <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={refresh} />
                     </div>
+                    )
                   ) : activeTab === 'themes' ? (
                     <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
