@@ -47,7 +47,7 @@ export interface PortfolioData {
 }
 
 const CACHE_KEY = 'revy_portfolio_cache';
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 const defaultData: PortfolioData = {
   profile: staticProfile,
@@ -85,103 +85,58 @@ function clearCache() {
 interface PortfolioContextType {
   data: PortfolioData;
   isLoading: boolean;
-  hasLoaded: boolean; // true setelah fetch pertama selesai (sukses/gagal)
   refresh: (force?: boolean) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
   isLoading: true,
-  hasLoaded: false,
   refresh: async () => {},
 });
 
 export const usePortfolio = () => useContext(PortfolioContext);
 
+function buildFresh(raw: Record<string, unknown>): PortfolioData {
+  return {
+    profile: (raw.profile as ProfileData) ?? defaultData.profile,
+    intro: (raw.intro as IntroData) ?? defaultData.intro,
+    projects: (raw.projects as Project[]) ?? defaultData.projects,
+    experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
+    education: (raw.education as Education[]) ?? defaultData.education,
+    skills: (raw.skills as string[]) ?? defaultData.skills,
+    social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
+    contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
+    languages: (raw.languages as Language[]) ?? defaultData.languages,
+    testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
+  };
+}
+
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
   const [isLoading, setIsLoading] = useState(() => !loadCache());
-  const [hasLoaded, setHasLoaded] = useState(() => !!loadCache());
 
   const refresh = useCallback(async (force?: boolean) => {
-    if (force) {
-      // Force: langsung fetch dari network, jangan clearCache() duluan
-      // karena clearCache + loadCache = null → form nampil default "Revy"
-      // sebelum fetch selesai. Kalau fetch sukses, saveCache() bakal nimpa.
-      try {
-        const raw = await getAllPortfolioData();
-        console.log('[Portfolio] force fetch raw:', raw);
-        const fresh: PortfolioData = {
-          profile: (raw.profile as ProfileData) ?? defaultData.profile,
-          intro: (raw.intro as IntroData) ?? defaultData.intro,
-          projects: (raw.projects as Project[]) ?? defaultData.projects,
-          experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
-          education: (raw.education as Education[]) ?? defaultData.education,
-          skills: (raw.skills as string[]) ?? defaultData.skills,
-          social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
-          contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
-          languages: (raw.languages as Language[]) ?? defaultData.languages,
-          testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
-        };
-        console.log('[Portfolio] force fresh.profile:', fresh.profile);
-        setData(fresh);
-        saveCache(fresh);
-      } catch {
-        // keep existing data
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
+    if (force) clearCache();
     const cached = loadCache();
-    if (cached) {
+    if (cached && !force) {
       setData(cached);
       setIsLoading(false);
-      // still refresh in background
+      // background refresh
       getAllPortfolioData().then(raw => {
-        console.log('[Portfolio] background fetch raw:', raw);
-        const fresh: PortfolioData = {
-          profile: (raw.profile as ProfileData) ?? defaultData.profile,
-          intro: (raw.intro as IntroData) ?? defaultData.intro,
-          projects: (raw.projects as Project[]) ?? defaultData.projects,
-          experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
-          education: (raw.education as Education[]) ?? defaultData.education,
-          skills: (raw.skills as string[]) ?? defaultData.skills,
-          social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
-          contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
-          languages: (raw.languages as Language[]) ?? defaultData.languages,
-          testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
-        };
-        console.log('[Portfolio] background fresh.profile:', fresh.profile);
-        setData(fresh);
-        saveCache(fresh);
-      }).catch((err) => console.error('[Portfolio] background fetch failed:', err));
+        setData(buildFresh(raw as Record<string, unknown>));
+        saveCache(buildFresh(raw as Record<string, unknown>));
+      }).catch(() => {});
       return;
     }
     try {
       const raw = await getAllPortfolioData();
-      console.log('[Portfolio] network fetch raw:', raw);
-      const fresh: PortfolioData = {
-        profile: (raw.profile as ProfileData) ?? defaultData.profile,
-        intro: (raw.intro as IntroData) ?? defaultData.intro,
-        projects: (raw.projects as Project[]) ?? defaultData.projects,
-        experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
-        education: (raw.education as Education[]) ?? defaultData.education,
-        skills: (raw.skills as string[]) ?? defaultData.skills,
-        social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
-        contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
-        languages: (raw.languages as Language[]) ?? defaultData.languages,
-        testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
-      };
-      console.log('[Portfolio] network fresh.profile:', fresh.profile);
+      const fresh = buildFresh(raw as Record<string, unknown>);
       setData(fresh);
       saveCache(fresh);
-    } catch (err) {
-      console.error('[Portfolio] network fetch failed:', err);
+    } catch {
       // fall back to static data
     } finally {
       setIsLoading(false);
-      setHasLoaded(true);
     }
   }, []);
 
@@ -190,7 +145,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, hasLoaded, refresh }}>
+    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
