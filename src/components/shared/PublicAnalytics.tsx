@@ -284,8 +284,8 @@ function PlatformBreakdown({ agents }: { agents: string[] }) {
   const currentData = activeTab === 'os' ? osCount : activeTab === 'browser' ? browserCount : deviceCount;
   const sorted = Object.entries(currentData).sort(([, a], [, b]) => b - a);
   const total = sorted.reduce((s, [, c]) => s + c, 0);
-  const items = sorted.filter(([k]) => k !== 'Bot' && k !== 'bot').slice(0, 5);
-  const colors = ['hsl(var(--primary))', 'hsl(var(--tertiary))', 'hsl(var(--secondary))', '#f59e0b', 'hsl(var(--error))'];
+  const items = sorted.slice(0, 6); // include all including Bot
+  const colors = ['hsl(var(--primary))', 'hsl(var(--tertiary))', 'hsl(var(--secondary))', '#f59e0b', 'hsl(var(--error))', 'hsl(var(--outline))'];
 
   return (
     <div>

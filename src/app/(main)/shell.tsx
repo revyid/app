@@ -84,13 +84,8 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             Skip to content
           </a>
 
-          {/* Desktop sidebar */}
-          <Sidebar
-            showFooter
-            onChatClick={() => setIsChatOpen(true)}
-            onProfileClick={() => setIsProfileOpen(true)}
-            onAdminClick={() => setIsAdminOpen(true)}
-          >
+          {/* Desktop sidebar — no footer buttons on home, handled by FloatingNavbar */}
+          <Sidebar>
             <HomeSidebarContent />
           </Sidebar>
 

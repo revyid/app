@@ -491,9 +491,10 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
   const [dbLoading, setDbLoading] = useState(false);
 
-  // On open: always fetch fresh data from DB
+  // On open: fetch fresh from DB only if dbData not yet loaded
   useEffect(() => {
     if (!isOpen || !user?.is_admin) return;
+    if (dbData !== null) { setDbLoading(false); return; } // already have data
     setDbLoading(true);
     refresh(true).finally(() => setDbLoading(false));
   }, [isOpen]);
