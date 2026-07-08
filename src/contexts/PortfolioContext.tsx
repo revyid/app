@@ -20,6 +20,8 @@ export interface ProfileData {
   verified: boolean;
   image: string;
   about: string;
+  role?: string;
+  location?: string;
   easter_egg?: {
     name: string;
     image: string;
