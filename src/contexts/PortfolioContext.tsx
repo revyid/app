@@ -101,9 +101,37 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(() => !loadCache());
 
   const refresh = useCallback(async (force?: boolean) => {
-    if (force) clearCache();
+    if (force) {
+      // Force: langsung fetch dari network, jangan clearCache() duluan
+      // karena clearCache + loadCache = null → form nampil default "Revy"
+      // sebelum fetch selesai. Kalau fetch sukses, saveCache() bakal nimpa.
+      try {
+        const raw = await getAllPortfolioData();
+        console.log('[Portfolio] force fetch raw:', raw);
+        const fresh: PortfolioData = {
+          profile: (raw.profile as ProfileData) ?? defaultData.profile,
+          intro: (raw.intro as IntroData) ?? defaultData.intro,
+          projects: (raw.projects as Project[]) ?? defaultData.projects,
+          experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
+          education: (raw.education as Education[]) ?? defaultData.education,
+          skills: (raw.skills as string[]) ?? defaultData.skills,
+          social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
+          contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
+          languages: (raw.languages as Language[]) ?? defaultData.languages,
+          testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
+        };
+        console.log('[Portfolio] force fresh.profile:', fresh.profile);
+        setData(fresh);
+        saveCache(fresh);
+      } catch {
+        // keep existing data
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
     const cached = loadCache();
-    if (cached && !force) {
+    if (cached) {
       setData(cached);
       setIsLoading(false);
       // still refresh in background
