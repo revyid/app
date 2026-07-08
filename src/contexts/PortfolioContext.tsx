@@ -120,7 +120,9 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { console.log('[Portfolio] MOUNT - calling refresh'); refresh(); }, []);
+
+  console.log('[Portfolio] RENDER data.profile.name:', data.profile.name);
 
   return (
     <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
