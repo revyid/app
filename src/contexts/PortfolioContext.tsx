@@ -95,19 +95,27 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const fetchingRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    if (fetchingRef.current) return;
+    if (fetchingRef.current) { console.log('[Portfolio] BLOCKED - already fetching'); return; }
     fetchingRef.current = true;
+    console.log('[Portfolio] START fetch');
 
     try {
       const raw = await getAllPortfolioData();
+      console.log('[Portfolio] RAW keys:', Object.keys(raw), '| profile:', (raw.profile as any)?.name);
       if (Object.keys(raw).length > 0) {
-        setData(buildFresh(raw));
+        const fresh = buildFresh(raw);
+        console.log('[Portfolio] BUILT profile.name:', fresh.profile.name);
+        setData(fresh);
+        console.log('[Portfolio] setData DONE');
+      } else {
+        console.log('[Portfolio] RAW EMPTY - keeping default');
       }
     } catch (err) {
-      console.error('[PortfolioContext] fetch error:', err);
+      console.error('[Portfolio] FETCH ERROR:', err);
     } finally {
       fetchingRef.current = false;
       setIsReady(true);
+      console.log('[Portfolio] isReady=true');
     }
   }, []);
 
