@@ -85,12 +85,14 @@ function clearCache() {
 interface PortfolioContextType {
   data: PortfolioData;
   isLoading: boolean;
+  hasLoaded: boolean; // true setelah fetch pertama selesai (sukses/gagal)
   refresh: (force?: boolean) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
   isLoading: true,
+  hasLoaded: false,
   refresh: async () => {},
 });
 
@@ -99,6 +101,7 @@ export const usePortfolio = () => useContext(PortfolioContext);
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
   const [isLoading, setIsLoading] = useState(() => !loadCache());
+  const [hasLoaded, setHasLoaded] = useState(() => !!loadCache());
 
   const refresh = useCallback(async (force?: boolean) => {
     if (force) {
@@ -178,6 +181,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       // fall back to static data
     } finally {
       setIsLoading(false);
+      setHasLoaded(true);
     }
   }, []);
 
@@ -186,7 +190,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, isLoading, hasLoaded, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
