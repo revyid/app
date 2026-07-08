@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateId } from '@/lib/utils';
 import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3, Users } from 'lucide-react';
@@ -16,7 +16,6 @@ import { UserManagement } from './UserManagement';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { LoadingIndicator } from '@/components/shared/LoadingIndicator';
 
-// ─── Helpers ─────────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
@@ -30,13 +29,8 @@ function Input({ value, onChange, placeholder, type = 'text' }: {
   value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
 }) {
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-    />
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
   );
 }
 
@@ -44,13 +38,8 @@ function Textarea({ value, onChange, placeholder, rows = 3 }: {
   value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
 }) {
   return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      rows={rows}
-      className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
-    />
+    <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows}
+      className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y" />
   );
 }
 
@@ -65,34 +54,21 @@ function SaveButton({ saving, saved, onSave }: { saving: boolean; saved: boolean
   );
 }
 
-// ─── Section Wrapper ──────────────────────────────────────────────────
 function Section({ label, children, onSave, saving, saved, error }: {
-  label: string;
-  children: React.ReactNode;
-  onSave: () => void;
-  saving: boolean;
-  saved: boolean;
-  error?: string;
+  label: string; children: React.ReactNode; onSave: () => void; saving: boolean; saved: boolean; error?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="border border-border rounded-xl overflow-hidden">
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
-      >
+      <button onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left">
         <span className="font-medium text-sm">{label}</span>
         {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
       <AnimatePresence>
         {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="p-4 space-y-4">
               {children}
               {error && <p className="text-xs text-destructive">{error}</p>}
@@ -105,108 +81,98 @@ function Section({ label, children, onSave, saving, saved, error }: {
   );
 }
 
-// ─── useSave hook ─────────────────────────────────────────────────────
 function useSave(section: string, onSaved: () => void) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>();
+  const onSavedRef = useRef(onSaved);
+  useEffect(() => { onSavedRef.current = onSaved; }, [onSaved]);
 
-  const save = async (data: unknown) => {
+  const save = useCallback(async (data: unknown) => {
     setSaving(true);
     setError(undefined);
     const result = await upsertPortfolioSection(section, data);
     setSaving(false);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      // Force refresh after a short delay to ensure DB write completes
-      setTimeout(() => onSaved(), 300);
-    }
-  };
+    if (result.error) { setError(result.error); return; }
+    setSaved(true);
+    const badgeTimer = setTimeout(() => setSaved(false), 2000);
+    const refreshTimer = setTimeout(() => { onSavedRef.current(); }, 500);
+    return () => { clearTimeout(badgeTimer); clearTimeout(refreshTimer); };
+  }, [section]);
 
   return { save, saving, saved, error };
 }
 
-// ─── Profile Section ──────────────────────────────────────────────────
+function useInitialSync<T>(initial: T, saving: boolean) {
+  const [form, setForm] = useState<T>(initial);
+  const isMountedFirstTime = useRef(true);
+  useEffect(() => {
+    if (isMountedFirstTime.current) { isMountedFirstTime.current = false; return; }
+    if (!saving) setForm(initial);
+  }, [initial]);
+  return [form, setForm] as const;
+}
+
 function ProfileSection({ initial, onSaved }: { initial: ProfileData; onSaved: () => void }) {
-  const [form, setForm] = useState(initial);
-  useEffect(() => setForm(initial), [initial]);
   const { save, saving, saved, error } = useSave('profile', onSaved);
+  const [form, setForm] = useInitialSync(initial, saving);
   const set = (k: keyof ProfileData) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
     <Section label="Profile" onSave={() => save(form)} saving={saving} saved={saved} error={error}>
       <Field label="Name"><Input value={form.name} onChange={set('name')} /></Field>
       <Field label="Pronouns"><Input value={form.pronouns} onChange={set('pronouns')} /></Field>
-      <Field label="Profile Image">
-        <ImageUpload value={form.image} onChange={set('image')} previewClass="aspect-square max-w-[120px]" />
-      </Field>
+      <Field label="Profile Image"><ImageUpload value={form.image} onChange={set('image')} previewClass="aspect-square max-w-[120px]" /></Field>
       <Field label="About"><Textarea value={form.about} onChange={set('about')} rows={4} /></Field>
       <div className="pt-2 border-t border-border space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Easter Egg (Ctrl+Alt+L)</p>
-        <Field label="Name"><Input value={form.easter_egg?.name ?? ''} onChange={(v) => setForm(f => ({ ...f, easter_egg: { ...f.easter_egg, name: v, image: f.easter_egg?.image ?? '', shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))} /></Field>
+        <Field label="Name"><Input value={form.easter_egg?.name ?? ''} onChange={(v) => setForm(f => ({ ...f, easter_egg: { name: v, image: f.easter_egg?.image ?? '', shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))} /></Field>
         <Field label="Image">
-          <ImageUpload
-            value={form.easter_egg?.image ?? ''}
-            onChange={(v) => setForm(f => ({ ...f, easter_egg: { ...f.easter_egg, name: f.easter_egg?.name ?? '', image: v, shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))}
-            previewClass="aspect-square max-w-[120px]"
-          />
+          <ImageUpload value={form.easter_egg?.image ?? ''} onChange={(v) => setForm(f => ({ ...f, easter_egg: { name: f.easter_egg?.name ?? '', image: v, shortcut: f.easter_egg?.shortcut ?? 'Ctrl+Alt+L' } }))}
+            previewClass="aspect-square max-w-[120px]" />
         </Field>
       </div>
     </Section>
   );
 }
 
-// ─── Intro Section ────────────────────────────────────────────────────
 function IntroSectionEditor({ initial, onSaved }: { initial: IntroData; onSaved: () => void }) {
-  const [paragraphs, setParagraphs] = useState(initial.paragraphs);
-  useEffect(() => setParagraphs(initial.paragraphs), [initial]);
   const { save, saving, saved, error } = useSave('intro', onSaved);
+  const [form, setForm] = useInitialSync(initial, saving);
 
   return (
-    <Section label="Intro" onSave={() => save({ paragraphs })} saving={saving} saved={saved} error={error}>
-      {paragraphs.map((p, i) => (
+    <Section label="Intro" onSave={() => save(form)} saving={saving} saved={saved} error={error}>
+      {form.paragraphs.map((p, i) => (
         <div key={i} className="flex gap-2">
-          <Textarea value={p} onChange={(v) => setParagraphs((arr) => arr.map((x, j) => j === i ? v : x))} rows={3} />
-          <IconButton variant="ghost" size="sm" onClick={() => setParagraphs((arr) => arr.filter((_, j) => j !== i))}>
+          <Textarea value={p} onChange={(v) => setForm(f => ({ ...f, paragraphs: f.paragraphs.map((x, j) => j === i ? v : x) }))} rows={3} />
+          <IconButton variant="ghost" size="sm" onClick={() => setForm(f => ({ ...f, paragraphs: f.paragraphs.filter((_, j) => j !== i) }))}>
             <Trash2 className="w-4 h-4 text-destructive" />
           </IconButton>
         </div>
       ))}
-      <Button variant="outlined" size="sm" onClick={() => setParagraphs((arr) => [...arr, ''])} className="gap-1">
+      <Button variant="outlined" size="sm" onClick={() => setForm(f => ({ ...f, paragraphs: [...f.paragraphs, ''] }))} className="gap-1">
         <Plus className="w-3.5 h-3.5" /> Add Paragraph
       </Button>
     </Section>
   );
 }
 
-// ─── Skills Section ───────────────────────────────────────────────────
 function SkillsSectionEditor({ initial, onSaved }: { initial: string[]; onSaved: () => void }) {
-  const [skills, setSkills] = useState(initial);
-  useEffect(() => setSkills(initial), [initial]);
   const { save, saving, saved, error } = useSave('skills', onSaved);
+  const [skills, setSkills] = useInitialSync(initial, saving);
 
   return (
     <Section label="Skills" onSave={() => save(skills)} saving={saving} saved={saved} error={error}>
       <div className="flex flex-wrap gap-2">
         {skills.map((skill, i) => (
           <div key={i} className="flex items-center gap-1 bg-muted rounded-full px-3 py-1">
-            <input
-              value={skill}
-              onChange={(e) => setSkills((arr) => arr.map((x, j) => j === i ? e.target.value : x))}
-              className="text-sm bg-transparent outline-none w-24"
-            />
+            <input value={skill} onChange={(e) => setSkills((arr) => arr.map((x, j) => j === i ? e.target.value : x))} className="text-sm bg-transparent outline-none w-24" />
             <button onClick={() => setSkills((arr) => arr.filter((_, j) => j !== i))}>
               <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
             </button>
           </div>
         ))}
-        <button
-          onClick={() => setSkills((arr) => [...arr, ''])}
-          className="flex items-center gap-1 text-xs text-primary border border-dashed border-primary/50 rounded-full px-3 py-1 hover:bg-primary/10"
-        >
+        <button onClick={() => setSkills((arr) => [...arr, ''])} className="flex items-center gap-1 text-xs text-primary border border-dashed border-primary/50 rounded-full px-3 py-1 hover:bg-primary/10">
           <Plus className="w-3 h-3" /> Add
         </button>
       </div>
@@ -214,13 +180,10 @@ function SkillsSectionEditor({ initial, onSaved }: { initial: string[]; onSaved:
   );
 }
 
-// ─── Languages Section ────────────────────────────────────────────────
 function LanguagesSectionEditor({ initial, onSaved }: { initial: Language[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('languages', onSaved);
-  const update = (i: number, k: keyof Language, v: string) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof Language, v: string) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Languages" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
@@ -240,13 +203,10 @@ function LanguagesSectionEditor({ initial, onSaved }: { initial: Language[]; onS
   );
 }
 
-// ─── Social Links Section ─────────────────────────────────────────────
 function SocialLinksSectionEditor({ initial, onSaved }: { initial: SocialLink[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('social_links', onSaved);
-  const update = (i: number, k: keyof SocialLink, v: string) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof SocialLink, v: string) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Social Links" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
@@ -269,18 +229,15 @@ function SocialLinksSectionEditor({ initial, onSaved }: { initial: SocialLink[];
   );
 }
 
-// ─── Contacts Section ─────────────────────────────────────────────────
 function ContactsSectionEditor({ initial, onSaved }: { initial: Contact[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('contacts', onSaved);
-  const update = (i: number, k: keyof Contact, v: string) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof Contact, v: string) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Contacts" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
       {items.map((c, i) => (
-        <div key={i} className="p-3 border border-border rounded-lg space-y-2">
+        <div key={c.id ?? i} className="p-3 border border-border rounded-lg space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-xs font-medium text-muted-foreground">Contact {i + 1}</span>
             <IconButton variant="ghost" size="sm" onClick={() => setItems((arr) => arr.filter((_, j) => j !== i))}>
@@ -302,13 +259,10 @@ function ContactsSectionEditor({ initial, onSaved }: { initial: Contact[]; onSav
   );
 }
 
-// ─── Projects Section ─────────────────────────────────────────────────
 function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('projects', onSaved);
-  const update = (i: number, k: keyof Project, v: string | string[]) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof Project, v: string | string[]) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Projects" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
@@ -328,11 +282,8 @@ function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSav
             <Field label="Color"><Input value={p.color} onChange={(v) => update(i, 'color', v)} placeholder="#000000" /></Field>
             <Field label="Icon"><Input value={p.icon} onChange={(v) => update(i, 'icon', v)} placeholder="Globe" /></Field>
             <Field label="Status">
-              <select
-                value={p.status ?? 'live'}
-                onChange={(e) => update(i, 'status', e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
+              <select value={p.status ?? 'live'} onChange={(e) => update(i, 'status', e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                 <option value="live">Live</option>
                 <option value="wip">In Progress</option>
                 <option value="archived">Archived</option>
@@ -340,24 +291,13 @@ function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSav
             </Field>
             <Field label="URL"><Input value={p.href ?? ''} onChange={(v) => update(i, 'href', v)} placeholder="https://..." /></Field>
             <Field label="Repo URL"><Input value={p.repoUrl ?? ''} onChange={(v) => update(i, 'repoUrl', v)} placeholder="https://github.com/..." /></Field>
-            <Field label="Thumbnail">
-              <ImageUpload value={p.thumbnail ?? ''} onChange={(v) => update(i, 'thumbnail', v)} previewClass="aspect-video" />
-            </Field>
+            <Field label="Thumbnail"><ImageUpload value={p.thumbnail ?? ''} onChange={(v) => update(i, 'thumbnail', v)} previewClass="aspect-video" /></Field>
           </div>
           <Field label="Tech Stack (comma separated)">
-            <Input
-              value={(p.techStack ?? []).join(', ')}
-              onChange={(v) => update(i, 'techStack', v.split(',').map(s => s.trim()).filter(Boolean))}
-              placeholder="React, Node.js, Docker"
-            />
+            <Input value={(p.techStack ?? []).join(', ')} onChange={(v) => update(i, 'techStack', v.split(',').map(s => s.trim()).filter(Boolean))} placeholder="React, Node.js, Docker" />
           </Field>
           <Field label="Features (one per line)">
-            <Textarea
-              value={(p.features ?? []).join('\n')}
-              onChange={(v) => update(i, 'features', v.split('\n').map(s => s.trim()).filter(Boolean))}
-              placeholder="One-click deploy&#10;Real-time logs"
-              rows={3}
-            />
+            <Textarea value={(p.features ?? []).join('\n')} onChange={(v) => update(i, 'features', v.split('\n').map(s => s.trim()).filter(Boolean))} placeholder="One-click deploy&#10;Real-time logs" rows={3} />
           </Field>
           <Field label="Description (Markdown supported)">
             <Textarea value={p.description ?? ''} onChange={(v) => update(i, 'description', v)} rows={5} placeholder="## About&#10;&#10;Describe your project with **markdown**..." />
@@ -371,13 +311,10 @@ function ProjectsSectionEditor({ initial, onSaved }: { initial: Project[]; onSav
   );
 }
 
-// ─── Experiences Section ──────────────────────────────────────────────
 function ExperiencesSectionEditor({ initial, onSaved }: { initial: Experience[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('experiences', onSaved);
-  const update = (i: number, k: keyof Experience, v: string) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof Experience, v: string) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Experiences" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
@@ -406,13 +343,10 @@ function ExperiencesSectionEditor({ initial, onSaved }: { initial: Experience[];
   );
 }
 
-// ─── Education Section ────────────────────────────────────────────────
 function EducationSectionEditor({ initial, onSaved }: { initial: Education[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('education', onSaved);
-  const update = (i: number, k: keyof Education, v: string) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof Education, v: string) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Education" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
@@ -436,13 +370,10 @@ function EducationSectionEditor({ initial, onSaved }: { initial: Education[]; on
   );
 }
 
-// ─── Testimonials Section ─────────────────────────────────────────────
 function TestimonialsSectionEditor({ initial, onSaved }: { initial: Testimonial[]; onSaved: () => void }) {
-  const [items, setItems] = useState(initial);
-  useEffect(() => setItems(initial), [initial]);
   const { save, saving, saved, error } = useSave('testimonials', onSaved);
-  const update = (i: number, k: keyof Testimonial, v: string) =>
-    setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const [items, setItems] = useInitialSync(initial, saving);
+  const update = (i: number, k: keyof Testimonial, v: string) => setItems((arr) => arr.map((x, j) => j === i ? { ...x, [k]: v } : x));
 
   return (
     <Section label="Testimonials" onSave={() => save(items)} saving={saving} saved={saved} error={error}>
@@ -469,11 +400,7 @@ function TestimonialsSectionEditor({ initial, onSaved }: { initial: Testimonial[
   );
 }
 
-// ─── Main Admin Panel ─────────────────────────────────────────────────
-interface AdminPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+interface AdminPanelProps { isOpen: boolean; onClose: () => void; }
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
@@ -484,103 +411,53 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center">
-          {/* Backdrop — identical to CustomLogin */}
-          <motion.div
-            variants={modalBackdrop}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            onClick={onClose}
-            className="absolute inset-0 popup-backdrop"
-          />
-
-          {/* Bottom sheet — identical structure to CustomLogin */}
-          <motion.div
-            variants={bottomSheetContent}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="relative w-full max-w-2xl mx-0 sm:mx-4"
-            style={{ maxHeight: '92vh' }}
-          >
+          <motion.div variants={modalBackdrop} initial="hidden" animate="visible" exit="exit" onClick={onClose} className="absolute inset-0 popup-backdrop" />
+          <motion.div variants={bottomSheetContent} initial="hidden" animate="visible" exit="exit" className="relative w-full max-w-2xl mx-0 sm:mx-4" style={{ maxHeight: '92vh' }}>
             <div className="relative rounded-t-[32px] sm:rounded-t-[36px] overflow-hidden bg-surface dark:bg-surface">
-
               <div className="relative flex flex-col" style={{ maxHeight: '92vh' }}>
-                {/* Drag handle */}
-                <div className="pt-3 pb-0 flex-shrink-0">
-                  <div className="sheet-handle" />
-                </div>
-
-                {/* Header */}
+                <div className="pt-3 pb-0 flex-shrink-0"><div className="sheet-handle" /></div>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-outline/10 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-primary" />
                     <h2 className="font-semibold text-base">Admin Panel</h2>
                   </div>
-                  <IconButton variant="ghost" size="sm" onClick={onClose} aria-label="Close">
-                    <X className="w-4 h-4" />
-                  </IconButton>
+                  <IconButton variant="ghost" size="sm" onClick={onClose} aria-label="Close"><X className="w-4 h-4" /></IconButton>
                 </div>
-
-                {/* Tabs */}
                 {user?.is_admin && (
                   <div className="flex border-b border-outline/10 flex-shrink-0">
                     {(['portfolio', 'themes', 'analytics', 'users', 'settings'] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`flex-1 py-3 text-sm font-medium capitalize transition-colors ${activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                      >
-                        {tab === 'themes' ? (
-                          <span className="flex items-center justify-center gap-1">
-                            <Palette className="w-3.5 h-3.5" />Themes
-                          </span>
-                        ) : tab === 'analytics' ? (
-                          <span className="flex items-center justify-center gap-1">
-                            <BarChart3 className="w-3.5 h-3.5" />Analytics
-                          </span>
-                        ) : tab === 'users' ? (
-                          <span className="flex items-center justify-center gap-1">
-                            <Users className="w-3.5 h-3.5" />Users
-                          </span>
-                        ) : tab === 'portfolio' ? 'Portfolio' : 'Settings'}
+                      <button key={tab} onClick={() => setActiveTab(tab)}
+                        className={`flex-1 py-3 text-sm font-medium capitalize transition-colors ${activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                        {tab === 'themes' ? <span className="flex items-center justify-center gap-1"><Palette className="w-3.5 h-3.5" />Themes</span>
+                          : tab === 'analytics' ? <span className="flex items-center justify-center gap-1"><BarChart3 className="w-3.5 h-3.5" />Analytics</span>
+                          : tab === 'users' ? <span className="flex items-center justify-center gap-1"><Users className="w-3.5 h-3.5" />Users</span>
+                          : tab === 'portfolio' ? 'Portfolio' : 'Settings'}
                       </button>
                     ))}
                   </div>
                 )}
-
-                {/* Scrollable content */}
                 <div className="flex-1 overflow-y-auto p-6" data-lenis-prevent>
                   {!user?.is_admin ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                      <p className="text-sm">Admin access required.</p>
-                    </div>
+                    <div className="text-center py-12 text-muted-foreground"><Shield className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">Admin access required.</p></div>
                   ) : activeTab === 'portfolio' ? (
-                    !isReady ? <div /> : (
-                    <div className="space-y-3">
-                      <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      <ProfileSection initial={data.profile} onSaved={refresh} />
-                      <IntroSectionEditor initial={data.intro} onSaved={refresh} />
-                      <SkillsSectionEditor initial={data.skills} onSaved={refresh} />
-                      <LanguagesSectionEditor initial={data.languages} onSaved={refresh} />
-                      <SocialLinksSectionEditor initial={data.social_links} onSaved={refresh} />
-                      <ContactsSectionEditor initial={data.contacts} onSaved={refresh} />
-                      <ProjectsSectionEditor initial={data.projects} onSaved={refresh} />
-                      <ExperiencesSectionEditor initial={data.experiences} onSaved={refresh} />
-                      <EducationSectionEditor initial={data.education} onSaved={refresh} />
-                      <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={refresh} />
-                    </div>
+                    !isReady ? (
+                      <div className="flex items-center justify-center py-12"><LoadingIndicator className="w-6 h-6" /></div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
+                        <ProfileSection initial={data.profile} onSaved={refresh} />
+                        <IntroSectionEditor initial={data.intro} onSaved={refresh} />
+                        <SkillsSectionEditor initial={data.skills} onSaved={refresh} />
+                        <LanguagesSectionEditor initial={data.languages} onSaved={refresh} />
+                        <SocialLinksSectionEditor initial={data.social_links} onSaved={refresh} />
+                        <ContactsSectionEditor initial={data.contacts} onSaved={refresh} />
+                        <ProjectsSectionEditor initial={data.projects} onSaved={refresh} />
+                        <ExperiencesSectionEditor initial={data.experiences} onSaved={refresh} />
+                        <EducationSectionEditor initial={data.education} onSaved={refresh} />
+                        <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={refresh} />
+                      </div>
                     )
-                  ) : activeTab === 'themes' ? (
-                    <ThemeBuilder />
-                  ) : activeTab === 'analytics' ? (
-                    <AnalyticsDashboard />
-                  ) : activeTab === 'users' ? (
-                    <UserManagement />
-                  ) : (
-                    <SiteSettings />
-                  )}
+                  ) : activeTab === 'themes' ? <ThemeBuilder /> : activeTab === 'analytics' ? <AnalyticsDashboard /> : activeTab === 'users' ? <UserManagement /> : <SiteSettings />}
                 </div>
               </div>
             </div>

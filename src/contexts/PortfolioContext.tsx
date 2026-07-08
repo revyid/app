@@ -54,23 +54,30 @@ const defaultData: PortfolioData = {
 };
 
 function buildFresh(raw: Record<string, unknown>): PortfolioData {
+  const get = <T,>(key: string, fallback: T): T => {
+    const val = raw[key];
+    if (val === null || val === undefined) return fallback;
+    if (Array.isArray(val) && val.length === 0) return fallback;
+    return val as T;
+  };
+
   return {
-    profile: (raw.profile as ProfileData) ?? defaultData.profile,
-    intro: (raw.intro as IntroData) ?? defaultData.intro,
-    projects: (raw.projects as Project[]) ?? defaultData.projects,
-    experiences: (raw.experiences as Experience[]) ?? defaultData.experiences,
-    education: (raw.education as Education[]) ?? defaultData.education,
-    skills: (raw.skills as string[]) ?? defaultData.skills,
-    social_links: (raw.social_links as SocialLink[]) ?? defaultData.social_links,
-    contacts: (raw.contacts as Contact[]) ?? defaultData.contacts,
-    languages: (raw.languages as Language[]) ?? defaultData.languages,
-    testimonials: (raw.testimonials as Testimonial[]) ?? defaultData.testimonials,
+    profile: get('profile', defaultData.profile),
+    intro: get('intro', defaultData.intro),
+    projects: get('projects', defaultData.projects),
+    experiences: get('experiences', defaultData.experiences),
+    education: get('education', defaultData.education),
+    skills: get('skills', defaultData.skills),
+    social_links: get('social_links', defaultData.social_links),
+    contacts: get('contacts', defaultData.contacts),
+    languages: get('languages', defaultData.languages),
+    testimonials: get('testimonials', defaultData.testimonials),
   };
 }
 
 interface PortfolioContextType {
   data: PortfolioData;
-  isReady: boolean; // true setelah fetch pertama selesai
+  isReady: boolean;
   refresh: () => Promise<void>;
 }
 
@@ -85,16 +92,26 @@ export const usePortfolio = () => useContext(PortfolioContext);
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(defaultData);
   const [isReady, setIsReady] = useState(false);
+  const fetchingRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+
     try {
       const raw = await getAllPortfolioData();
-      setData(buildFresh(raw as Record<string, unknown>));
-    } catch { /* keep current */ }
-    finally { setIsReady(true); }
+      if (Object.keys(raw).length > 0) {
+        setData(buildFresh(raw));
+      }
+    } catch (err) {
+      console.error('[PortfolioContext] fetch error:', err);
+    } finally {
+      fetchingRef.current = false;
+      setIsReady(true);
+    }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { refresh(); }, []);
 
   return (
     <PortfolioContext.Provider value={{ data, isReady, refresh }}>
