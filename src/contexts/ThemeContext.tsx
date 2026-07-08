@@ -313,8 +313,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         : t as EffectiveTheme;
 
       setEffectiveTheme(active);
-      root.classList.remove('light', 'dark');
-      root.classList.add(active);
+
+      // Only touch classList if not already correct (avoids fighting useModeAnimation)
+      const root = window.document.documentElement;
+      if (!root.classList.contains(active)) {
+        root.classList.remove('light', 'dark');
+        root.classList.add(active);
+      }
 
       applyColors(active, currentProfile);
     };

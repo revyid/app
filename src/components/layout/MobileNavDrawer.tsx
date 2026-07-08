@@ -81,7 +81,7 @@ interface MobileNavDrawerProps {
 
 export function MobileNavDrawer({ nav, onChatClick, onProfileClick, onAdminClick }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
-  const { effectiveTheme } = useTheme();
+  const { effectiveTheme, setTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const { user } = useAuth();
 
@@ -89,7 +89,9 @@ export function MobileNavDrawer({ nav, onChatClick, onProfileClick, onAdminClick
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
-    onDarkModeChange: () => {},
+    onDarkModeChange: (dark: boolean) => {
+      setTheme(dark ? 'dark' : 'light');
+    },
   });
 
   return (

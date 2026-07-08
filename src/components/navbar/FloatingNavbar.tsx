@@ -36,14 +36,16 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   onProfileClick,
   onAdminClick,
 }: FloatingNavbarProps) {
-  const { effectiveTheme, toggleTheme } = useTheme();
+  const { effectiveTheme, setTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
   const { ref, toggleSwitchTheme } = useModeAnimation({
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
-    onDarkModeChange: () => { toggleTheme(); },
+    onDarkModeChange: (dark: boolean) => {
+      setTheme(dark ? 'dark' : 'light');
+    },
   });
 
   const { user } = useAuth();

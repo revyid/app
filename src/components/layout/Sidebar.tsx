@@ -16,7 +16,7 @@ interface SidebarProps {
 }
 
 function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatClick?: () => void; onProfileClick?: () => void; onAdminClick?: () => void }) {
-  const { effectiveTheme } = useTheme();
+  const { effectiveTheme, setTheme } = useTheme();
   const { user } = useAuth();
   const isDark = effectiveTheme === 'dark';
 
@@ -24,7 +24,10 @@ function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatCl
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
-    onDarkModeChange: () => {},
+    onDarkModeChange: (dark: boolean) => {
+      // Library sudah toggle class dark di <html>, kita sync ThemeContext state
+      setTheme(dark ? 'dark' : 'light');
+    },
   });
 
   return (
