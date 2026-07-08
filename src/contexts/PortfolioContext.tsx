@@ -199,34 +199,56 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
   // Prevent duplicate fetches
   const fetchInProgress = useRef(false);
-  const pendingForceRefresh = useRef(false);
   const refresh = useCallback(async (force?: boolean) => {
-    // Prevent concurrent fetches
-    if (fetchInProgress.current) {
-      // If a force refresh is requested while a fetch is in progress,
-      // clear the cache so the next refresh will fetch fresh data,
-      // and flag for retry after the current fetch completes.
-      if (force) {
-        clearPortfolioCache();
-        pendingForceRefresh.current = true;
-      }
-      return;
-    }
-
-    // Set guard BEFORE any early return — covers all branches including fast-path
+    // Prevent concurrent fetches — set this synchronously, before any await,
+    // so a background revalidation and a forced refresh (e.g. AdminPanel
+    // opening while a fetch is already in flight) can never both slip past
+    // the guard and race each other.
+    if (fetchInProgress.current) return;
     fetchInProgress.current = true;
 
-    if (force) clearPortfolioCache();
+    try {
+      if (force) clearPortfolioCache();
 
-    const cached = loadCacheEntry();
+      const cached = loadCacheEntry();
 
-    // Fast path: valid cache, no force → serve cache + background refresh
-    if (cached && !force && !isCacheStale(cached)) {
-      setData(cached.data);
-      setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
-      setIsLoading(false);
-      // Silent background refresh (fetchInProgress already set above)
+      // Fast path: valid cache, no force → serve cache + background refresh
+      if (cached && !force && !isCacheStale(cached)) {
+        setData(cached.data);
+        setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
+        setIsLoading(false);
+        // Silent background refresh
+        setIsFetching(true);
+        try {
+          const raw = await getAllPortfolioData();
+          const r = raw as Record<string, unknown>;
+          const fresh = buildFresh(r);
+          const dbOnly = buildDbData(r);
+          setData(fresh);
+          setDbData(dbOnly);
+          saveCache(fresh);
+          setError(null);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Background refresh failed';
+          console.warn('[Portfolio] Background refresh failed:', msg);
+          // Keep existing data, don't show error for background refresh
+        } finally {
+          setIsFetching(false);
+        }
+        return;
+      }
+
+      // Stale cache → serve immediately + refresh in background
+      if (cached && !force && isCacheStale(cached)) {
+        setData(cached.data);
+        setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
+        setIsLoading(false);
+      }
+
+      // Fetch from network
       setIsFetching(true);
+      setError(null);
+
       try {
         const raw = await getAllPortfolioData();
         const r = raw as Record<string, unknown>;
@@ -237,59 +259,20 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         saveCache(fresh);
         setError(null);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Background refresh failed';
-        console.warn('[Portfolio] Background refresh failed:', msg);
-        // Keep existing data, don't show error for background refresh
-      } finally {
-        setIsFetching(false);
-        fetchInProgress.current = false;
-        // Retry if a force refresh was blocked during this fetch
-        if (pendingForceRefresh.current) {
-          pendingForceRefresh.current = false;
-          refresh(true);
+        const msg = err instanceof Error ? err.message : 'Failed to load portfolio data';
+        console.error('[Portfolio] Fetch failed:', msg);
+        setError(msg);
+        // If we have cached data, keep using it (stale-while-error)
+        if (!cached) {
+          // No cache at all → keep static defaults, but mark dbData as empty so admin doesn't hang
+          setDbData({});
         }
-      }
-      return;
-    }
-
-    // Stale cache → serve immediately + refresh in background
-    if (cached && !force && isCacheStale(cached)) {
-      setData(cached.data);
-      setDbData(buildDbData(cached.data as unknown as Record<string, unknown>));
-      setIsLoading(false);
-    }
-
-    // Fetch from network (fetchInProgress already set above)
-    setIsFetching(true);
-    setError(null);
-
-    try {
-      const raw = await getAllPortfolioData();
-      const r = raw as Record<string, unknown>;
-      const fresh = buildFresh(r);
-      const dbOnly = buildDbData(r);
-      setData(fresh);
-      setDbData(dbOnly);
-      saveCache(fresh);
-      setError(null);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load portfolio data';
-      console.error('[Portfolio] Fetch failed:', msg);
-      setError(msg);
-      // If we have cached data, keep using it (stale-while-error)
-      if (!cached) {
-        // No cache at all → keep static defaults, but mark dbData as empty so admin doesn't hang
-        setDbData({});
+      } finally {
+        setIsLoading(false);
+        setIsFetching(false);
       }
     } finally {
-      setIsLoading(false);
-      setIsFetching(false);
       fetchInProgress.current = false;
-      // Retry if a force refresh was blocked during this fetch
-      if (pendingForceRefresh.current) {
-        pendingForceRefresh.current = false;
-        refresh(true);
-      }
     }
   }, []);
 

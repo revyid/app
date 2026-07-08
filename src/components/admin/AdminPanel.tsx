@@ -496,7 +496,7 @@ const LOADING_TIMEOUT = 10000;
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { dbData, isLoading: portfolioLoading, isFetching, refresh } = usePortfolio();
+  const { dbData, isLoading: portfolioLoading, isFetching, error: portfolioError, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
   // Local safety timeout to prevent infinite loading
@@ -635,6 +635,14 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                         </div>
                       ) : (
                         <>
+                          {portfolioError && (
+                            <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-xs text-destructive">
+                              <span>Failed to load latest data from the database: {portfolioError}. The form below may be showing old or empty data.</span>
+                              <Button size="sm" variant="outlined" onClick={forceRefresh} className="flex-shrink-0">
+                                Retry
+                              </Button>
+                            </div>
+                          )}
                           <ProfileSection initial={adminData.profile} onSaved={forceRefresh} />
                           <IntroSectionEditor initial={adminData.intro} onSaved={forceRefresh} />
                           <SkillsSectionEditor initial={adminData.skills} onSaved={forceRefresh} />
