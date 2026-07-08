@@ -40,6 +40,9 @@ export interface PortfolioData {
   testimonials: Testimonial[];
 }
 
+const CACHE_KEY = 'revy_portfolio_v2';
+const CACHE_TTL = 5 * 60 * 1000;
+
 const defaultData: PortfolioData = {
   profile: staticProfile,
   intro: staticIntro,
@@ -52,6 +55,24 @@ const defaultData: PortfolioData = {
   languages: staticLanguages,
   testimonials: staticTestimonials,
 };
+
+function loadCache(): PortfolioData | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) return null;
+    return data;
+  } catch { return null; }
+}
+
+function saveCache(data: PortfolioData) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
+
+function clearCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch {}
+}
 
 function buildFresh(raw: Record<string, unknown>): PortfolioData {
   const get = <T,>(key: string, fallback: T): T => {
@@ -77,45 +98,49 @@ function buildFresh(raw: Record<string, unknown>): PortfolioData {
 
 interface PortfolioContextType {
   data: PortfolioData;
-  isLoading: boolean;
-  refresh: () => Promise<void>;
+  isReady: boolean;
+  refresh: (force?: boolean) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
-  isLoading: true,
+  isReady: false,
   refresh: async () => {},
 });
 
 export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<PortfolioData>(defaultData);
-  const [isLoading, setIsLoading] = useState(true);
+  const cached = useRef(loadCache());
+  const [data, setData] = useState<PortfolioData>(() => cached.current ?? defaultData);
+  const [isReady, setIsReady] = useState(() => cached.current !== null);
   const fetchingRef = useRef(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (force?: boolean) => {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
-    setIsLoading(true);
+
+    if (force) clearCache();
 
     try {
       const raw = await getAllPortfolioData();
       if (Object.keys(raw).length > 0) {
-        setData(buildFresh(raw));
+        const fresh = buildFresh(raw);
+        setData(fresh);
+        saveCache(fresh);
       }
     } catch (err) {
       console.error('[PortfolioContext] fetch error:', err);
     } finally {
       fetchingRef.current = false;
-      setIsLoading(false);
+      setIsReady(true);
     }
   }, []);
 
   useEffect(() => { refresh(); }, []);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, isReady, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
