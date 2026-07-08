@@ -95,12 +95,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
+      console.log('[Portfolio] fetching...');
       const raw = await getAllPortfolioData();
-      setData(buildFresh(raw as Record<string, unknown>));
-    } catch {
-      // keep current data on error
+      console.log('[Portfolio] raw:', JSON.stringify(raw).slice(0, 500));
+      const fresh = buildFresh(raw as Record<string, unknown>);
+      console.log('[Portfolio] fresh.profile.name:', fresh.profile.name);
+      setData(fresh);
+      console.log('[Portfolio] setData done');
+    } catch (err) {
+      console.error('[Portfolio] fetch FAILED:', err);
     } finally {
       setIsLoading(false);
+      console.log('[Portfolio] isLoading=false');
     }
   }, []);
 
