@@ -22,7 +22,7 @@ export function ProfileHeader() {
 
   return (
     <div className="mb-2">
-      {/* Avatar row - foto besar kotak */}
+      {/* Avatar row */}
       <div className="flex items-center gap-4 mb-4 h-20">
         <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-surface-variant ring-2 ring-primary/20 rounded-[20px] hover:scale-105 transition-transform duration-300">
           <img
@@ -34,7 +34,7 @@ export function ProfileHeader() {
           />
         </div>
 
-        {/* Easter egg photo di samping */}
+        {/* Easter egg photo */}
         <AnimatePresence>
           {isNawaMode && easterEgg && (
             <motion.div
@@ -90,7 +90,7 @@ export function ProfileHeader() {
           </AnimatePresence>
         </div>
 
-        {/* "love Nawa" text saat easter egg aktif */}
+        {/* Easter egg name (no "love" text) */}
         <AnimatePresence>
           {isNawaMode && easterEgg && (
             <motion.div
@@ -98,9 +98,7 @@ export function ProfileHeader() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={SPRING_BOUNCY}
-              className="flex items-center gap-1"
             >
-              <span className="text-body-sm text-muted-foreground">love</span>
               <span className="text-title-lg font-bold text-foreground">
                 {easterEgg.name}
               </span>

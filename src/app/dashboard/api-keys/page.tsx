@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, Plus, Trash2, Copy, Check, Clock, Shield, Eye, EyeOff } from 'lucide-react';
+import { Key, Plus, Trash2, Copy, Check, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/lib/supabase';
 import { listApiKeys, createApiKey, deleteApiKey } from '@/lib/auth';
@@ -29,9 +29,10 @@ export default function ApiKeysPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [shownKeyId, setShownKeyId] = useState<string | null>(null);
-  // Store newly created full keys in session (not persisted — by design)
-  const [sessionKeys, setSessionKeys] = useState<Record<string, string>>({});
+  // Store full keys in localStorage so they persist across refreshes
+  const [storedKeys, setStoredKeys] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('revy_api_keys') ?? '{}'); } catch { return {}; }
+  });
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
@@ -73,9 +74,10 @@ export default function ApiKeysPage() {
       setError(result.error);
     } else {
       setGeneratedKey(result.key!);
-      // Store full key mapped to key ID for show/copy in the list
       if (result.id && result.key) {
-        setSessionKeys(prev => ({ ...prev, [result.id!]: result.key! }));
+        const updated = { ...storedKeys, [result.id!]: result.key! };
+        setStoredKeys(updated);
+        localStorage.setItem('revy_api_keys', JSON.stringify(updated));
       }
       setNewKeyName('');
       fetchKeys();
@@ -87,7 +89,13 @@ export default function ApiKeysPage() {
     if (!confirm('Delete this API key? This cannot be undone.')) return;
     setDeletingId(keyId);
     const success = await deleteApiKey(keyId);
-    if (success) setKeys(prev => prev.filter(k => k.id !== keyId));
+    if (success) {
+      setKeys(prev => prev.filter(k => k.id !== keyId));
+      const updated = { ...storedKeys };
+      delete updated[keyId];
+      setStoredKeys(updated);
+      localStorage.setItem('revy_api_keys', JSON.stringify(updated));
+    }
     setDeletingId(null);
   };
 
@@ -149,7 +157,7 @@ export default function ApiKeysPage() {
             transition={SPRING_BOUNCY}
             className="p-4 bg-success/10 border border-success/30 rounded-2xl space-y-3"
           >
-            <p className="text-body-sm text-success font-medium">✓ New API key created — copy it now, it won't be shown again!</p>
+            <p className="text-body-sm text-success font-medium">✓ New API key created!</p>
             <div className="flex flex-col sm:flex-row gap-2">
               <code className="flex-1 p-3 bg-surface rounded-xl text-body-sm font-mono text-foreground break-all select-all border border-outline/20">
                 {generatedKey}
@@ -205,23 +213,12 @@ export default function ApiKeysPage() {
                         <p className="text-body-sm font-medium text-foreground truncate">{key.name}</p>
                         {/* Key display row */}
                         <div className="flex items-center gap-2 mt-0.5">
-                          <code className="text-label-sm text-muted-foreground font-mono break-all">
-                            {shownKeyId === key.id
-                              ? (sessionKeys[key.id] ?? `${key.key_prefix}${'•'.repeat(24)}`)
-                              : `${key.key_prefix}${'•'.repeat(24)}`}
+                          <code className="text-label-sm text-muted-foreground font-mono break-all select-all">
+                            {storedKeys[key.id] ?? `${key.key_prefix}${'•'.repeat(24)}`}
                           </code>
-                          {sessionKeys[key.id] && (
+                          {storedKeys[key.id] && (
                             <button
-                              onClick={() => setShownKeyId(shownKeyId === key.id ? null : key.id)}
-                              className="p-0.5 rounded hover:bg-surface-variant transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
-                              title={shownKeyId === key.id ? 'Hide' : 'Show full key'}
-                            >
-                              {shownKeyId === key.id ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            </button>
-                          )}
-                          {sessionKeys[key.id] && (
-                            <button
-                              onClick={() => copyKey(sessionKeys[key.id], key.id)}
+                              onClick={() => copyKey(storedKeys[key.id], key.id)}
                               className="p-0.5 rounded hover:bg-surface-variant transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
                               title="Copy full key"
                             >
@@ -263,11 +260,6 @@ export default function ApiKeysPage() {
         )}
       </motion.div>
 
-      {/* Info */}
-      <motion.div variants={itemVariants} className="p-4 rounded-2xl bg-surface-variant/40 border border-outline/10 flex items-start gap-2 text-label-sm text-muted-foreground">
-        <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
-        <span>Full API keys are only shown once at creation. Show/copy is available in this session only — after refresh, only the prefix is shown for identification.</span>
-      </motion.div>
     </motion.div>
   );
 }

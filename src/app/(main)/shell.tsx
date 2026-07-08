@@ -39,7 +39,12 @@ function HomeSidebarContent() {
       <LanguagesSection />
       <div className="h-px bg-outline/20" />
       <SocialLinks />
-      <div className="mt-auto pt-3 border-t border-outline/15">
+      <div className="mt-auto pt-3 border-t border-outline/15 space-y-2">
+        <div className="flex items-center justify-center gap-3 text-label-sm">
+          <a href="#projects" className="text-muted-foreground hover:text-primary transition-colors font-medium">Work</a>
+          <span className="w-1 h-1 rounded-full bg-outline/40" />
+          <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">Contact</a>
+        </div>
         <p className="text-label-sm text-muted-foreground/40 text-center">Built with React & Next.js · © 2026 revyid</p>
       </div>
     </>

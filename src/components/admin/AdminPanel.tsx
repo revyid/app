@@ -490,16 +490,25 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
   const [dbLoading, setDbLoading] = useState(false);
+  const [dbError, setDbError] = useState(false);
 
   // On open: fetch fresh from DB only if dbData not yet loaded
   useEffect(() => {
     if (!isOpen || !user?.is_admin) return;
-    if (dbData !== null) { setDbLoading(false); return; } // already have data
+    if (dbData !== null) { setDbLoading(false); setDbError(false); return; }
     setDbLoading(true);
-    refresh(true).finally(() => setDbLoading(false));
-  }, [isOpen]);
+    setDbError(false);
+    const timeout = setTimeout(() => {
+      setDbLoading(false);
+      setDbError(true);
+    }, 15000);
+    refresh(true)
+      .then(() => { setDbError(false); })
+      .catch(() => { setDbError(true); })
+      .finally(() => { setDbLoading(false); clearTimeout(timeout); });
+  }, [isOpen, user?.is_admin]);
 
-  const isDbReady = !dbLoading && dbData !== null;
+  const isDbReady = !dbLoading && dbData !== null && !dbError;
 
   // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
   const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
@@ -595,7 +604,14 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   ) : activeTab === 'portfolio' ? (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      {!isDbReady ? (
+                      {dbError ? (
+                        <div className="flex flex-col items-center justify-center py-16 gap-4">
+                          <p className="text-sm text-muted-foreground">Failed to load portfolio data.</p>
+                          <Button size="sm" onClick={() => { setDbError(false); setDbLoading(true); refresh(true).finally(() => setDbLoading(false)); }}>
+                            Retry
+                          </Button>
+                        </div>
+                      ) : !isDbReady ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-4">
                           <LoadingIndicator className="w-12 h-12" />
                           <p className="text-sm text-muted-foreground">Loading from database…</p>

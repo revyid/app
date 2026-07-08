@@ -76,7 +76,9 @@ export function HomePage() {
         </Suspense>
       </div>
 
-      <Footer />
+      <div className="lg:hidden">
+        <Footer />
+      </div>
     </div>
   );
 }
