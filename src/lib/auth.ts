@@ -8,15 +8,6 @@ import { getSupabase } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 import { resetSupabase } from './supabase';
 
-// ─── Timeout Helper ─────────────────────────────────────────────────
-function withTimeout<T>(promise: PromiseLike<T>, ms: number, label = 'Request'): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
-}
-
 // ─── Error Helpers ──────────────────────────────────────────────────
 function handleAuthError(err: unknown, fallback: string): string {
   if (err instanceof Error) {
@@ -298,11 +289,7 @@ export async function getPortfolioSection(section: string): Promise<unknown> {
 export async function getAllPortfolioData(): Promise<Record<string, unknown>> {
   try {
     const client = await getSupabase();
-    const { data, error } = await withTimeout(
-      client.rpc('get_all_portfolio_data').then(),
-      10000,
-      'Portfolio fetch'
-    );
+    const { data, error } = await client.rpc('get_all_portfolio_data');
     if (error) throw error;
     return (data as Record<string, unknown>) || {};
   } catch (err) {
@@ -319,15 +306,11 @@ export async function upsertPortfolioSection(
 
   try {
     const client = await getSupabase();
-    const { data: result, error } = await withTimeout(
-      client.rpc('upsert_portfolio_section', {
-        p_token: token,
-        p_section: section,
-        p_data: data,
-      }).then(),
-      10000,
-      'Portfolio save'
-    );
+    const { data: result, error } = await client.rpc('upsert_portfolio_section', {
+      p_token: token,
+      p_section: section,
+      p_data: data,
+    });
 
     if (error) return { error: handleAuthError(error, 'Save failed') };
     if ((result as { error?: string })?.error) return { error: (result as { error: string }).error };

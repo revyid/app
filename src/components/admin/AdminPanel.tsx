@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generateId } from '@/lib/utils';
 import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePortfolio, clearPortfolioCache } from '@/contexts/PortfolioContext';
+import { usePortfolio } from '@/contexts/PortfolioContext';
 import { upsertPortfolioSection } from '@/lib/auth';
 import { Button, IconButton } from '@/components/ui/button';
 import { modalBackdrop, bottomSheetContent } from '@/lib/motion-presets';
@@ -17,15 +17,6 @@ import { ImageUpload } from '@/components/shared/ImageUpload';
 import { LoadingIndicator } from '@/components/shared/LoadingIndicator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────
-function LoadingPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4">
-      <LoadingIndicator className="w-12 h-12" />
-      <p className="text-sm text-muted-foreground">Loading…</p>
-    </div>
-  );
-}
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
@@ -120,27 +111,20 @@ function useSave(section: string, onSaved: () => void) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
 
-  const save = useCallback(async (data: unknown) => {
+  const save = async (data: unknown) => {
     setSaving(true);
     setError(undefined);
-    try {
-      const result = await upsertPortfolioSection(section, data);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        // Clear cache so fresh data is loaded on next refresh
-        clearPortfolioCache();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-        // Force refresh after a short delay to ensure DB write completes
-        setTimeout(() => onSaved(), 300);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
-    } finally {
-      setSaving(false);
+    const result = await upsertPortfolioSection(section, data);
+    setSaving(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      // Force refresh after a short delay to ensure DB write completes
+      setTimeout(() => onSaved(), 300);
     }
-  }, [section, onSaved]);
+  };
 
   return { save, saving, saved, error };
 }
@@ -491,58 +475,11 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
-// Safety timeout to prevent infinite loading (10 seconds)
-const LOADING_TIMEOUT = 10000;
-
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { dbData, isLoading: portfolioLoading, isFetching, error: portfolioError, refresh } = usePortfolio();
+  const { data, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
-  // Local safety timeout to prevent infinite loading
-  const [timedOut, setTimedOut] = useState(false);
-
-  // Safety timeout: if loading takes too long, force unblock
-  useEffect(() => {
-    if (!isOpen || !user?.is_admin) {
-      setTimedOut(false);
-      return;
-    }
-    // Reset timeout when opening
-    setTimedOut(false);
-    const timer = setTimeout(() => {
-      setTimedOut(true);
-    }, LOADING_TIMEOUT);
-    return () => clearTimeout(timer);
-  }, [isOpen, user?.is_admin, activeTab]);
-
-  // Fetch fresh data when panel opens
-  useEffect(() => {
-    if (!isOpen || !user?.is_admin) return;
-    refresh(true).catch(() => {
-      // Error already handled in context, just ensure we don't hang
-    });
-  }, [isOpen, user?.is_admin]);
-
-  // dbData is ready when it's not null (can be {} for empty DB, which is valid)
-  // or when timed out (safety net)
-  const isDbReady = dbData !== null || timedOut;
-  const showLoading = portfolioLoading && !isDbReady && !timedOut;
-
-  // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
-  const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
-  const adminData = {
-    profile:      dbData?.profile      ?? emptyProfile,
-    intro:        dbData?.intro        ?? { paragraphs: [] },
-    skills:       dbData?.skills       ?? [],
-    languages:    dbData?.languages    ?? [],
-    social_links: dbData?.social_links ?? [],
-    contacts:     dbData?.contacts     ?? [],
-    projects:     dbData?.projects     ?? [],
-    experiences:  dbData?.experiences  ?? [],
-    education:    dbData?.education    ?? [],
-    testimonials: dbData?.testimonials ?? [],
-  };
 
   return (
     <AnimatePresence>
@@ -623,47 +560,25 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   ) : activeTab === 'portfolio' ? (
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground pb-1">Changes are saved to the database and reflected live.</p>
-                      {showLoading ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-4">
-                          <LoadingIndicator className="w-12 h-12" />
-                          <p className="text-sm text-muted-foreground">Loading from database…</p>
-                          {timedOut && (
-                            <Button size="sm" variant="outlined" onClick={forceRefresh} className="mt-2">
-                              Retry
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <>
-                          {portfolioError && (
-                            <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-xs text-destructive">
-                              <span>Failed to load latest data from the database: {portfolioError}. The form below may be showing old or empty data.</span>
-                              <Button size="sm" variant="outlined" onClick={forceRefresh} className="flex-shrink-0">
-                                Retry
-                              </Button>
-                            </div>
-                          )}
-                          <ProfileSection initial={adminData.profile} onSaved={forceRefresh} />
-                          <IntroSectionEditor initial={adminData.intro} onSaved={forceRefresh} />
-                          <SkillsSectionEditor initial={adminData.skills} onSaved={forceRefresh} />
-                          <LanguagesSectionEditor initial={adminData.languages} onSaved={forceRefresh} />
-                          <SocialLinksSectionEditor initial={adminData.social_links} onSaved={forceRefresh} />
-                          <ContactsSectionEditor initial={adminData.contacts} onSaved={forceRefresh} />
-                          <ProjectsSectionEditor initial={adminData.projects} onSaved={forceRefresh} />
-                          <ExperiencesSectionEditor initial={adminData.experiences} onSaved={forceRefresh} />
-                          <EducationSectionEditor initial={adminData.education} onSaved={forceRefresh} />
-                          <TestimonialsSectionEditor initial={adminData.testimonials} onSaved={forceRefresh} />
-                        </>
-                      )}
+                      <ProfileSection initial={data.profile} onSaved={forceRefresh} />
+                      <IntroSectionEditor initial={data.intro} onSaved={forceRefresh} />
+                      <SkillsSectionEditor initial={data.skills} onSaved={forceRefresh} />
+                      <LanguagesSectionEditor initial={data.languages} onSaved={forceRefresh} />
+                      <SocialLinksSectionEditor initial={data.social_links} onSaved={forceRefresh} />
+                      <ContactsSectionEditor initial={data.contacts} onSaved={forceRefresh} />
+                      <ProjectsSectionEditor initial={data.projects} onSaved={forceRefresh} />
+                      <ExperiencesSectionEditor initial={data.experiences} onSaved={forceRefresh} />
+                      <EducationSectionEditor initial={data.education} onSaved={forceRefresh} />
+                      <TestimonialsSectionEditor initial={data.testimonials ?? []} onSaved={forceRefresh} />
                     </div>
                   ) : activeTab === 'themes' ? (
-                    isFetching ? <LoadingPlaceholder /> : <ThemeBuilder />
+                    <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
-                    isFetching ? <LoadingPlaceholder /> : <AnalyticsDashboard />
+                    <AnalyticsDashboard />
                   ) : activeTab === 'users' ? (
-                    isFetching ? <LoadingPlaceholder /> : <UserManagement />
+                    <UserManagement />
                   ) : (
-                    isFetching ? <LoadingPlaceholder /> : <SiteSettings />
+                    <SiteSettings />
                   )}
                 </div>
               </div>
