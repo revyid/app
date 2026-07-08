@@ -77,12 +77,14 @@ function buildFresh(raw: Record<string, unknown>): PortfolioData {
 interface PortfolioContextType {
   data: PortfolioData;
   isLoading: boolean;
+  hasLoaded: boolean;
   refresh: () => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
   isLoading: true,
+  hasLoaded: false,
   refresh: async () => {},
 });
 
@@ -91,6 +93,7 @@ export const usePortfolio = () => useContext(PortfolioContext);
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(defaultData);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -101,6 +104,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       // keep current data on error
     } finally {
       setIsLoading(false);
+      setHasLoaded(true);
     }
   }, []);
 
@@ -109,7 +113,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, isLoading, hasLoaded, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
