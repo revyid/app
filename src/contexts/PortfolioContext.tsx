@@ -112,32 +112,42 @@ export const usePortfolio = () => useContext(PortfolioContext);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const cached = useRef(loadCache());
+  console.log('[Portfolio] INIT cached:', cached.current ? 'YES' : 'NO', '| profile:', cached.current?.profile?.name);
   const [data, setData] = useState<PortfolioData>(() => cached.current ?? defaultData);
   const [isReady, setIsReady] = useState(() => cached.current !== null);
   const fetchingRef = useRef(false);
 
   const refresh = useCallback(async (force?: boolean) => {
-    if (fetchingRef.current) return;
+    if (fetchingRef.current) { console.log('[Portfolio] BLOCKED'); return; }
     fetchingRef.current = true;
 
-    if (force) clearCache();
+    if (force) { console.log('[Portfolio] FORCE - clearing cache'); clearCache(); }
 
+    console.log('[Portfolio] START fetch');
     try {
       const raw = await getAllPortfolioData();
+      console.log('[Portfolio] RAW keys:', Object.keys(raw), '| profile:', (raw.profile as any)?.name);
       if (Object.keys(raw).length > 0) {
         const fresh = buildFresh(raw);
+        console.log('[Portfolio] BUILT profile.name:', fresh.profile.name);
         setData(fresh);
         saveCache(fresh);
+        console.log('[Portfolio] CACHE SAVED');
+      } else {
+        console.log('[Portfolio] RAW EMPTY');
       }
     } catch (err) {
-      console.error('[PortfolioContext] fetch error:', err);
+      console.error('[Portfolio] FETCH ERROR:', err);
     } finally {
       fetchingRef.current = false;
       setIsReady(true);
+      console.log('[Portfolio] DONE isReady=true');
     }
   }, []);
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { console.log('[Portfolio] MOUNT - refresh'); refresh(); }, []);
+
+  console.log('[Portfolio] RENDER profile.name:', data.profile.name, '| isReady:', isReady);
 
   return (
     <PortfolioContext.Provider value={{ data, isReady, refresh }}>
