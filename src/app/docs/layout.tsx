@@ -77,6 +77,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-background flex">
       <Sidebar
         showFooter
+        showMobile={false}
         onChatClick={() => setIsChatOpen(true)}
         onProfileClick={() => setIsProfileOpen(true)}
         onAdminClick={() => setIsAdminOpen(true)}

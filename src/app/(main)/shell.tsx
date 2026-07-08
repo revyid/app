@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Providers } from '@/app/providers';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { MobileNavDrawer, type NavItem } from '@/components/layout/MobileNavDrawer';
 import { WelcomePreloader } from '@/components/shared/WelcomePreloader';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PageTransition } from '@/components/shared/PageTransition';
@@ -21,13 +20,7 @@ import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
 import { LanguagesSection } from '@/components/sections/LanguagesSection';
-import { Home, Code2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-
-const HOME_NAV: NavItem[] = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/dashboard', label: 'Dashboard', icon: Code2 },
-];
 
 function HomeSidebarContent() {
   return (
@@ -126,14 +119,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
-
-      {/* Mobile floating nav */}
-      <MobileNavDrawer
-        showNav={false}
-        onChatClick={() => setIsChatOpen(true)}
-        onProfileClick={() => setIsProfileOpen(true)}
-        onAdminClick={() => setIsAdminOpen(true)}
-      />
 
       {isCommandPaletteOpen && (
         <CommandPalette

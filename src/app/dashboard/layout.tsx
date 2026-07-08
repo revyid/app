@@ -79,6 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-background flex">
       <Sidebar
         showFooter
+        showMobile={false}
         onChatClick={() => setIsChatOpen(true)}
         onProfileClick={() => setIsProfileOpen(true)}
         onAdminClick={() => setIsAdminOpen(true)}

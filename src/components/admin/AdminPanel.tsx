@@ -506,7 +506,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       .then(() => { setDbError(false); })
       .catch(() => { setDbError(true); })
       .finally(() => { setDbLoading(false); clearTimeout(timeout); });
-  }, [isOpen, user?.is_admin]);
+  }, [isOpen, user?.is_admin, dbData]);
 
   const isDbReady = !dbLoading && dbData !== null && !dbError;
 
