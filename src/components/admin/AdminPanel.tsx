@@ -486,19 +486,19 @@ interface AdminPanelProps {
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, dbData, isLoading: portfolioLoading, refresh } = usePortfolio();
+  const { data, dbData, refresh } = usePortfolio();
   const forceRefresh = useCallback(() => refresh(true), [refresh]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
+  const [fetching, setFetching] = useState(false);
 
-  // Trigger DB fetch on first open if data hasn't loaded yet
+  // Always fetch fresh from DB when panel opens
   useEffect(() => {
     if (!isOpen || !user?.is_admin) return;
-    if (dbData === null && !portfolioLoading) {
-      refresh(true);
-    }
+    setFetching(true);
+    refresh(true).finally(() => setFetching(false));
   }, [isOpen, user?.is_admin]);
 
-  const isDbReady = dbData !== null && !portfolioLoading;
+  const isDbReady = !fetching && dbData !== null;
 
   // Use DB data for admin (no static fallback). If DB has no value yet, use empty defaults.
   const emptyProfile: ProfileData = { name: '', pronouns: '', verified: false, image: '', about: '', role: '', location: '' };
@@ -615,13 +615,13 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       )}
                     </div>
                   ) : activeTab === 'themes' ? (
-                    portfolioLoading ? <LoadingPlaceholder /> : <ThemeBuilder />
+                    fetching ? <LoadingPlaceholder /> : <ThemeBuilder />
                   ) : activeTab === 'analytics' ? (
-                    portfolioLoading ? <LoadingPlaceholder /> : <AnalyticsDashboard />
+                    fetching ? <LoadingPlaceholder /> : <AnalyticsDashboard />
                   ) : activeTab === 'users' ? (
-                    portfolioLoading ? <LoadingPlaceholder /> : <UserManagement />
+                    fetching ? <LoadingPlaceholder /> : <UserManagement />
                   ) : (
-                    portfolioLoading ? <LoadingPlaceholder /> : <SiteSettings />
+                    fetching ? <LoadingPlaceholder /> : <SiteSettings />
                   )}
                 </div>
               </div>
