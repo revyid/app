@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { getAllPortfolioData } from '@/lib/auth';
 import {
   profileData as staticProfile,
@@ -85,12 +85,14 @@ function clearCache() {
 interface PortfolioContextType {
   data: PortfolioData;
   isLoading: boolean;
+  hasLoaded: boolean;
   refresh: (force?: boolean) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
   isLoading: true,
+  hasLoaded: false,
   refresh: async () => {},
 });
 
@@ -114,6 +116,15 @@ function buildFresh(raw: Record<string, unknown>): PortfolioData {
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(() => loadCache() ?? defaultData);
   const [isLoading, setIsLoading] = useState(() => !loadCache());
+  const [hasLoaded, setHasLoaded] = useState(() => !!loadCache());
+  const hasLoadedRef = useRef(!!loadCache());
+
+  const markLoaded = useCallback(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      setHasLoaded(true);
+    }
+  }, []);
 
   const refresh = useCallback(async (force?: boolean) => {
     if (force) clearCache();
@@ -121,10 +132,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     if (cached && !force) {
       setData(cached);
       setIsLoading(false);
+      markLoaded();
       // background refresh
       getAllPortfolioData().then(raw => {
-        setData(buildFresh(raw as Record<string, unknown>));
-        saveCache(buildFresh(raw as Record<string, unknown>));
+        const fresh = buildFresh(raw as Record<string, unknown>);
+        setData(fresh);
+        saveCache(fresh);
       }).catch(() => {});
       return;
     }
@@ -137,15 +150,16 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       // fall back to static data
     } finally {
       setIsLoading(false);
+      markLoaded();
     }
-  }, []);
+  }, [markLoaded]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
+    <PortfolioContext.Provider value={{ data, isLoading, hasLoaded, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );
