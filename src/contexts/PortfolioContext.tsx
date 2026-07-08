@@ -22,16 +22,10 @@ export interface ProfileData {
   about: string;
   role?: string;
   location?: string;
-  easter_egg?: {
-    name: string;
-    image: string;
-    shortcut?: string;
-  };
+  easter_egg?: { name: string; image: string; shortcut?: string };
 }
 
-export interface IntroData {
-  paragraphs: string[];
-}
+export interface IntroData { paragraphs: string[] }
 
 export interface PortfolioData {
   profile: ProfileData;
@@ -77,14 +71,12 @@ function buildFresh(raw: Record<string, unknown>): PortfolioData {
 interface PortfolioContextType {
   data: PortfolioData;
   isLoading: boolean;
-  hasLoaded: boolean;
   refresh: () => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType>({
   data: defaultData,
   isLoading: true,
-  hasLoaded: false,
   refresh: async () => {},
 });
 
@@ -93,27 +85,20 @@ export const usePortfolio = () => useContext(PortfolioContext);
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortfolioData>(defaultData);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
       const raw = await getAllPortfolioData();
       setData(buildFresh(raw as Record<string, unknown>));
-    } catch {
-      // keep current data on error
-    } finally {
-      setIsLoading(false);
-      setHasLoaded(true);
-    }
+    } catch { /* keep current */ }
+    finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    <PortfolioContext.Provider value={{ data, isLoading, hasLoaded, refresh }}>
+    <PortfolioContext.Provider value={{ data, isLoading, refresh }}>
       {children}
     </PortfolioContext.Provider>
   );

@@ -477,7 +477,7 @@ interface AdminPanelProps {
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, hasLoaded, refresh } = usePortfolio();
+  const { data, isLoading, refresh } = usePortfolio();
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
   return (
@@ -557,7 +557,7 @@ export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                       <p className="text-sm">Admin access required.</p>
                     </div>
                   ) : activeTab === 'portfolio' ? (
-                    !hasLoaded ? (
+                    isLoading ? (
                       <div className="flex flex-col items-center justify-center py-16 gap-4">
                         <LoadingIndicator className="w-12 h-12" />
                         <p className="text-sm text-muted-foreground">Loading from database…</p>
