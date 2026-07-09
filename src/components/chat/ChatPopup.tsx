@@ -113,27 +113,27 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
 
       <div className="pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing"><div className="sheet-handle" /></div>
 
-      <div className="flex items-center justify-between px-5 py-3 border-b border-outline/20">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${aiMode ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-primary'}`}>
-            {aiMode ? <Sparkles className="w-5 h-5 text-white" /> : <User className="w-5 h-5 text-primary-foreground" />}
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-outline/20">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${aiMode ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-primary'}`}>
+            {aiMode ? <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> : <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />}
           </div>
           <div>
-            <h3 className="font-semibold text-foreground text-title-sm">
+            <h3 className="font-semibold text-foreground text-[14px] sm:text-title-sm">
               {aiMode ? 'AI Chat' : 'Global Chat'}
-              {aiMode && <span className="ml-2 text-label-xs text-purple-500 font-normal">Beta</span>}
+              {aiMode && <span className="ml-1.5 sm:ml-2 text-[10px] sm:text-label-xs text-purple-500 font-normal">Beta</span>}
             </h3>
-            <p className="text-label-sm text-muted-foreground">
+            <p className="text-[11px] sm:text-label-sm text-muted-foreground">
               {aiMode ? `${aiMessages.length} messages` : `${messages.length} messages`}
             </p>
           </div>
         </div>
-        <IconButton onClick={onClose} variant="ghost" className="rounded-full bg-surface-variant hover:bg-surface-variant/80">
-          <X className="w-5 h-5" />
+        <IconButton onClick={onClose} variant="ghost" className="rounded-full w-8 h-8 sm:w-9 sm:h-9 bg-surface-variant hover:bg-surface-variant/80">
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </IconButton>
       </div>
 
-      <div className="h-80 overflow-y-auto p-4 space-y-4 scrollbar-thin" role="log" aria-live="polite" aria-label="Chat messages" data-lenis-prevent>
+      <div className="h-[50vh] sm:h-80 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 scrollbar-thin" role="log" aria-live="polite" aria-label="Chat messages" data-lenis-prevent>
         {aiMode ? (
           aiMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
@@ -143,22 +143,24 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
             </div>
           ) : (
             aiMessages.map((msg, i) => (
-              <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'assistant' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-primary'}`}>
+              <div key={i} className={`flex gap-2 sm:gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'assistant' ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-primary'}`}>
                   {msg.role === 'assistant' ? (
-                    <Sparkles className="w-4 h-4 text-white" />
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   ) : (
-                    <User className="w-4 h-4 text-primary-foreground" />
+                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
                   )}
                 </div>
-                <div className={`max-w-[80%] ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <p className="text-label-sm text-muted-foreground mb-1">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
-                  <div className={`inline-block px-4 py-2 rounded-2xl text-body-sm text-left ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
+                <div className={`max-w-[85%] sm:max-w-[80%] min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  <p className="text-xs text-muted-foreground mb-0.5">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
+                  <div className={`inline-block px-3 py-2 sm:px-4 sm:py-2 rounded-2xl text-[13px] sm:text-body-sm text-left break-words ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-pre:bg-background/50 prose-pre:rounded-lg prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
+                      <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none break-words prose-p:my-1 prose-pre:my-2 prose-pre:bg-background/50 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
                         <Markdown>{msg.content}</Markdown>
                       </div>
-                    ) : msg.content}
+                    ) : (
+                      <span className="break-words">{msg.content}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -203,13 +205,13 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
             <Button onClick={onLoginRequest} variant="filled" size="sm" className="rounded-full">Sign In</Button>
           </div>
         ) : (
-          <div className="p-4 flex gap-2 items-center">
+          <div className="p-3 sm:p-4 flex gap-2 items-center">
             <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyPress}
               placeholder={aiMode ? "Ask AI anything..." : "Type a message..."} aria-label="Type a message"
-              className={`flex-1 px-4 py-3 bg-surface-variant border rounded-full text-body-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 transition-all duration-150 ${aiMode ? 'border-purple-500/30 focus:ring-purple-500/30' : 'border-outline/30 focus:ring-primary/30'}`} />
+              className={`flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 bg-surface-variant border rounded-full text-[13px] sm:text-body-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 transition-all duration-150 ${aiMode ? 'border-purple-500/30 focus:ring-purple-500/30' : 'border-outline/30 focus:ring-primary/30'}`} />
             <IconButton onClick={handleSend} disabled={!newMessage.trim() || isLoading} variant="filled"
-              className={`rounded-full w-12 h-12 flex items-center justify-center ${aiMode ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' : ''}`}>
-              <Send className="w-5 h-5" />
+              className={`rounded-full w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 ${aiMode ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' : ''}`}>
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             </IconButton>
           </div>
         )}
