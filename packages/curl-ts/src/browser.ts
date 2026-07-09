@@ -60,13 +60,36 @@ export async function curl<T = any>(input: CurlOptions | string, proxyUrl?: stri
   }
 
   // Direct browser fetch
-  const { method = 'GET', url, headers = {}, body, userAgent = 'curl/7.81.0' } = options;
+  const { method = 'GET', url: originalUrl, headers = {}, body, userAgent = 'curl/7.81.0', queryParams } = options;
+
+  // Build final URL with --data-urlencode params
+  let url = originalUrl;
+  if (queryParams && Object.keys(queryParams).length > 0) {
+    const sep = url.includes('?') ? '&' : '?';
+    const qs = Object.entries(queryParams)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&');
+    url += sep + qs;
+  }
+
   const rh = new Headers(headers);
   rh.set('User-Agent', userAgent);
+
+  // Handle multipart form data (-F / --form)
+  let fetchBody: string | FormData | undefined;
+  if (Array.isArray(body)) {
+    const fd = new FormData();
+    body.forEach(([k, v]) => fd.append(k, v));
+    fetchBody = fd;
+    if (!rh.has('Content-Type')) rh.delete('Content-Type'); // browser sets boundary
+  } else if (typeof body === 'string') {
+    fetchBody = body;
+  }
+
   const res = await fetch(url, {
     method: method.toUpperCase(),
     headers: rh,
-    body: !['GET', 'HEAD'].includes(method.toUpperCase()) ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+    body: !['GET', 'HEAD'].includes(method.toUpperCase()) ? fetchBody : undefined,
   });
   const rb = await res.json();
   return {
