@@ -533,18 +533,7 @@
 
 .animate-orbit-glow {
   animation: orbit-glow 3s linear infinite;
-  filter: blur(8px);
-  opacity: 0.6;
-}
-
-@keyframes gradient-x {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.animate-gradient-x {
-  background-size: 200% 200%;
-  animation: gradient-x 3s ease infinite;
+  opacity: 0.8;
 }
 
 .animate-on-scroll {
