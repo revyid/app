@@ -30,6 +30,7 @@ export default function ShortenPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [createUrl, setCreateUrl] = useState('');
   const [createSlug, setCreateSlug] = useState('');
+  const [createExpiry, setCreateExpiry] = useState('never');
   const [createSaving, setCreateSaving] = useState(false);
   const [createError, setCreateError] = useState('');
   const [createdShort, setCreatedShort] = useState('');
@@ -117,7 +118,7 @@ export default function ShortenPage() {
       const res = await fetch('/api/short-urls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: createUrl.trim(), slug: createSlug.trim() || undefined, token }),
+        body: JSON.stringify({ url: createUrl.trim(), slug: createSlug.trim() || undefined, token, expires_in: createExpiry === 'never' ? undefined : createExpiry }),
       });
       const data = await res.json();
       if (data.error) {
@@ -369,6 +370,17 @@ export default function ShortenPage() {
                   <input type="text" value={createSlug} onChange={e => setCreateSlug(e.target.value)}
                     placeholder="auto-generated if empty"
                     className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Expiry</label>
+                  <select value={createExpiry} onChange={e => setCreateExpiry(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    <option value="never">Never</option>
+                    <option value="1d">1 day</option>
+                    <option value="7d">7 days</option>
+                    <option value="30d">30 days</option>
+                    <option value="90d">90 days</option>
+                  </select>
                 </div>
               </div>
               {createError && <p className="text-xs text-destructive">{createError}</p>}

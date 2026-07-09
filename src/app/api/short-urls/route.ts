@@ -7,6 +7,14 @@ function getAdmin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 }
 
+function parseInterval(s: string): number {
+  const m = s.match(/^(\d+)([smhd])$/);
+  if (!m) return 0;
+  const n = parseInt(m[1]);
+  const unit: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
+  return n * (unit[m[2]] || 0);
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
@@ -23,7 +31,7 @@ export async function GET(request: Request) {
   // Default: list all
   const { data, error } = await admin
     .from('short_urls')
-    .select('id, slug, original_url, clicks, created_at')
+    .select('id, slug, original_url, clicks, created_at, expires_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -41,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { url: originalUrl, slug: customSlug, token } = body;
+    const { url: originalUrl, slug: customSlug, token, expires_in } = body;
 
     if (!originalUrl) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -80,6 +88,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
     }
 
+    // Calculate expiry
+    let expiresAt = null;
+    if (expires_in && expires_in !== 'never') {
+      const ms = parseInterval(expires_in);
+      if (ms > 0) expiresAt = new Date(Date.now() + ms).toISOString();
+    }
+
     // Create short URL
     const { data, error } = await admin
       .from('short_urls')
@@ -87,6 +102,7 @@ export async function POST(request: Request) {
         slug,
         original_url: originalUrl,
         user_id: session.user_id,
+        expires_at: expiresAt,
       })
       .select()
       .single();
