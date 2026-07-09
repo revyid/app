@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
       if (!msg.role || !msg.content || typeof msg.content !== 'string') {
         return NextResponse.json({ error: 'Invalid message format' }, { status: 400, headers: cors });
       }
-      // Limit individual message length
       if (msg.content.length > 500) {
         return NextResponse.json({ error: 'Message too long (max 500 chars)' }, { status: 400, headers: cors });
       }
@@ -89,13 +88,14 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'meta/llama-3.1-8b-instruct',
+        model: 'nvidia/nemotron-3-ultra-550b-a55b',
         messages: [
           { role: 'system', content: 'You are Revy, a friendly AI assistant embedded in a portfolio website. Keep responses concise and helpful. Use a casual, friendly tone.' },
           ...messages.slice(-10),
         ],
-        temperature: 0.7,
-        max_tokens: 512,
+        temperature: 1,
+        top_p: 0.95,
+        max_tokens: 1024,
       }),
     });
 
