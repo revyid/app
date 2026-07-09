@@ -151,15 +151,15 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                     <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
                   )}
                 </div>
-                <div className={`max-w-[85%] sm:max-w-[80%] min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <p className="text-xs text-muted-foreground mb-0.5">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
-                  <div className={`inline-block px-3 py-2 sm:px-4 sm:py-2 rounded-2xl text-[13px] sm:text-body-sm text-left break-words ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
+                <div className={`max-w-[80%] min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  <p className="text-[10px] text-muted-foreground mb-0.5">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
+                  <div className={`inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[12px] sm:text-[13px] text-left leading-relaxed overflow-hidden ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none break-words prose-p:my-1 prose-pre:my-2 prose-pre:bg-background/50 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
+                      <div className="prose prose-[11px] sm:prose-xs dark:prose-invert max-w-none prose-p:my-0.5 prose-pre:my-1 prose-pre:bg-background/50 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:max-w-[250px] prose-code:text-[10px] prose-code:break-all prose-code:before:content-none prose-code:after:content-none">
                         <Markdown>{msg.content}</Markdown>
                       </div>
                     ) : (
-                      <span className="break-words">{msg.content}</span>
+                      <span className="break-words break-all">{msg.content}</span>
                     )}
                   </div>
                 </div>
