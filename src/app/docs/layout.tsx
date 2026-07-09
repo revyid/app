@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
   ]},
   { href: '/docs', label: 'Docs', icon: BookOpen, children: [
     { href: '/docs', label: 'Overview', icon: BookOpen },
+    { href: '/docs/guide', label: 'Guide', icon: BookOpen },
     { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
       { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
     ]},
