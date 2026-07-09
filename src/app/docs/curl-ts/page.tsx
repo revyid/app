@@ -34,7 +34,7 @@ export default function CurlTsPage() {
         <p className="text-body-md text-muted-foreground max-w-2xl">
           cURL for TypeScript — parse and execute curl commands in browser and Node.js.
         </p>
-        <a href="https://github.com/Revy4k/cURL-ts" target="_blank" rel="noopener noreferrer"
+        <a href="https://github.com/revyid/cURL-ts" target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 mt-3 text-primary hover:underline text-body-sm font-medium">
           GitHub Repository <ExternalLink className="w-3.5 h-3.5" />
         </a>

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Key, FileText, Home, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Key, Home, ChevronRight, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNavDrawer, type NavItem } from '@/components/layout/MobileNavDrawer';
 import { PageTransition } from '@/components/shared/PageTransition';
@@ -19,14 +19,14 @@ const NAV: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, children: [
     { href: '/dashboard/api-keys', label: 'API Keys', icon: Key },
   ]},
-  { href: '/docs', label: 'Docs', icon: FileText, children: [
-    { href: '/docs', label: 'Overview', icon: FileText },
-    { href: '/docs/api-reference', label: 'API Reference', icon: FileText, children: [
-      { href: '/docs/api-reference/github', label: 'GitHub API', icon: FileText },
-      { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: FileText },
+  { href: '/docs', label: 'Docs', icon: BookOpen, children: [
+    { href: '/docs', label: 'Overview', icon: BookOpen },
+    { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
+      { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
+      { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
     ]},
-    { href: '/docs/sandbox', label: 'Sandbox', icon: FileText },
-    { href: '/docs/curl-ts', label: 'curl-ts', icon: FileText },
+    { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
+    { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
   ]},
 ];
 
