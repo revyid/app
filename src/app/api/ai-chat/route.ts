@@ -89,19 +89,19 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'nvidia/llama-3.1-nemotron-70b-instruct',
+        model: 'meta/llama-3.1-8b-instruct',
         messages: [
-          { role: 'system', content: 'You are Revy, a friendly AI assistant embedded in a portfolio website. Keep responses concise and helpful. Use a casual, friendly tone. You can help with coding questions, general knowledge, or just chat.' },
-          ...messages.slice(-10), // Only keep last 10 messages for context
+          { role: 'system', content: 'You are Revy, a friendly AI assistant embedded in a portfolio website. Keep responses concise and helpful. Use a casual, friendly tone.' },
+          ...messages.slice(-10),
         ],
         temperature: 0.7,
         max_tokens: 512,
-        stream: false,
       }),
     });
 
     if (!response.ok) {
-      console.error('NVIDIA API error:', response.status);
+      const errText = await response.text().catch(() => '');
+      console.error('NVIDIA API error:', response.status, errText);
       return NextResponse.json({ error: 'AI service unavailable' }, { status: 502, headers: cors });
     }
 

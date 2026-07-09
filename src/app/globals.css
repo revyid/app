@@ -526,14 +526,31 @@
   to { transform: scaleX(1); opacity: 1; }
 }
 
-@keyframes orbit-glow {
+@keyframes orbit-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.animate-orbit-glow {
-  animation: orbit-glow 3s linear infinite;
-  opacity: 0.8;
+.orbit-glow-ring {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    hsl(var(--primary)) 5%,
+    transparent 10%,
+    transparent 40%,
+    hsl(var(--primary)) 45%,
+    transparent 50%,
+    transparent 90%,
+    hsl(var(--primary)) 95%,
+    transparent 100%
+  );
+  animation: orbit-spin 3s linear infinite;
+  opacity: 0.6;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 2px;
 }
 
 .animate-on-scroll {

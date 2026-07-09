@@ -111,15 +111,10 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
             className={`fixed bottom-0 left-0 right-0 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60] ${side === 'left' ? 'sm:left-4' : 'sm:right-4 sm:left-auto'}`}>
 
             <BottomSheet onClose={onClose}>
-              {/* Orbit glow — wider, no blur */}
+              {/* Orbit glow ring */}
               {aiMode && (
-                <div className="absolute -inset-3 rounded-[36px] pointer-events-none overflow-hidden z-0">
-                  <div
-                    className="absolute inset-0 animate-orbit-glow"
-                    style={{
-                      background: 'conic-gradient(from 0deg, transparent 0%, hsl(var(--primary)) 20%, transparent 40%, hsl(var(--primary)) 60%, transparent 80%)',
-                    }}
-                  />
+                <div className="absolute -inset-1 rounded-[32px] pointer-events-none z-0 overflow-visible">
+                  <div className="absolute inset-0 rounded-[32px] orbit-glow-ring" />
                 </div>
               )}
 
@@ -227,14 +222,6 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                           <Send className="w-5 h-5" />
                         </IconButton>
                       </div>
-                      {aiMode && (
-                        <div className="px-4 pb-3 -mt-1">
-                          <p className="text-label-xs text-purple-500/70 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            AI Mode — Press Ctrl+Alt+A+I to toggle off
-                          </p>
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
