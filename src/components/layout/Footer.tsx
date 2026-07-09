@@ -6,7 +6,7 @@ import { Heart } from 'lucide-react';
 export function Footer() {
   return (
     <footer className="border-t border-outline/10 bg-surface/50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-8">
           <div>
             <h3 className="text-label-sm font-semibold text-foreground mb-3">Product</h3>

@@ -175,12 +175,14 @@ export default function ShortenPage() {
           { label: 'Total URLs', value: urls.length, icon: Link2 },
           { label: 'Total Clicks', value: urls.reduce((s, u) => s + (u.clicks ?? 0), 0), icon: BarChart3 },
           { label: 'Active', value: urls.length, icon: Check },
-        ].map((stat) => (
-          <div key={stat.label} className="p-4 rounded-2xl bg-surface border border-outline/15 text-center">
+        ].map((stat, i) => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1, type: 'spring', stiffness: 300, damping: 25 }}
+            className="p-4 rounded-2xl bg-surface border border-outline/15 text-center">
             <stat.icon className="w-5 h-5 mx-auto mb-1.5 text-muted-foreground" />
             <p className="text-title-lg font-bold text-foreground">{stat.value}</p>
             <p className="text-label-sm text-muted-foreground">{stat.label}</p>
-          </div>
+          </motion.div>
         ))}
       </motion.div>
 

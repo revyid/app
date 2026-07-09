@@ -133,7 +133,7 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
             <div className="text-primary-container-foreground"><BarChart3 className="w-5 h-5" /></div>
           </div>
           <div>
-            <h3 className="text-title-sm font-semibold text-foreground">Traffic & Audience</h3>
+            <h3 className="text-title-sm font-semibold text-foreground">Traffic</h3>
             <div className="flex items-center gap-1.5 text-label-sm">
               <span className="text-muted-foreground">{total.toLocaleString()} total</span>
               <span className={`flex items-center gap-0.5 font-medium ${isUp ? 'text-success' : 'text-error'}`}>
@@ -175,10 +175,8 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
         </div>
       )}
 
-      {/* Two-column layout: chart + audience */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart — takes 2/3 */}
-        <div className="lg:col-span-2 h-56">
+      {/* Chart */}
+      <div className="h-56">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
@@ -205,13 +203,14 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
                   }}
                 />
                 {mode === 'all' ? (
-                  <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2.5}
+                  <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2.5} isAnimationActive={true} animationDuration={800}
                     dot={{ r: 3, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
                     activeDot={{ r: 5, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
                 ) : (
                   platformBreakdown.map((p, i) => (
                     <Line key={p.name} type="monotone" dataKey={p.name} stroke={platformColors[i]}
-                      strokeWidth={2} dot={{ r: 2, fill: platformColors[i], strokeWidth: 0 }}
+                      strokeWidth={2} isAnimationActive={true} animationDuration={800}
+                      dot={{ r: 2, fill: platformColors[i], strokeWidth: 0 }}
                       activeDot={{ r: 4, fill: platformColors[i], stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
                   ))
                 )}
@@ -220,12 +219,6 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
           )}
-        </div>
-
-        {/* Audience breakdown — takes 1/3 */}
-        <div className="lg:border-l lg:border-outline/10 lg:pl-6">
-          <p className="text-label-sm font-medium text-muted-foreground mb-3">Audience</p>
-          <PlatformBreakdown agents={agents} />
         </div>
       </div>
     </Card>
