@@ -209,7 +209,11 @@ function addUrlEncode(opts: CurlOptions, value: string) {
   if (!opts.queryParams) opts.queryParams = {};
   const eqIdx = value.indexOf('=');
   if (eqIdx > -1) {
-    opts.queryParams[value.substring(0, eqIdx)] = decodeURIComponent(value.substring(eqIdx + 1));
+    const key = value.substring(0, eqIdx);
+    const raw = value.substring(eqIdx + 1);
+    // Safe decode — handles newlines and special chars that break decodeURIComponent
+    try { opts.queryParams[key] = decodeURIComponent(raw); }
+    catch { opts.queryParams[key] = raw; }
   }
   if (!opts.method) opts.method = 'POST';
 }
