@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, User, Trash2, Sparkles } from 'lucide-react';
+import Markdown from 'react-markdown';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchMessages, sendMessage, subscribeToMessages, deleteMessage, deleteMessageAdmin, type ChatMessage } from '@/lib/supabase';
 import { modalBackdrop } from '@/lib/motion-presets';
@@ -150,10 +151,14 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                     <User className="w-4 h-4 text-primary-foreground" />
                   )}
                 </div>
-                <div className={`max-w-[75%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+                <div className={`max-w-[80%] ${msg.role === 'user' ? 'text-right' : ''}`}>
                   <p className="text-label-sm text-muted-foreground mb-1">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
-                  <div className={`inline-block px-4 py-2 rounded-2xl text-body-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
-                    {msg.content}
+                  <div className={`inline-block px-4 py-2 rounded-2xl text-body-sm text-left ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
+                    {msg.role === 'assistant' ? (
+                      <Markdown className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-pre:bg-background/50 prose-pre:rounded-lg prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
+                        {msg.content}
+                      </Markdown>
+                    ) : msg.content}
                   </div>
                 </div>
               </div>
