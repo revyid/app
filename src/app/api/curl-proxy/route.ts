@@ -75,8 +75,13 @@ export async function POST(req: NextRequest) {
     // Handle multipart form data
     if (Array.isArray(finalBody)) {
       const fd = new FormData();
-      finalBody.forEach(([k, v]: [string, string]) => fd.append(k, v));
+      finalBody.forEach(([k, v]: [string, string]) => {
+        // Skip @file references — can't resolve files from curl command
+        if (!v.startsWith('@')) fd.append(k, v);
+      });
       finalBody = fd;
+      // Remove Content-Type so browser sets multipart/form-data with boundary
+      rh.delete('Content-Type');
     }
 
     const controller = new AbortController();

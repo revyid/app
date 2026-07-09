@@ -219,7 +219,14 @@ function addUrlEncode(opts: CurlOptions, value: string) {
 
 function addForm(opts: CurlOptions, value: string) {
   if (!opts.body || !Array.isArray(opts.body)) opts.body = [];
-  opts.body.push([value.split('=')[0], value.includes('=') ? value.split('=').slice(1).join('=') : '']);
+  const eqIdx = value.indexOf('=');
+  if (eqIdx > -1) {
+    const key = value.substring(0, eqIdx);
+    const val = value.substring(eqIdx + 1);
+    opts.body.push([key, val]);
+  } else {
+    opts.body.push([value, '']);
+  }
   if (!opts.method) opts.method = 'POST';
 }
 
