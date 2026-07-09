@@ -37,3 +37,70 @@ export async function GET(request: Request) {
 
   return NextResponse.json({ urls });
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { url: originalUrl, slug: customSlug, token } = body;
+
+    if (!originalUrl) {
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    }
+
+    const admin = getAdmin();
+
+    // Validate session
+    const { data: session } = await admin
+      .from('app_sessions')
+      .select('user_id')
+      .eq('token', token)
+      .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
+    // Generate slug if not provided
+    let slug = customSlug;
+    if (!slug) {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      slug = Array.from({ length: 7 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    // Check if slug already exists
+    const { data: existing } = await admin
+      .from('short_urls')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    if (existing) {
+      return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+    }
+
+    // Create short URL
+    const { data, error } = await admin
+      .from('short_urls')
+      .insert({
+        slug,
+        original_url: originalUrl,
+        user_id: session.user_id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      short_url: `https://revy.my.id/s/${slug}`,
+      slug,
+      id: data.id,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
