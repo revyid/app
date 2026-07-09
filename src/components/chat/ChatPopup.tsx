@@ -72,13 +72,16 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     if (aiMode) {
       const userMsg = newMessage.trim();
       setNewMessage('');
-      setAiMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+
+      // Build messages array with current state + new message
+      const allMessages = [...aiMessages, { role: 'user' as const, content: userMsg }];
+      setAiMessages(allMessages);
 
       try {
         const res = await fetch('/api/ai-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [...aiMessages, { role: 'user', content: userMsg }] }),
+          body: JSON.stringify({ messages: allMessages }),
         });
         const data = await res.json();
         if (data.message) {

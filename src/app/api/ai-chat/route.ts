@@ -280,19 +280,24 @@ export async function POST(req: NextRequest) {
     console.log(`[AI Chat] Request from ${ip} | Message: "${lastMsg.slice(0, 100)}"`);
 
     if (!Array.isArray(messages) || messages.length === 0) {
+      console.log('[AI Chat] Invalid messages:', typeof messages, messages?.length);
       return NextResponse.json({ error: 'Invalid messages' }, { status: 400, headers: cors });
     }
 
     if (messages.length > 20) {
+      console.log('[AI Chat] Too many messages:', messages.length);
       return NextResponse.json({ error: 'Conversation too long' }, { status: 400, headers: cors });
     }
 
-    for (const msg of messages) {
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
       if (!msg.role || !msg.content || typeof msg.content !== 'string') {
-        return NextResponse.json({ error: 'Invalid format' }, { status: 400, headers: cors });
+        console.log('[AI Chat] Invalid msg at', i, ':', JSON.stringify(msg));
+        return NextResponse.json({ error: `Invalid format at message ${i}` }, { status: 400, headers: cors });
       }
       if (msg.content.length > 500) {
-        return NextResponse.json({ error: 'Message too long' }, { status: 400, headers: cors });
+        console.log('[AI Chat] Message too long at', i, ':', msg.content.length);
+        return NextResponse.json({ error: `Message ${i} too long (${msg.content.length} chars)` }, { status: 400, headers: cors });
       }
     }
 
