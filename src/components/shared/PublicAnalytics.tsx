@@ -220,7 +220,6 @@ function TrafficChart({ dailyViews, hourlyViews, agents }: { dailyViews: any[]; 
             <div className="h-full flex items-center justify-center text-muted-foreground text-body-sm">No data yet</div>
           )}
         </div>
-      </div>
     </Card>
   );
 }
