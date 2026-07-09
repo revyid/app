@@ -12,8 +12,8 @@ export const NAV: NavItem[] = [
     { href: '/docs/guide', label: 'Guide', icon: BookOpen },
     { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
       { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
+      { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
     ]},
-    { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
     { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
     { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
   ]},
