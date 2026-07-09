@@ -78,7 +78,8 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.NVIDIA_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'AI not configured' }, { status: 500, headers: cors });
+      console.error('[AI Chat] NVIDIA_API_KEY not set in environment');
+      return NextResponse.json({ error: 'AI not configured', detail: 'NVIDIA_API_KEY missing' }, { status: 500, headers: cors });
     }
 
     const response = await fetch(NVIDIA_API_URL, {
@@ -101,8 +102,8 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
-      console.error('NVIDIA API error:', response.status, errText);
-      return NextResponse.json({ error: 'AI service unavailable' }, { status: 502, headers: cors });
+      console.error('[AI Chat] NVIDIA API error:', response.status, errText);
+      return NextResponse.json({ error: 'AI service unavailable', status: response.status, detail: errText.slice(0, 200) }, { status: 502, headers: cors });
     }
 
     const data = await response.json();

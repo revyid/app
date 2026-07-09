@@ -111,11 +111,9 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
             className={`fixed bottom-0 left-0 right-0 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60] ${side === 'left' ? 'sm:left-4' : 'sm:right-4 sm:left-auto'}`}>
 
             <BottomSheet onClose={onClose}>
-              {/* Orbit glow ring */}
+              {/* Static glow — wide, breathing */}
               {aiMode && (
-                <div className="absolute -inset-1 rounded-[32px] pointer-events-none z-0 overflow-visible">
-                  <div className="absolute inset-0 rounded-[32px] orbit-glow-ring" />
-                </div>
+                <div className="absolute -inset-2 rounded-[32px] pointer-events-none z-0 ai-glow" />
               )}
 
               <div className={`bg-surface rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 border overflow-hidden noise-grain relative z-10 ${aiMode ? 'border-primary/40' : 'border-outline/20'}`}>
