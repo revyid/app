@@ -1,6 +1,6 @@
 -- Re-grant permissions after function recreation
 GRANT EXECUTE ON FUNCTION public.list_api_keys(text) TO anon;
-GRANT EXECUTE ON FUNCTION public.create_api_key(text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.create_api_key(text, text, text) TO anon;
 GRANT EXECUTE ON FUNCTION public.list_short_urls(text) TO anon;
 GRANT EXECUTE ON FUNCTION public.create_short_url(text, text, text, text) TO anon;
 
