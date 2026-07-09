@@ -1,4 +1,4 @@
-﻿-- Re-grant permissions after function recreation
+-- Re-grant permissions after function recreation
 GRANT EXECUTE ON FUNCTION public.list_api_keys(text) TO anon;
 GRANT EXECUTE ON FUNCTION public.create_api_key(text, text) TO anon;
 GRANT EXECUTE ON FUNCTION public.list_short_urls(text) TO anon;
@@ -7,7 +7,7 @@ GRANT EXECUTE ON FUNCTION public.create_short_url(text, text, text, text) TO ano
 -- Fix: recreate list_api_keys with correct return type
 DROP FUNCTION IF EXISTS public.list_api_keys(text);
 CREATE OR REPLACE FUNCTION public.list_api_keys(p_token text)
-RETURNS json LANGUAGE plpgsql SECURITY DEFINER AS $
+RETURNS json LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   v_session app_sessions%rowtype;
 BEGIN
@@ -29,5 +29,5 @@ BEGIN
     ORDER BY k.created_at DESC
   ));
 END;
-$;
+$$;
 GRANT EXECUTE ON FUNCTION public.list_api_keys(text) TO anon;
