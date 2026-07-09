@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight, Home, LayoutDashboard, Key } from 'lucide-react';
+import { BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle, ChevronRight, Home, LayoutDashboard, Key, Shield, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNavDrawer, type NavItem } from '@/components/layout/MobileNavDrawer';
@@ -26,6 +26,8 @@ const NAV: NavItem[] = [
     { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
     { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
     { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
+    { href: '/docs/privacy', label: 'Privacy Policy', icon: Shield },
+    { href: '/docs/terms', label: 'Terms of Service', icon: FileText },
   ]},
 ];
 
