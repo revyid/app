@@ -16,6 +16,7 @@ import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { trackEvent } from '@/lib/auth';
+import { Footer } from '@/components/layout/Footer';
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { SocialLinks } from '@/components/sections/SocialLinks';
@@ -117,6 +118,8 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             </ErrorBoundary>
           </main>
         </div>
+
+        <Footer />
       </div>
 
       {isCommandPaletteOpen && (

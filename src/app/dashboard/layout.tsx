@@ -5,33 +5,18 @@ export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Key, Home, ChevronRight, BookOpen, Globe, Link2, Code as CodeIcon, PlayCircle } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { MobileNavDrawer, type NavItem } from '@/components/layout/MobileNavDrawer';
+import { MobileNavDrawer } from '@/components/layout/MobileNavDrawer';
 import { PageTransition } from '@/components/shared/PageTransition';
 import { ChatPopup } from '@/components/chat/ChatPopup';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
 import { AdminPanel } from '@/components/admin/AdminPanel';
+import { Footer } from '@/components/layout/Footer';
 import { createPortal } from 'react-dom';
+import { NAV } from '@/lib/nav';
 
-const NAV: NavItem[] = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, children: [
-    { href: '/dashboard/api-keys', label: 'API Keys', icon: Key },
-    { href: '/dashboard/shorten', label: 'URL Shortener', icon: Link2 },
-  ]},
-  { href: '/docs', label: 'Docs', icon: BookOpen, children: [
-    { href: '/docs', label: 'Overview', icon: BookOpen },
-    { href: '/docs/api-reference', label: 'API Reference', icon: Globe, children: [
-      { href: '/docs/api-reference/github', label: 'GitHub API', icon: Globe },
-      { href: '/docs/api-reference/shorten', label: 'URL Shortener', icon: Link2 },
-    ]},
-    { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
-    { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
-  ]},
-];
-
-function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string }) {
+function DesktopNavItem({ item, pathname }: { item: any; pathname: string }) {
   const [open, setOpen] = useState(true);
   const Icon = item.icon;
   const hasChildren = !!item.children?.length;
@@ -56,7 +41,7 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
       </div>
       {hasChildren && open && (
         <div className="ml-3 border-l border-outline/10 pl-2 mt-0.5">
-          {item.children!.map(child => (
+          {item.children!.map((child: any) => (
             <DesktopNavItem key={child.href} item={child} pathname={pathname} />
           ))}
         </div>
@@ -77,26 +62,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar
-        showFooter
-        showMobile={false}
-        onChatClick={() => setIsChatOpen(true)}
-        onProfileClick={() => setIsProfileOpen(true)}
-        onAdminClick={() => setIsAdminOpen(true)}
-      >
-        <nav className="space-y-0.5">
-          {NAV.map(item => (
-            <DesktopNavItem key={item.href} item={item} pathname={pathname} />
-          ))}
-        </nav>
-      </Sidebar>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex flex-1">
+        <Sidebar
+          showFooter
+          showMobile={false}
+          onChatClick={() => setIsChatOpen(true)}
+          onProfileClick={() => setIsProfileOpen(true)}
+          onAdminClick={() => setIsAdminOpen(true)}
+        >
+          <nav className="space-y-0.5">
+            {NAV.map(item => (
+              <DesktopNavItem key={item.href} item={item} pathname={pathname} />
+            ))}
+          </nav>
+        </Sidebar>
 
-      <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
-        <PageTransition>{children}</PageTransition>
-      </main>
+        <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24">
+          <PageTransition>{children}</PageTransition>
+        </main>
+      </div>
 
-      {/* Mobile floating nav */}
+      <Footer />
+
       <MobileNavDrawer
         nav={NAV}
         onChatClick={() => setIsChatOpen(true)}
