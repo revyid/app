@@ -274,8 +274,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { messages } = await req.json();
-    const lastMsg = messages[messages.length - 1]?.content || '';
+    const body = await req.json().catch(e => {
+      console.error('[AI Chat] Failed to parse body:', e);
+      return null;
+    });
+
+    if (!body) {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400, headers: cors });
+    }
+
+    console.log('[AI Chat] Body keys:', Object.keys(body), 'messages count:', body.messages?.length);
+
+    const { messages } = body;
+    const lastMsg = messages?.[messages.length - 1]?.content || '';
 
     console.log(`[AI Chat] Request from ${ip} | Message: "${lastMsg.slice(0, 100)}"`);
 
