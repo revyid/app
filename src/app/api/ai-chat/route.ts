@@ -256,30 +256,6 @@ export async function OPTIONS(request: Request) {
   return new NextResponse(null, { status: 204, headers: getCorsHeaders(origin) });
 }
 
-// Detect which page the user is asking about
-function detectPageQuery(message: string): string | null {
-  const lower = message.toLowerCase();
-  const pageMap: [string[], string][] = [
-    [['github api', 'github endpoint', 'github proxy', '/api/github'], '/docs/api-reference/github'],
-    [['url shortener', 'shorten', 'short url', 'shorten endpoint'], '/docs/api-reference/shorten'],
-    [['sandbox', 'code sandbox', 'run code'], '/docs/sandbox'],
-    [['curl-ts', 'curlts', 'curl parser'], '/docs/curl-ts'],
-    [['guide', 'getting started', 'how to use', 'tutorial'], '/docs/guide'],
-    [['api reference', 'api docs', 'endpoints'], '/docs/api-reference'],
-    [['privacy', 'privacy policy', 'data policy'], '/privacy'],
-    [['terms', 'terms of service', 'tos', 'conditions'], '/terms'],
-    [['dashboard', 'api keys', 'manage keys'], '/dashboard'],
-    [['docs', 'documentation', 'documentation'], '/docs'],
-  ];
-
-  for (const [keywords, path] of pageMap) {
-    if (keywords.some(kw => lower.includes(kw))) {
-      return path;
-    }
-  }
-  return null;
-}
-
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || '';
   const cors = getCorsHeaders(origin);
