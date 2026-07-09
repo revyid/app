@@ -67,7 +67,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, aiMessages]);
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
@@ -117,7 +117,14 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
             className={`fixed bottom-0 left-0 right-0 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60] ${side === 'left' ? 'sm:left-4' : 'sm:right-4 sm:left-auto'}`}>
 
             <BottomSheet onClose={onClose}>
-              <div className="bg-surface rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 border border-outline/20 overflow-hidden noise-grain">
+              {aiMode && (
+                <div className="absolute -inset-[2px] rounded-[30px] overflow-hidden pointer-events-none">
+                  <div className="absolute inset-0 animate-orbit-glow" style={{
+                    background: 'conic-gradient(from 0deg, transparent 0%, hsl(var(--primary)) 25%, transparent 50%, hsl(var(--primary)) 75%, transparent 100%)',
+                  }} />
+                </div>
+              )}
+              <div className={`bg-surface rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 border overflow-hidden noise-grain relative z-10 ${aiMode ? 'border-primary/30' : 'border-outline/20'}`}>
                 <div className="pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing"><div className="sheet-handle" /></div>
 
                 <div className="flex items-center justify-between px-5 py-3 border-b border-outline/20">
@@ -219,8 +226,8 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                           placeholder={aiMode ? "Ask AI anything..." : "Type a message..."} aria-label="Type a message"
                           className={`flex-1 px-4 py-3 bg-surface-variant border rounded-full text-body-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 transition-all duration-150 ${aiMode ? 'border-purple-500/30 focus:ring-purple-500/30' : 'border-outline/30 focus:ring-primary/30'}`} />
                         <IconButton onClick={handleSend} disabled={!newMessage.trim() || isLoading} variant="filled"
-                          className={`rounded-full w-12 h-12 ${aiMode ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' : ''}`}>
-                          <Send className="w-5 h-5 ml-1" />
+                          className={`rounded-full w-12 h-12 flex items-center justify-center ${aiMode ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' : ''}`}>
+                          <Send className="w-5 h-5" />
                         </IconButton>
                       </div>
                       {aiMode && (

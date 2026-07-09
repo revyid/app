@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || '';
   const cors = getCorsHeaders(origin);
 
-  // CORS check
-  if (!ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
+  // CORS check — allow same-origin (no origin header) or explicit allowed origins
+  if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: cors });
   }
 
