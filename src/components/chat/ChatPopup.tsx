@@ -69,6 +69,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
   const fetchCurrentPage = async (): Promise<string> => {
     try {
       const url = window.location.href;
+      console.log('[AI Chat] Fetching current page:', url);
       const res = await fetch(url);
       const html = await res.text();
 
@@ -90,8 +91,10 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
         text = text.slice(0, 2000) + '...';
       }
 
+      console.log('[AI Chat] Page content:', text.length, 'chars');
       return `[Current page: ${url}]\n${text}`;
-    } catch {
+    } catch (err) {
+      console.error('[AI Chat] Failed to fetch page:', err);
       return '';
     }
   };

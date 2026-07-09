@@ -208,6 +208,57 @@ export async function OPTIONS(request: Request) {
   return new NextResponse(null, { status: 204, headers: getCorsHeaders(origin) });
 }
 
+// Fetch page content from revy.my.id
+async function fetchPageContent(path: string): Promise<string> {
+  try {
+    const url = `https://revy.my.id${path}`;
+    console.log(`[AI Chat] Fetching page: ${url}`);
+    const res = await fetch(url, { headers: { 'User-Agent': 'RevyAI/1.0' } });
+    if (!res.ok) {
+      console.log(`[AI Chat] Fetch failed: ${res.status}`);
+      return '';
+    }
+    const html = await res.text();
+
+    // Extract text from HTML
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('script, style, nav, footer, header, [aria-hidden]').forEach(el => el.remove());
+    const main = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.body;
+    let text = main?.textContent?.trim() || '';
+    text = text.replace(/\s+/g, ' ').trim();
+
+    console.log(`[AI Chat] Fetched ${text.length} chars from ${path}`);
+    return text.slice(0, 2000);
+  } catch (err) {
+    console.error(`[AI Chat] Fetch error for ${path}:`, err);
+    return '';
+  }
+}
+
+// Detect which page the user is asking about
+function detectPageQuery(message: string): string | null {
+  const lower = message.toLowerCase();
+  const pageMap: [string[], string][] = [
+    [['github api', 'github endpoint', 'github proxy', '/api/github'], '/docs/api-reference/github'],
+    [['url shortener', 'shorten', 'short url', 'shorten endpoint'], '/docs/api-reference/shorten'],
+    [['sandbox', 'code sandbox', 'run code'], '/docs/sandbox'],
+    [['curl-ts', 'curlts', 'curl parser'], '/docs/curl-ts'],
+    [['guide', 'getting started', 'how to use', 'tutorial'], '/docs/guide'],
+    [['api reference', 'api docs', 'endpoints'], '/docs/api-reference'],
+    [['privacy', 'privacy policy', 'data policy'], '/privacy'],
+    [['terms', 'terms of service', 'tos', 'conditions'], '/terms'],
+    [['dashboard', 'api keys', 'manage keys'], '/dashboard'],
+    [['docs', 'documentation', 'documentation'], '/docs'],
+  ];
+
+  for (const [keywords, path] of pageMap) {
+    if (keywords.some(kw => lower.includes(kw))) {
+      return path;
+    }
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || '';
   const cors = getCorsHeaders(origin);
@@ -227,6 +278,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { messages, pageContext } = await req.json();
+    const lastMsg = messages[messages.length - 1]?.content || '';
+
+    console.log(`[AI Chat] Request from ${ip} | Message: "${lastMsg.slice(0, 100)}"`);
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Invalid messages' }, { status: 400, headers: cors });
@@ -250,10 +304,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 500, headers: cors });
     }
 
-    // Build system prompt with realtime page context
-    const pageSection = pageContext
-      ? `\n===REALTIME PAGE CONTENT (user's current page)===\n${pageContext.slice(0, 2000)}\n===END PAGE===`
-      : '';
+    // Build page context sections
+    let pageSections = '';
+
+    // 1. User's current page from browser
+    if (pageContext) {
+      pageSections += `\n===USER'S CURRENT PAGE===\n${pageContext.slice(0, 2000)}\n===END===`;
+      console.log(`[AI Chat] Browser page context: ${pageContext.length} chars`);
+    }
+
+    // 2. Auto-fetch relevant page if user asks about specific topic
+    const detectedPage = detectPageQuery(lastMsg);
+    if (detectedPage) {
+      console.log(`[AI Chat] Auto-detected page query: ${detectedPage}`);
+      const fetchedContent = await fetchPageContent(detectedPage);
+      if (fetchedContent) {
+        pageSections += `\n===PAGE: ${detectedPage}===\n${fetchedContent}\n===END===`;
+      }
+    }
 
     const response = await fetch(NVIDIA_API_URL, {
       method: 'POST',
@@ -264,7 +332,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'meta/llama-3.1-8b-instruct',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT + pageSection },
+          { role: 'system', content: SYSTEM_PROMPT + pageSections },
           ...messages.slice(-10),
         ],
         temperature: 0.7,
@@ -281,6 +349,8 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
     let aiMessage = data.choices?.[0]?.message?.content || 'Sorry, no response.';
+
+    console.log(`[AI Chat] Response: "${aiMessage.slice(0, 150)}..."`);
 
     // Post-process: detect prompt leaks
     const leakPatterns = ['system prompt', 'my instructions', 'i was told', 'my rules', 'i am programmed', 'i was configured'];
