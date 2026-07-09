@@ -25,6 +25,7 @@ const NAV: NavItem[] = [
     ]},
     { href: '/docs/sandbox', label: 'Sandbox', icon: PlayCircle },
     { href: '/docs/curl-ts', label: 'curl-ts', icon: CodeIcon },
+    { href: '/dashboard/shorten', label: 'URL Shortener (App)', icon: Link2 },
   ]},
 ];
 

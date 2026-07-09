@@ -16,6 +16,7 @@ interface ShortUrl {
   original_url: string;
   clicks: number;
   created_at: string;
+  expires_at?: string | null;
 }
 
 export default function ShortenPage() {
@@ -24,6 +25,15 @@ export default function ShortenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Create state
+  const [showCreate, setShowCreate] = useState(false);
+  const [createUrl, setCreateUrl] = useState('');
+  const [createSlug, setCreateSlug] = useState('');
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createdShort, setCreatedShort] = useState('');
+  const [copiedCreated, setCopiedCreated] = useState(false);
 
   // Edit state
   const [editingUrl, setEditingUrl] = useState<ShortUrl | null>(null);
@@ -98,6 +108,33 @@ export default function ShortenPage() {
     }
   };
 
+  const handleCreate = async () => {
+    if (!createUrl.trim()) return;
+    setCreateSaving(true);
+    setCreateError('');
+    try {
+      const token = localStorage.getItem('app_session_token') ?? '';
+      const res = await fetch('/api/short-urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: createUrl.trim(), slug: createSlug.trim() || undefined, token }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setCreateError(data.error);
+      } else {
+        setCreatedShort(data.short_url || `https://revy.my.id/s/${data.slug}`);
+        setCreateUrl('');
+        setCreateSlug('');
+        setShowCreate(false);
+        fetchUrls();
+      }
+    } catch (e: any) {
+      setCreateError(e.message);
+    }
+    setCreateSaving(false);
+  };
+
   const handleDelete = async () => {
     if (!deletingUrl) return;
     const success = await deleteShortUrl(deletingUrl.slug);
@@ -117,9 +154,18 @@ export default function ShortenPage() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants}>
-        <h1 className="text-2xl font-bold text-foreground">URL Shortener</h1>
-        <p className="text-body-sm text-muted-foreground mt-1">Manage your shortened URLs and track clicks.</p>
+      <motion.div variants={itemVariants} className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">URL Shortener</h1>
+          <p className="text-body-sm text-muted-foreground mt-1">Manage your shortened URLs and track clicks.</p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          onClick={() => setShowCreate(true)}
+          className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Create URL
+        </motion.button>
       </motion.div>
 
       {/* Stats */}
@@ -187,6 +233,7 @@ export default function ShortenPage() {
                         </p>
                         <p className="text-label-sm text-muted-foreground/60 mt-0.5">
                           {url.clicks} clicks · {formatDate(url.created_at)}
+                          {url.expires_at && <span className="ml-2 text-warning">· expires {formatDate(url.expires_at)}</span>}
                         </p>
                       </div>
                     </div>
@@ -281,6 +328,60 @@ export default function ShortenPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeletingUrl(null)}
       />
+
+      {/* Created URL Alert */}
+      <AnimatePresence>
+        {createdShort && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }} className="fixed top-4 right-4 z-[70] p-4 bg-success/10 border border-success/30 rounded-2xl space-y-2 max-w-sm">
+            <p className="text-body-sm text-success font-medium">URL created!</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-sm font-mono text-foreground break-all">{createdShort}</code>
+              <button onClick={() => { navigator.clipboard.writeText(createdShort); setCopiedCreated(true); setTimeout(() => setCopiedCreated(false), 2000); }}
+                className="p-1 rounded hover:bg-surface-variant transition-colors text-muted-foreground">
+                {copiedCreated ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <button onClick={() => setCreatedShort('')} className="text-xs text-muted-foreground hover:text-foreground">Dismiss</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create URL Popup */}
+      <AnimatePresence>
+        {showCreate && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="relative w-full max-w-md bg-surface rounded-2xl border border-outline/20 shadow-elevation-5 p-6 space-y-4">
+              <h3 className="text-title-sm font-semibold text-foreground">Create Short URL</h3>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Original URL</label>
+                  <input type="url" value={createUrl} onChange={e => setCreateUrl(e.target.value)}
+                    placeholder="https://example.com/long-url" autoFocus
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Slug (optional)</label>
+                  <input type="text" value={createSlug} onChange={e => setCreateSlug(e.target.value)}
+                    placeholder="auto-generated if empty"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+              </div>
+              {createError && <p className="text-xs text-destructive">{createError}</p>}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outlined" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleCreate} disabled={createSaving || !createUrl.trim()}>
+                  {createSaving ? 'Creating…' : 'Create'}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Error */}
       <AnimatePresence>

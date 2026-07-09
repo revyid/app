@@ -497,12 +497,12 @@ export async function deleteTheme(themeId: string): Promise<{ error?: string }> 
 
 // ─── API Keys ─────────────────────────────────────────────────────
 
-export async function createApiKey(name: string): Promise<{ key?: string; id?: string; key_prefix?: string; error?: string }> {
+export async function createApiKey(name: string, expiresIn?: string): Promise<{ key?: string; id?: string; key_prefix?: string; error?: string }> {
   const token = getStoredToken();
   if (!token) return { error: 'Not authenticated' };
   try {
     const client = await getSupabase();
-    const { data, error } = await client.rpc('create_api_key', { p_token: token, p_name: name });
+    const { data, error } = await client.rpc('create_api_key', { p_token: token, p_name: name, p_expires_in: expiresIn || null });
     if (error) return { error: handleAuthError(error, 'Failed to create API key') };
     if (data?.error) return { error: data.error };
     return { key: data.key, id: data.id, key_prefix: data.key_prefix };
