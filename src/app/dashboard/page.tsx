@@ -292,15 +292,15 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        <Link href="/docs" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-secondary/40 hover:bg-surface-container/50 transition-all">
+        <Link href="/dashboard/shorten" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-secondary/40 hover:bg-surface-container/50 transition-all">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center">
-                <ExternalLink className="w-6 h-6 text-secondary" />
+                <Link2 className="w-6 h-6 text-secondary" />
               </div>
               <div>
-                <h3 className="text-title-sm font-semibold text-foreground">API Docs</h3>
-                <p className="text-body-sm text-muted-foreground">View endpoints and examples</p>
+                <h3 className="text-title-sm font-semibold text-foreground">URL Shortener</h3>
+                <p className="text-body-sm text-muted-foreground">Create and manage short URLs</p>
               </div>
             </div>
             <motion.div whileHover={{ x: 4 }} transition={SPRING_BOUNCY}>
@@ -309,139 +309,6 @@ export default function DashboardPage() {
           </div>
         </Link>
       </motion.div>
-
-      {/* Short URLs */}
-      <motion.div variants={itemVariants}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-title-sm font-semibold text-foreground">Short URLs</h2>
-          <Link href="/docs/api-reference/shorten" className="text-label-sm text-primary hover:underline">API Docs</Link>
-        </div>
-
-        {shortUrls.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="py-10 text-center rounded-2xl border border-outline/15 bg-surface-variant/20"
-          >
-            <Link2 className="w-8 h-8 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="text-body-sm text-muted-foreground">No short URLs yet</p>
-          </motion.div>
-        ) : (
-          <div className="rounded-2xl border border-outline/20 overflow-hidden">
-            {/* Desktop table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="bg-surface-variant/50 border-b border-outline/15">
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Short URL</th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">Original</th>
-                    <th className="text-right py-3 px-4 text-muted-foreground font-medium">Clicks</th>
-                    <th className="text-right py-3 px-4 text-muted-foreground font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <AnimatePresence initial={false}>
-                    {shortUrls.map(url => (
-                      <motion.tr
-                        key={url.id}
-                        layout
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="border-b border-outline/10 last:border-0 hover:bg-surface-variant/30 transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <code className="text-primary font-mono text-[12px]">/s/{url.slug}</code>
-                            <button onClick={() => handleCopy(url.short_url, url.slug)}
-                              className="p-1 rounded hover:bg-surface-variant transition-colors">
-                              {copiedSlug === url.slug
-                                ? <Check className="w-3 h-3 text-success" />
-                                : <Copy className="w-3 h-3 text-muted-foreground" />}
-                            </button>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground max-w-[200px]">
-                          <span className="truncate block">{url.original_url}</span>
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-foreground">{url.clicks}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => setEditingUrl(url)}
-                              className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors">
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(url.slug)}
-                              disabled={deletingSlug === url.slug}
-                              className="p-1.5 rounded-lg hover:bg-error/10 text-muted-foreground hover:text-error transition-colors disabled:opacity-50"
-                            >
-                              {deletingSlug === url.slug
-                                ? <span className="animate-spin w-3.5 h-3.5 border-2 border-error/30 border-t-error rounded-full inline-block" />
-                                : <Trash2 className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile cards */}
-            <div className="sm:hidden divide-y divide-outline/10">
-              <AnimatePresence initial={false}>
-                {shortUrls.map(url => (
-                  <motion.div
-                    key={url.id}
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="p-4 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <code className="text-primary font-mono text-[12px]">/s/{url.slug}</code>
-                        <button onClick={() => handleCopy(url.short_url, url.slug)} className="p-1 rounded hover:bg-surface-variant transition-colors">
-                          {copiedSlug === url.slug ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-                        </button>
-                      </div>
-                      <span className="text-label-sm text-muted-foreground font-mono">{url.clicks} clicks</span>
-                    </div>
-                    <p className="text-label-sm text-muted-foreground truncate">{url.original_url}</p>
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={() => setEditingUrl(url)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm bg-primary/10 text-primary hover:bg-primary/15 transition-colors">
-                        <Pencil className="w-3 h-3" /> Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(url.slug)}
-                        disabled={deletingSlug === url.slug}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm bg-error/10 text-error hover:bg-error/15 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="w-3 h-3" /> Delete
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Edit modal */}
-      <AnimatePresence>
-        {editingUrl && (
-          <EditUrlModal
-            url={editingUrl}
-            onSave={handleEditSave}
-            onClose={() => setEditingUrl(null)}
-          />
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }

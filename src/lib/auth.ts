@@ -511,7 +511,7 @@ export async function createApiKey(name: string, expiresIn?: string): Promise<{ 
   }
 }
 
-export async function listApiKeys(): Promise<Array<{ id: string; name: string; key_prefix: string; rate_limit: number; is_active: boolean; created_at: string; last_used_at: string }>> {
+export async function listApiKeys(): Promise<Array<{ id: string; name: string; key_prefix: string; rate_limit: number; is_active: boolean; created_at: string; last_used_at: string; expires_at?: string | null }>> {
   const token = getStoredToken();
   if (!token) return [];
   try {
