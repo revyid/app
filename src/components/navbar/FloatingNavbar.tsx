@@ -165,7 +165,12 @@ export const FloatingNavbar = memo(function FloatingNavbar({
           <button onClick={onProfileClick} aria-label="Profile"
             className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-150 flex-shrink-0 ml-0.5">
             {isSignedIn && user ? (
-              <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`}
+              <motion.img
+                key={user.avatar_url || user.display_name}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.display_name || user.email || 'U')}&background=random`}
                 alt={user.display_name || 'User'} referrerPolicy="no-referrer"
                 className="w-full h-full object-cover" />
             ) : (

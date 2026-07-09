@@ -179,21 +179,21 @@ function ConsoleOutput({ lines }: { lines: string[] }) {
   useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight; }, [lines]);
   return (
     <div className="flex-1 min-h-[200px] flex flex-col">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#13141c] border-b border-outline/10 shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-outline/10 shrink-0">
         <span className="text-label-sm text-muted-foreground/60 font-mono">console</span>
       </div>
-      <div ref={ref} className="flex-1 overflow-y-auto p-3 bg-[#1a1b26]">
+      <div ref={ref} className="flex-1 overflow-y-auto p-3 bg-background">
         {lines.length === 0 ? (
           <div className="text-[13px] font-mono text-muted-foreground/30">Output appears here...</div>
         ) : (
-          <pre className="font-mono text-[13px] leading-relaxed text-[#a9b1d6] whitespace-pre-wrap break-words">
+          <pre className="font-mono text-[13px] leading-relaxed text-foreground whitespace-pre-wrap break-words">
             {lines.filter(l => l !== undefined).map((l, i) => {
               let cls = '';
               const s = l || '';
-              if (s.startsWith('>') || s.startsWith('#') || s.startsWith('*')) cls = 'text-[#7aa2f7]';
-              else if (s.startsWith('< HTTP')) cls = /\s2\d\d\s/.test(s) ? 'text-[#9ece6a]' : 'text-[#f7768e]';
-              else if (s.startsWith('<')) cls = 'text-[#565f89]';
-              else if (s.toLowerCase().startsWith('error') || s.toLowerCase().startsWith('warning') || s.includes('"error"')) cls = 'text-[#f7768e]';
+              if (s.startsWith('>') || s.startsWith('#') || s.startsWith('*')) cls = 'text-primary';
+              else if (s.startsWith('< HTTP')) cls = /\s2\d\d\s/.test(s) ? 'text-green-500' : 'text-red-500';
+              else if (s.startsWith('<')) cls = 'text-muted-foreground';
+              else if (s.toLowerCase().startsWith('error') || s.toLowerCase().startsWith('warning') || s.includes('"error"')) cls = 'text-red-500';
               return <div key={i} className={cls}>{s}</div>;
             })}
           </pre>
@@ -210,7 +210,7 @@ function Editor({ code, setCode, onRun, onReset, running, lang }: {
   useEffect(() => { if (ref.current) { ref.current.style.height = 'auto'; ref.current.style.height = ref.current.scrollHeight + 'px'; } }, [code]);
   return (
     <div className="flex-1 min-h-[200px] flex flex-col border-b md:border-b-0 md:border-r border-outline/20">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#13141c] border-b border-outline/10 shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-outline/10 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-error/80" /><div className="w-2.5 h-2.5 rounded-full bg-warning/80" /><div className="w-2.5 h-2.5 rounded-full bg-success/80" /></div>
           {lang && <span className="text-label-sm text-muted-foreground/50 font-mono ml-1">{lang.toLowerCase()}</span>}
@@ -225,7 +225,7 @@ function Editor({ code, setCode, onRun, onReset, running, lang }: {
         </div>
       </div>
       <textarea ref={ref} value={code} onChange={e => setCode(e.target.value)} spellCheck={false} disabled={running}
-        className="flex-1 w-full p-3 bg-[#1a1b26] text-[#a9b1d6] font-mono text-[13px] leading-relaxed resize-none outline-none disabled:opacity-60" />
+        className="flex-1 w-full p-3 bg-background text-foreground font-mono text-[13px] leading-relaxed resize-none outline-none disabled:opacity-60" />
     </div>
   );
 }
