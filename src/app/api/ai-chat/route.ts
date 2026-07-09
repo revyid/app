@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, pageContext } = await req.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Invalid messages' }, { status: 400, headers: cors });
@@ -250,6 +250,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 500, headers: cors });
     }
 
+    // Build system prompt with realtime page context
+    const pageSection = pageContext
+      ? `\n===REALTIME PAGE CONTENT (user's current page)===\n${pageContext.slice(0, 2000)}\n===END PAGE===`
+      : '';
+
     const response = await fetch(NVIDIA_API_URL, {
       method: 'POST',
       headers: {
@@ -259,7 +264,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'meta/llama-3.1-8b-instruct',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: SYSTEM_PROMPT + pageSection },
           ...messages.slice(-10),
         ],
         temperature: 0.7,
