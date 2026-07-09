@@ -226,7 +226,7 @@ export default function ApiKeysPage() {
         {showCreate && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
+              className="absolute inset-0 bg-black/50" onClick={() => setShowCreate(false)} />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               className="relative w-full max-w-md bg-surface rounded-2xl border border-outline/20 shadow-elevation-5 p-6 space-y-4">
