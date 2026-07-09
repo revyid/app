@@ -155,9 +155,9 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                   <p className="text-label-sm text-muted-foreground mb-1">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
                   <div className={`inline-block px-4 py-2 rounded-2xl text-body-sm text-left ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
                     {msg.role === 'assistant' ? (
-                      <Markdown className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-pre:bg-background/50 prose-pre:rounded-lg prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
-                        {msg.content}
-                      </Markdown>
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-pre:bg-background/50 prose-pre:rounded-lg prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
+                        <Markdown>{msg.content}</Markdown>
+                      </div>
                     ) : msg.content}
                   </div>
                 </div>
