@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'nvidia/nemotron-3-ultra-550b-a55b',
+        model: 'meta/llama-3.1-8b-instruct',
         messages: [
           { role: 'system', content: 'You are Revy, a friendly AI assistant embedded in a portfolio website. Keep responses concise and helpful. Use a casual, friendly tone.' },
           ...messages.slice(-10),
