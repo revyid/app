@@ -88,7 +88,55 @@ async function getPublicPortfolioData(): Promise<string> {
   }
 }
 
-// Complete page knowledge base
+// Fetch page content via Jina AI Reader (free, renders SPA to markdown)
+async function fetchPageViaJina(path: string): Promise<string> {
+  try {
+    const url = `https://r.jina.ai/https://revy.my.id${path}`;
+    console.log(`[AI Chat] Jina fetch: ${url}`);
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'text/markdown',
+        'X-No-Cache': 'true',
+      },
+    });
+    if (!res.ok) {
+      console.log(`[AI Chat] Jina failed: ${res.status}`);
+      return '';
+    }
+    const text = await res.text();
+    console.log(`[AI Chat] Jina got ${text.length} chars from ${path}`);
+    return text.slice(0, 3000);
+  } catch (err) {
+    console.error(`[AI Chat] Jina error:`, err);
+    return '';
+  }
+}
+
+// Detect which page the user is asking about
+function detectPageQuery(message: string): string | null {
+  const lower = message.toLowerCase();
+  const pageMap: [string[], string][] = [
+    [['github api', 'github endpoint', 'github proxy', 'users/', 'repos/'], '/docs/api-reference/github'],
+    [['url shortener', 'shorten', 'short url', 'shorten endpoint', 'create short', 'slug'], '/docs/api-reference/shorten'],
+    [['sandbox', 'code sandbox', 'run code', 'execute code'], '/docs/sandbox'],
+    [['curl-ts', 'curlts', 'curl parser', 'curl command'], '/docs/curl-ts'],
+    [['guide', 'getting started', 'how to use', 'tutorial', 'cara pakai', 'cara pake', 'gimana cara'], '/docs/guide'],
+    [['api reference', 'api docs', 'endpoints', 'documentation'], '/docs/api-reference'],
+    [['privacy', 'privacy policy', 'data policy', 'kebijakan privasi'], '/privacy'],
+    [['terms', 'terms of service', 'tos', 'conditions', 'syarat'], '/terms'],
+    [['dashboard', 'api keys', 'manage keys', 'key management'], '/dashboard'],
+    [['docs', 'dokumentasi'], '/docs'],
+  ];
+
+  for (const [keywords, path] of pageMap) {
+    if (keywords.some(kw => lower.includes(kw))) {
+      return path;
+    }
+  }
+  return null;
+}
+
+// Complete page knowledge base (fallback if Jina fails)
 const PAGE_KNOWLEDGE = `
 === WEBSITE PAGES (revy.my.id) ===
 
@@ -208,33 +256,6 @@ export async function OPTIONS(request: Request) {
   return new NextResponse(null, { status: 204, headers: getCorsHeaders(origin) });
 }
 
-// Fetch page content from revy.my.id
-async function fetchPageContent(path: string): Promise<string> {
-  try {
-    const url = `https://revy.my.id${path}`;
-    console.log(`[AI Chat] Fetching page: ${url}`);
-    const res = await fetch(url, { headers: { 'User-Agent': 'RevyAI/1.0' } });
-    if (!res.ok) {
-      console.log(`[AI Chat] Fetch failed: ${res.status}`);
-      return '';
-    }
-    const html = await res.text();
-
-    // Extract text from HTML
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    doc.querySelectorAll('script, style, nav, footer, header, [aria-hidden]').forEach(el => el.remove());
-    const main = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.body;
-    let text = main?.textContent?.trim() || '';
-    text = text.replace(/\s+/g, ' ').trim();
-
-    console.log(`[AI Chat] Fetched ${text.length} chars from ${path}`);
-    return text.slice(0, 2000);
-  } catch (err) {
-    console.error(`[AI Chat] Fetch error for ${path}:`, err);
-    return '';
-  }
-}
-
 // Detect which page the user is asking about
 function detectPageQuery(message: string): string | null {
   const lower = message.toLowerCase();
@@ -304,6 +325,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI not configured' }, { status: 500, headers: cors });
     }
 
+    // Detect if user is asking about a specific page, then fetch it via Jina
+    let fetchedContent = '';
+    const detectedPage = detectPageQuery(lastMsg);
+    if (detectedPage) {
+      console.log(`[AI Chat] Detected page: ${detectedPage}`);
+      fetchedContent = await fetchPageViaJina(detectedPage);
+    }
+
+    // Build system prompt with fetched content
+    let finalPrompt = SYSTEM_PROMPT;
+    if (fetchedContent) {
+      finalPrompt += `\n\n===REALTIME PAGE CONTENT (fetched just now)===\n${fetchedContent}\n===END===`;
+    }
+
     const response = await fetch(NVIDIA_API_URL, {
       method: 'POST',
       headers: {
@@ -313,12 +348,12 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'meta/llama-3.1-8b-instruct',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: finalPrompt },
           ...messages.slice(-10),
         ],
         temperature: 0.7,
         top_p: 0.9,
-        max_tokens: 256,
+        max_tokens: 512,
       }),
     });
 
