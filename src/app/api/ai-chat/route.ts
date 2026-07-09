@@ -5,9 +5,9 @@ const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
 const ALLOWED_ORIGINS = ['https://revy.my.id', 'https://dev.revy.my.id'];
 
-// Rate limiter
+// Rate limiter: 20 requests per minute per IP
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 5;
+const RATE_LIMIT = 20;
 const RATE_WINDOW = 60_000;
 
 function checkRateLimit(ip: string): boolean {
