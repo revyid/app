@@ -65,40 +65,6 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, aiMessages]);
 
-  // Fetch current page content for AI context
-  const fetchCurrentPage = async (): Promise<string> => {
-    try {
-      const url = window.location.href;
-      console.log('[AI Chat] Fetching current page:', url);
-      const res = await fetch(url);
-      const html = await res.text();
-
-      // Extract text content from HTML, strip tags
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-
-      // Remove scripts, styles, nav, footer
-      doc.querySelectorAll('script, style, nav, footer, header, [aria-hidden]').forEach(el => el.remove());
-
-      // Get main content
-      const main = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.body;
-      let text = main?.textContent?.trim() || '';
-
-      // Clean up whitespace
-      text = text.replace(/\s+/g, ' ').trim();
-
-      // Limit to ~2000 chars to fit in context
-      if (text.length > 2000) {
-        text = text.slice(0, 2000) + '...';
-      }
-
-      console.log('[AI Chat] Page content:', text.length, 'chars');
-      return `[Current page: ${url}]\n${text}`;
-    } catch (err) {
-      console.error('[AI Chat] Failed to fetch page:', err);
-      return '';
-    }
-  };
-
   const handleSend = async () => {
     if (!newMessage.trim()) return;
     setIsLoading(true);
@@ -108,17 +74,11 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
       setNewMessage('');
       setAiMessages(prev => [...prev, { role: 'user', content: userMsg }]);
 
-      // Fetch current page content for realtime context
-      const pageContent = await fetchCurrentPage();
-
       try {
         const res = await fetch('/api/ai-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [...aiMessages, { role: 'user', content: userMsg }],
-            pageContext: pageContent,
-          }),
+          body: JSON.stringify({ messages: [...aiMessages, { role: 'user', content: userMsg }] }),
         });
         const data = await res.json();
         if (data.message) {
