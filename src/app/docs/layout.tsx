@@ -80,7 +80,9 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         </main>
       </div>
 
-      <Footer />
+      <div className="lg:pl-80">
+        <Footer />
+      </div>
 
       <MobileNavDrawer
         nav={NAV}

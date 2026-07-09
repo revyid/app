@@ -83,7 +83,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      <Footer />
+      <div className="lg:pl-80">
+        <Footer />
+      </div>
 
       <MobileNavDrawer
         nav={NAV}

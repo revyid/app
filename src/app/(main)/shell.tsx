@@ -119,7 +119,9 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </main>
         </div>
 
-        <Footer />
+        <div className="lg:pl-80">
+          <Footer />
+        </div>
       </div>
 
       {isCommandPaletteOpen && (
