@@ -4,6 +4,12 @@ ALTER TABLE public.api_keys ADD COLUMN IF NOT EXISTS expires_at timestamptz;
 -- Add expires_at to short_urls
 ALTER TABLE public.short_urls ADD COLUMN IF NOT EXISTS expires_at timestamptz;
 
+-- Drop functions that change return type before recreating
+DROP FUNCTION IF EXISTS public.list_short_urls(text);
+DROP FUNCTION IF EXISTS public.list_api_keys(text);
+DROP FUNCTION IF EXISTS public.create_api_key(text, text);
+DROP FUNCTION IF EXISTS public.create_short_url(text, text, text);
+
 -- Update create_api_key to accept p_expires_in (interval string or NULL for never)
 CREATE OR REPLACE FUNCTION public.create_api_key(p_token text, p_name text, p_expires_in text DEFAULT NULL)
 RETURNS json LANGUAGE plpgsql SECURITY DEFINER AS $$
