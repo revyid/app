@@ -77,3 +77,7 @@ Supabase Auth with GitHub, Google, Passkeys. Dashboard at dashboard.revy.my.id.
 
 ## Social
 GitHub: revyid | Instagram: revy.id | LinkedIn: revyid | Email: revy8k@gmail.com
+
+## Easter Eggs
+- Ctrl+Alt+L di homepage → liat surprise Nawa ❤️
+- Nawa adalah bintang spesial Revy 💕
