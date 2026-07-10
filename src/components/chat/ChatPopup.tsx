@@ -215,16 +215,20 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
           if (evt.type === 'step') {
             steps = [...steps, evt.label];
             setGen(g => ({ ...g, steps }));
-          } else if (evt.type === 'source') {
-            sources = [...sources, evt.source];
+          } else if (evt.type === 'sources') {
+            sources = evt.sources || [];
             setGen(g => ({ ...g, phase: 'searching', sources }));
+          } else if (evt.type === 'thinking_done') {
+            setGen(g => ({ ...g, thinkingOpen: false, thinkingLabel: `Berpikir selama ${evt.seconds} detik` }));
           } else if (evt.type === 'token') {
             if (!typingStarted) {
               typingStarted = true;
-              const seconds = Math.max(1, Math.round((Date.now() - genStartRef.current) / 1000));
-              setGen(g => ({ ...g, phase: 'typing', thinkingOpen: false, thinkingLabel: `Berpikir selama ${seconds} detik` }));
+              setGen(g => ({ ...g, phase: 'typing' }));
             }
             text += evt.text;
+            setGen(g => ({ ...g, typedText: text }));
+          } else if (evt.type === 'final') {
+            text = evt.text || text;
             setGen(g => ({ ...g, typedText: text }));
           } else if (evt.type === 'final_override') {
             text = evt.text;
