@@ -47,40 +47,75 @@ async function fetchPage(path: string): Promise<string> {
   } catch { return ''; }
 }
 
-const PAGE_MAP: Record<string, { path: string; label: string }> = {
-  'home': { path: '/', label: 'Beranda' },
-  'dashboard': { path: '/dashboard', label: 'Dashboard' },
-  'api-keys': { path: '/dashboard/api-keys', label: 'API Keys' },
-  'shorten': { path: '/dashboard/shorten', label: 'URL Shortener (dashboard)' },
-  'docs': { path: '/docs', label: 'Dokumentasi' },
-  'guide': { path: '/docs/guide', label: 'Panduan' },
-  'api-reference': { path: '/docs/api-reference', label: 'API Reference' },
-  'github-api': { path: '/docs/api-reference/github', label: 'GitHub API' },
-  'url-shortener': { path: '/docs/api-reference/shorten', label: 'URL Shortener API' },
-  'sandbox': { path: '/docs/sandbox', label: 'Sandbox' },
-  'curl-ts': { path: '/docs/curl-ts', label: 'cURL → TypeScript' },
-  'privacy': { path: '/privacy', label: 'Kebijakan Privasi' },
-  'terms': { path: '/terms', label: 'Ketentuan Layanan' },
-};
+// Auto-generated page map from ai-knowledge.md
+// Fetches the knowledge base and extracts page URLs + keywords
+async function buildPageMap(): Promise<Record<string, { path: string; label: string; keywords: string[] }>> {
+  try {
+    const res = await fetch('https://revy.my.id/ai-knowledge.md', { next: { revalidate: 300 } });
+    if (!res.ok) return {};
+    const md = await res.text();
 
-// Detect which page the user is asking about
-function detectPage(msg: string): string | null {
-  const m = msg.toLowerCase();
-  const map: [string[], string][] = [
-    [['github api','github endpoint','github proxy','users/','repos/'],'github-api'],
-    [['url shortener','shorten','short url','slug'],'url-shortener'],
-    [['sandbox','run code','execute code'],'sandbox'],
-    [['curl-ts','curlts','curl parser'],'curl-ts'],
-    [['guide','getting started','how to use','cara pakai','cara pake','gimana cara'],'guide'],
-    [['api reference','api docs','endpoints'],'api-reference'],
-    [['privacy','privacy policy','kebijakan privasi'],'privacy'],
-    [['terms','terms of service','tos','ketentuan'],'terms'],
-    [['dashboard','api keys','manage keys'],'dashboard'],
-    [['docs','documentation','dokumentasi'],'docs'],
-  ];
-  for (const [kw, page] of map) {
-    if (kw.some(k => m.includes(k))) return page;
+    const map: Record<string, { path: string; label: string; keywords: string[] }> = {};
+
+    // Parse markdown headers like "### Page Name (/path)"
+    const pageRegex = /###\s+(.+?)\s+\(([^)]+)\)/g;
+    let match;
+    while ((match = pageRegex.exec(md)) !== null) {
+      const label = match[1].trim();
+      const path = match[2].trim();
+
+      // Extract keywords from the section content
+      const sectionStart = match.index + match[0].length;
+      const nextSection = md.indexOf('\n### ', sectionStart);
+      const section = md.slice(sectionStart, nextSection > 0 ? nextSection : undefined).toLowerCase();
+
+      const keywords: string[] = [];
+      // Auto-extract keywords from content
+      if (section.includes('github')) keywords.push('github');
+      if (section.includes('api')) keywords.push('api');
+      if (section.includes('shorten') || section.includes('url')) keywords.push('shorten', 'url');
+      if (section.includes('sandbox') || section.includes('code')) keywords.push('sandbox', 'code');
+      if (section.includes('curl')) keywords.push('curl');
+      if (section.includes('guide') || section.includes('getting started')) keywords.push('guide', 'getting started');
+      if (section.includes('privacy')) keywords.push('privacy');
+      if (section.includes('terms') || section.includes('ketentuan')) keywords.push('terms');
+      if (section.includes('dashboard')) keywords.push('dashboard');
+      if (section.includes('api key')) keywords.push('api key', 'api keys');
+      if (section.includes('endpoint')) keywords.push('endpoint');
+      if (section.includes('rate limit')) keywords.push('rate limit');
+      if (section.includes('authentication') || section.includes('auth')) keywords.push('auth', 'authentication');
+
+      // Create a short ID from the path
+      const id = path.split('/').filter(Boolean).join('-') || 'home';
+      map[id] = { path, label, keywords };
+    }
+
+    console.log(`[AI] Built page map: ${Object.keys(map).length} pages`);
+    return map;
+  } catch (err) {
+    console.error('[AI] Failed to build page map:', err);
+    return {};
   }
+}
+
+// Detect which page the user is asking about using the dynamic page map
+function detectPage(msg: string, pageMap: Record<string, { path: string; label: string; keywords: string[] }>): string | null {
+  const m = msg.toLowerCase();
+
+  // First try keyword matching
+  for (const [id, page] of Object.entries(pageMap)) {
+    if (page.keywords.some(kw => m.includes(kw))) {
+      return id;
+    }
+  }
+
+  // Then try path matching (e.g. user types "/docs/api-reference/github")
+  for (const [id, page] of Object.entries(pageMap)) {
+    if (m.includes(page.path)) {
+      return id;
+    }
+  }
+
   return null;
 }
 
@@ -146,13 +181,16 @@ export async function POST(req: NextRequest) {
         send({ type: 'step', label: 'Mengecek data portofolio' });
         const pData = await portfolio();
 
+        // Build dynamic page map from knowledge base
+        const pageMap = await buildPageMap();
+
         // Detect if user is asking about a specific page
-        const detectedPage = detectPage(lastMsg);
+        const detectedPage = detectPage(lastMsg, pageMap);
         let pageContent = '';
         let sources: Source[] = [];
 
-        if (detectedPage && PAGE_MAP[detectedPage]) {
-          const page = PAGE_MAP[detectedPage];
+        if (detectedPage && pageMap[detectedPage]) {
+          const page = pageMap[detectedPage];
           send({ type: 'step', label: `Mengambil halaman: ${page.label}` });
           pageContent = await fetchPage(page.path);
           if (pageContent) {
@@ -163,11 +201,15 @@ export async function POST(req: NextRequest) {
         send({ type: 'step', label: 'Menyusun jawaban' });
         send({ type: 'sources', sources });
 
+        // Build available pages list from dynamic map
+        const availablePages = Object.entries(pageMap).map(([id, p]) => `- ${id}: ${p.label} (${p.path})`).join('\n');
+
         const systemPrompt = `You are Revy's smart AI assistant on revy.my.id. Answer DIRECTLY — NEVER say "check the docs".
 
 CAPABILITIES:
 - Access Revy's portfolio data (skills, projects, experience)
 - Answer questions about the platform
+- Available pages: ${Object.keys(pageMap).join(', ')}
 
 CODE RULES:
 - You MAY provide curl examples for Revy's GitHub API or URL Shortener
@@ -183,7 +225,10 @@ OTHER RULES:
 ===PORTFOLIO===
 ${pData || 'No data'}
 
-${pageContent ? `===PAGE CONTENT===\n${pageContent}` : ''}`;
+${pageContent ? `===PAGE CONTENT===\n${pageContent}` : ''}
+
+===AVAILABLE PAGES===
+${availablePages}`;
 
         const apiMessages = [
           { role: 'system', content: systemPrompt },
