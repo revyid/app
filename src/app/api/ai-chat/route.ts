@@ -259,8 +259,15 @@ ${kbRes || 'No knowledge base available'}`;
         }, 30000);
 
         if (!aiRes.ok || !aiRes.body) {
-          console.error('[AI] NVIDIA error:', aiRes.status);
-          send({ type: 'error', message: 'AI provider is currently unavailable.' });
+          const errText = await aiRes.text().catch(() => '');
+          console.error('[AI] Groq error:', aiRes.status, errText.slice(0, 300));
+
+          let msg = 'AI tidak tersedia.';
+          if (aiRes.status === 429) msg = 'Rate limit Groq. Tunggu sebentar lalu coba lagi.';
+          else if (aiRes.status === 503) msg = 'Groq sedang sibuk. Coba lagi nanti.';
+          else msg = `Error ${aiRes.status}: ${errText.slice(0, 100)}`;
+
+          send({ type: 'error', message: msg });
           controller.close();
           return;
         }
