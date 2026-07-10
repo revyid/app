@@ -177,11 +177,13 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     let typingStarted = false;
 
     const finalizeError = (fallback: string) => {
+      console.error('[AI Chat] Error:', fallback);
       setAiMessages(prev => [...prev, { role: 'assistant', content: fallback }]);
       setGen(EMPTY_GEN);
     };
 
     try {
+      console.log('[AI Chat] Sending request...');
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -189,19 +191,27 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
         signal: controller.signal,
       });
 
+      console.log('[AI Chat] Response status:', res.status);
+
       if (!res.ok || !res.body) {
-        finalizeError('Maaf, AI sedang tidak tersedia. Coba lagi sebentar lagi.');
+        const errText = await res.text().catch(() => 'unknown');
+        console.error('[AI Chat] Response error:', res.status, errText);
+        finalizeError(`Error ${res.status}: ${errText.slice(0, 100)}`);
         return;
       }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
+      let chunkCount = 0;
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        buf += decoder.decode(value, { stream: true });
+        const decoded = decoder.decode(value, { stream: true });
+        buf += decoded;
+        chunkCount++;
+        console.log(`[AI Chat] Chunk ${chunkCount}: ${decoded.slice(0, 100)}...`);
         
         // Standard SSE chunks are separated by \n\n
         const chunks = buf.split('\n\n');
@@ -217,6 +227,8 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
           const payload = dataLine.slice(5).trim(); // remove 'data:'
           if (!payload) continue;
           
+          console.log('[AI Chat] Event payload:', payload.slice(0, 150));
+          
           let evt: any;
           try { 
             evt = JSON.parse(payload); 
@@ -225,24 +237,30 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
           }
 
           if (evt.type === 'step') {
+            console.log('[AI Chat] Step:', evt.label);
             steps = [...steps, evt.label];
             setGen(g => ({ ...g, steps }));
           } else if (evt.type === 'sources') {
+            console.log('[AI Chat] Sources:', evt.sources?.length);
             sources = evt.sources || [];
             setGen(g => ({ ...g, phase: 'searching', sources }));
           } else if (evt.type === 'thinking_done') {
+            console.log('[AI Chat] Thinking done:', evt.seconds, 'seconds');
             setGen(g => ({ ...g, thinkingOpen: false, thinkingLabel: `Berpikir selama ${evt.seconds} detik` }));
           } else if (evt.type === 'token') {
             if (!typingStarted) {
               typingStarted = true;
+              console.log('[AI Chat] Typing started');
               setGen(g => ({ ...g, phase: 'typing' }));
             }
             text += evt.text;
             setGen(g => ({ ...g, typedText: text }));
           } else if (evt.type === 'final') {
+            console.log('[AI Chat] Final response:', evt.text?.slice(0, 100));
             text = evt.text || text;
             setGen(g => ({ ...g, typedText: text }));
           } else if (evt.type === 'final_override') {
+            console.log('[AI Chat] Final override:', evt.text?.slice(0, 100));
             text = evt.text;
             setGen(g => ({ ...g, typedText: text }));
           } else if (evt.type === 'error') {
@@ -251,6 +269,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
         }
       }
 
+      console.log('[AI Chat] Stream finished. Text length:', text.length, 'Steps:', steps.length, 'Sources:', sources.length);
       setAiMessages(prev => [...prev, {
         role: 'assistant',
         content: text || 'Maaf, tidak ada respon.',
