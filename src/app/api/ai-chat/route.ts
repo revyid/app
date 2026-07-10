@@ -45,18 +45,30 @@ async function getPortfolio(): Promise<string> {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) return 'Portfolio data unavailable.';
-    
-    const db = createClient(url, key, { auth: { persistSession: false } });
-    const { data, error } = await db.rpc('get_all_portfolio_data');
-    if (error || !data) return '';
+    if (!url || !key) {
+      console.log('[Portfolio] Missing env vars');
+      return '';
+    }
 
+    const db = createClient(url, key);
+    const { data, error } = await db.rpc('get_all_portfolio_data');
+
+    if (error) {
+      console.log('[Portfolio] RPC error:', error.message);
+      return '';
+    }
+    if (!data) {
+      console.log('[Portfolio] No data returned');
+      return '';
+    }
+
+    console.log('[Portfolio] Got data, keys:', Object.keys(data));
     const p = data as Record<string, any>;
     const r: string[] = [];
-    
-    if (p.profile) { 
-      const x = p.profile; 
-      r.push(`Name: ${x.name || 'Revy'}, Title: ${x.title || ''}, Bio: ${x.bio || ''}, Location: ${x.location || ''}`); 
+
+    if (p.profile) {
+      const x = p.profile;
+      r.push(`Name: ${x.name || 'Revy'}, Title: ${x.title || ''}, Bio: ${x.bio || ''}, Location: ${x.location || ''}`);
     }
     if (p.skills?.items) r.push(`Skills: ${p.skills.items.map((i: any) => i.name).join(', ')}`);
     if (p.languages?.items) r.push(`Languages: ${p.languages.items.map((i: any) => `${i.name} (${i.level || ''})`).join(', ')}`);
@@ -64,7 +76,8 @@ async function getPortfolio(): Promise<string> {
     if (p.experiences?.items) r.push(`Experience: ${p.experiences.items.map((i: any) => `${i.position || ''} at ${i.company}`).join('; ')}`);
     if (p.education?.items) r.push(`Education: ${p.education.items.map((i: any) => `${i.degree || ''} at ${i.school}`).join('; ')}`);
     if (p.social_links?.items) r.push(`Social: ${p.social_links.items.map((i: any) => i.platform).join(', ')}`);
-    
+
+    console.log('[Portfolio] Result:', r.length, 'lines');
     return r.join('\n');
   } catch (err) {
     console.error('[Portfolio] Error:', err);
@@ -180,8 +193,10 @@ export async function POST(req: NextRequest) {
         // Fetch data in parallel — no fake steps, just real work
         const [pData, kbRes] = await Promise.all([
           getPortfolio(),
-          fetchWithTimeout('https://revy.my.id/ai-knowledge.md', { next: { revalidate: 300 } }, 5000).then(r => r.text()).catch(() => '')
+          fetchWithTimeout('https://revy.my.id/ai-knowledge.md', {}, 5000).then(r => r.text()).catch(() => '')
         ]);
+
+        console.log(`[AI] Portfolio: ${pData.length} chars, KB: ${kbRes.length} chars`);
 
         const detectedPage = detectPage(lastMsg);
         let pageContent = '';
