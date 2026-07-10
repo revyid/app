@@ -152,14 +152,14 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                   )}
                 </div>
                 <div className={`max-w-[80%] min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <p className="text-[10px] text-muted-foreground mb-0.5">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
-                  <div className={`inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[12px] sm:text-[13px] text-left leading-relaxed overflow-hidden ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
+                  <p className="text-[9px] text-muted-foreground mb-0.5">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
+                  <div className={`inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[12px] text-left leading-relaxed overflow-hidden ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-[11px] sm:prose-xs dark:prose-invert max-w-none prose-p:my-0.5 prose-pre:my-1 prose-pre:bg-background/50 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:max-w-[250px] prose-code:text-[10px] prose-code:break-all prose-code:before:content-none prose-code:after:content-none">
+                      <div className="chat-markdown">
                         <Markdown>{msg.content}</Markdown>
                       </div>
                     ) : (
-                      <span className="break-words break-all">{msg.content}</span>
+                      <span className="break-words">{msg.content}</span>
                     )}
                   </div>
                 </div>

@@ -536,6 +536,34 @@
   to { --angle: 360deg; }
 }
 
+/* Chat markdown - consistent text size, no scroll code blocks */
+.chat-markdown p { margin: 0 0 4px; font-size: 12px; line-height: 1.5; }
+.chat-markdown ol, .chat-markdown ul { margin: 0 0 4px; padding-left: 16px; }
+.chat-markdown li { margin: 0; font-size: 12px; line-height: 1.5; }
+.chat-markdown pre {
+  background: hsl(var(--surface-variant));
+  border-radius: 8px;
+  padding: 8px;
+  margin: 4px 0;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.chat-markdown code {
+  font-size: 11px;
+  background: hsl(var(--surface-variant) / 0.5);
+  padding: 1px 4px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+.chat-markdown pre code {
+  background: none;
+  padding: 0;
+  font-size: 11px;
+}
+.chat-markdown strong { font-weight: 600; }
+.chat-markdown a { color: hsl(var(--primary)); text-decoration: underline; }
+
 .ai-glow-wrap {
   position: relative;
   border-radius: 32px;
