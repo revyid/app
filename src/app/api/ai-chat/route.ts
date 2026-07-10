@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const ALLOWED_ORIGINS = new Set(['https://revy.my.id', 'https://dev.revy.my.id']);
 
 // In-memory rate limiter (optimized for edge)
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Need messages' }, { status: 400 });
   }
 
-  const apiKey = process.env.NVIDIA_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
@@ -232,23 +232,21 @@ ${kbRes || 'No knowledge base available'}`;
           ...body.messages.slice(-10).filter((m: any) => m.role && m.content),
         ];
 
-        const aiRes = await fetchWithTimeout(NVIDIA_URL, {
+        const aiRes = await fetchWithTimeout(GROQ_URL, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json', 
             'Authorization': `Bearer ${apiKey}`,
-            'Accept': 'text/event-stream'
           },
           body: JSON.stringify({
-            model: 'minimaxai/minimax-m3',
+            model: 'llama-3.3-70b-versatile',
             messages: apiMessages,
-            max_tokens: 8192,
-            temperature: 0.7, // Lowered from 1.0 for more factual stability
+            max_tokens: 4096,
+            temperature: 0.7,
             top_p: 0.9,
             stream: true,
-            chat_template_kwargs: { thinking_mode: 'enabled' },
           }),
-        }, 30000); // 30s timeout for AI initial response
+        }, 30000);
 
         if (!aiRes.ok || !aiRes.body) {
           console.error('[AI] NVIDIA error:', aiRes.status);
