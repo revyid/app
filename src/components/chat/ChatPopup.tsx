@@ -78,6 +78,8 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
       const allMessages = [...aiMessages, { role: 'user' as const, content: userMsg }];
       setAiMessages(allMessages);
 
+      console.log('[AI Chat] Sending:', userMsg);
+
       // Add thinking indicator
       setAiMessages(prev => [...prev, { role: 'assistant', content: '🔍 Thinking...' }]);
 
@@ -87,18 +89,22 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: allMessages }),
         });
+
+        console.log('[AI Chat] Response status:', res.status);
         const data = await res.json();
+        console.log('[AI Chat] Response:', data);
 
         // Remove thinking indicator and add real response
         setAiMessages(prev => {
           const without = prev.slice(0, -1); // remove "Thinking..."
           if (data.status) {
-            // Show status like "Fetching page..."
+            console.log('[AI Chat] Status:', data.status);
             return [...without, { role: 'assistant', content: `🔍 ${data.status}` }, { role: 'assistant', content: data.message }];
           }
           return [...without, { role: 'assistant', content: data.message || 'No response' }];
         });
-      } catch {
+      } catch (err) {
+        console.error('[AI Chat] Error:', err);
         setAiMessages(prev => {
           const without = prev.slice(0, -1);
           return [...without, { role: 'assistant', content: 'Error: Could not reach AI service.' }];
