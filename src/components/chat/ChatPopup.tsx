@@ -31,34 +31,82 @@ interface AIMessage {
   role: 'user' | 'assistant';
   content: string;
   sources?: AISource[];
+  steps?: string[];
   thinkingMs?: number;
 }
 
 type GenPhase = 'thinking' | 'searching' | 'typing' | null;
 
+// Live generation state — every field here is driven by real events coming from the
+// server as they happen (NDJSON stream), not by simulated timers.
 interface GenState {
   phase: GenPhase;
   steps: string[];
-  visibleSteps: number;
   thinkingOpen: boolean;
   thinkingLabel: string;
   sources: AISource[];
-  visibleSources: number;
   typedText: string;
-  fullText: string;
 }
 
 const EMPTY_GEN: GenState = {
   phase: null,
   steps: [],
-  visibleSteps: 0,
   thinkingOpen: true,
   thinkingLabel: 'Berpikir...',
   sources: [],
-  visibleSources: 0,
   typedText: '',
-  fullText: '',
 };
+
+// Shared "thinking" collapsible block — used both for the live generation bubble
+// and for finished messages in history, so the look stays identical and the trace
+// never disappears once a message is done.
+function ThinkingBlock({
+  steps, label, spinning, open, onToggle,
+}: {
+  steps: string[]; label: string; spinning: boolean; open: boolean; onToggle: () => void;
+}) {
+  if (steps.length === 0) return null;
+  return (
+    <div
+      className={`border border-outline/25 bg-surface-variant/40 rounded-xl px-2.5 py-2 text-[11px] text-muted-foreground max-w-fit ${open ? '' : 'cursor-pointer'}`}
+      onClick={onToggle}
+    >
+      <div className="flex items-center gap-1.5 select-none">
+        {spinning ? (
+          <span className="w-2.5 h-2.5 rounded-full border-2 border-outline/40 border-t-purple-500 animate-spin flex-shrink-0" />
+        ) : (
+          <ChevronRight className={`w-2.5 h-2.5 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`} />
+        )}
+        <span>{label}</span>
+      </div>
+      {open && (
+        <div className="flex flex-col gap-1 mt-1.5 pl-2.5 ml-1 border-l-2 border-outline/25">
+          {steps.map((s, si) => (
+            <span key={si} className="animate-in fade-in slide-in-from-bottom-1 duration-300">{s}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SourceCards({ sources }: { sources: AISource[] }) {
+  if (sources.length === 0) return null;
+  return (
+    <div className="flex gap-1.5 overflow-x-auto mt-1.5 pb-1">
+      {sources.map((s, si) => (
+        <a key={si} href={s.url} target="_blank" rel="noopener noreferrer"
+          className="flex-shrink-0 w-32 border border-outline/25 bg-surface rounded-lg p-2 text-[10px] hover:border-purple-400 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-300">
+          <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-[8px] font-bold mb-1">
+            {s.domain.charAt(0).toUpperCase()}
+          </div>
+          <div className="font-medium text-foreground line-clamp-2">{s.title}</div>
+          <div className="text-muted-foreground mt-0.5">{s.domain}</div>
+        </a>
+      ))}
+    </div>
+  );
+}
 
 export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: ChatPopupProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -69,23 +117,16 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
   const [gen, setGen] = useState<GenState>(EMPTY_GEN);
   const [feedback, setFeedback] = useState<Record<number, 'up' | 'down' | undefined>>({});
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  // Whether each historical message's thinking trace is expanded — collapsed by default,
+  // but the trace itself is always kept (never wiped after the answer finishes).
+  const [openThinkIdx, setOpenThinkIdx] = useState<Record<number, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const genStartRef = useRef<number>(0);
+  const abortRef = useRef<AbortController | null>(null);
   const { user } = useAuth();
   const isSignedIn = !!user;
 
-  const clearGenTimers = () => {
-    timersRef.current.forEach(t => clearTimeout(t));
-    timersRef.current = [];
-  };
-  const addTimer = (fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    timersRef.current.push(id);
-    return id;
-  };
-
-  useEffect(() => () => clearGenTimers(), []);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'a') {
@@ -120,86 +161,92 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, aiMessages, gen]);
 
-  // Drives the "thinking → searching → typing" reveal sequence once the API responds.
-  const runGeneration = useCallback((steps: string[], sources: AISource[], fullText: string) => {
+  // Consumes the NDJSON stream from /api/ai-chat in real time: thinking steps, sources,
+  // and answer tokens are all rendered the instant they arrive from the server — nothing
+  // here is simulated or replayed after the fact.
+  const streamAI = async (history: AIMessage[]) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsLoading(true);
     genStartRef.current = Date.now();
-    setGen({ ...EMPTY_GEN, phase: 'thinking', steps, sources, fullText });
+    setGen({ ...EMPTY_GEN, phase: 'thinking' });
 
-    let stepIdx = 0;
-    const revealStep = () => {
-      if (stepIdx < steps.length) {
-        stepIdx++;
-        setGen(g => ({ ...g, visibleSteps: stepIdx }));
-        addTimer(revealStep, 380 + Math.random() * 220);
-      } else {
-        addTimer(collapseThinking, 300);
-      }
-    };
+    let steps: string[] = [];
+    let sources: AISource[] = [];
+    let text = '';
+    let typingStarted = false;
 
-    const collapseThinking = () => {
-      const seconds = Math.max(1, Math.round((Date.now() - genStartRef.current) / 1000));
-      setGen(g => ({ ...g, thinkingOpen: false, thinkingLabel: `Berpikir selama ${seconds} detik` }));
-      if (sources.length > 0) {
-        addTimer(() => setGen(g => ({ ...g, phase: 'searching' })), 250);
-        addTimer(revealSources, 900);
-      } else {
-        addTimer(startTyping, 300);
-      }
-    };
-
-    let sourceIdx = 0;
-    const revealSources = () => {
-      sourceIdx = sources.length;
-      setGen(g => ({ ...g, visibleSources: sourceIdx }));
-      addTimer(startTyping, 500);
-    };
-
-    const startTyping = () => {
-      setGen(g => ({ ...g, phase: 'typing' }));
-      let i = 0;
-      const speed = fullText.length > 400 ? 4 : 12;
-      const typeChunk = () => {
-        i = Math.min(fullText.length, i + 2);
-        setGen(g => ({ ...g, typedText: fullText.slice(0, i) }));
-        if (i < fullText.length) {
-          addTimer(typeChunk, speed);
-        } else {
-          addTimer(finish, 200);
-        }
-      };
-      typeChunk();
-    };
-
-    const finish = () => {
-      setAiMessages(prev => [...prev, {
-        role: 'assistant',
-        content: fullText,
-        sources,
-        thinkingMs: Date.now() - genStartRef.current,
-      }]);
+    const finalizeError = (fallback: string) => {
+      setAiMessages(prev => [...prev, { role: 'assistant', content: fallback }]);
       setGen(EMPTY_GEN);
     };
 
-    revealStep();
-  }, []);
-
-  const askAI = async (history: AIMessage[]) => {
-    setIsLoading(true);
     try {
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content })) }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setAiMessages(prev => [...prev, { role: 'assistant', content: 'Maaf, AI sedang tidak tersedia. Coba lagi sebentar lagi.' }]);
-      } else {
-        runGeneration(data.steps || [], data.sources || [], data.message || 'No response');
+
+      if (!res.ok || !res.body) {
+        finalizeError('Maaf, AI sedang tidak tersedia. Coba lagi sebentar lagi.');
+        return;
       }
-    } catch (err) {
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          let evt: any;
+          try { evt = JSON.parse(line); } catch { continue; }
+
+          if (evt.type === 'step') {
+            steps = [...steps, evt.label];
+            setGen(g => ({ ...g, steps }));
+          } else if (evt.type === 'source') {
+            sources = [...sources, evt.source];
+            setGen(g => ({ ...g, phase: 'searching', sources }));
+          } else if (evt.type === 'token') {
+            if (!typingStarted) {
+              typingStarted = true;
+              const seconds = Math.max(1, Math.round((Date.now() - genStartRef.current) / 1000));
+              setGen(g => ({ ...g, phase: 'typing', thinkingOpen: false, thinkingLabel: `Berpikir selama ${seconds} detik` }));
+            }
+            text += evt.text;
+            setGen(g => ({ ...g, typedText: text }));
+          } else if (evt.type === 'final_override') {
+            text = evt.text;
+            setGen(g => ({ ...g, typedText: text }));
+          } else if (evt.type === 'error') {
+            throw new Error(evt.message || 'AI unavailable');
+          }
+        }
+      }
+
+      setAiMessages(prev => [...prev, {
+        role: 'assistant',
+        content: text || 'Maaf, tidak ada respon.',
+        sources,
+        steps,
+        thinkingMs: Date.now() - genStartRef.current,
+      }]);
+      setGen(EMPTY_GEN);
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('[AI Chat] Error:', err);
-      setAiMessages(prev => [...prev, { role: 'assistant', content: 'Error: tidak bisa menghubungi layanan AI.' }]);
+      finalizeError('Maaf, AI sedang tidak tersedia. Coba lagi sebentar lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +260,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
       setNewMessage('');
       const allMessages = [...aiMessages, { role: 'user' as const, content: userMsg }];
       setAiMessages(allMessages);
-      await askAI(allMessages);
+      await streamAI(allMessages);
     } else if (user) {
       setIsLoading(true);
       await sendMessage(user.id, user.display_name || user.email || 'Anonymous', user.avatar_url, newMessage);
@@ -229,7 +276,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     const cutIdx = aiMessages.length - 1 - lastUserIdx;
     const history = aiMessages.slice(0, cutIdx + 1);
     setAiMessages(history);
-    await askAI(history);
+    await streamAI(history);
   };
 
   const handleCopy = (text: string, idx: number) => {
@@ -293,6 +340,20 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                   </div>
                   <div className={`max-w-[85%] min-w-0 ${msg.role === 'user' ? 'text-right' : ''}`}>
                     <p className="text-[9px] text-muted-foreground mb-0.5">{msg.role === 'assistant' ? 'AI' : 'You'}</p>
+
+                    {/* Thinking trace — persists in history, merged into the same message block */}
+                    {msg.role === 'assistant' && msg.steps && msg.steps.length > 0 && (
+                      <div className="mb-1.5">
+                        <ThinkingBlock
+                          steps={msg.steps}
+                          spinning={false}
+                          open={!!openThinkIdx[i]}
+                          label={msg.thinkingMs ? `Berpikir selama ${Math.max(1, Math.round(msg.thinkingMs / 1000))} detik` : 'Berpikir'}
+                          onToggle={() => setOpenThinkIdx(o => ({ ...o, [i]: !o[i] }))}
+                        />
+                      </div>
+                    )}
+
                     <div className={`inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[12px] text-left leading-relaxed overflow-hidden ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
                       {msg.role === 'assistant' ? (
                         <div className="chat-markdown">
@@ -344,7 +405,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
               ))
             )}
 
-            {/* Live generation bubble — thinking / searching / typing */}
+            {/* Live generation bubble — thinking / searching / typing, all driven by real stream events */}
             {gen.phase && (
               <div className="flex gap-2 sm:gap-3">
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-purple-500 to-pink-500">
@@ -353,27 +414,14 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                 <div className="max-w-[85%] min-w-0 w-full">
                   <p className="text-[9px] text-muted-foreground mb-0.5">AI</p>
 
-                  {/* Thinking block */}
-                  <div className={`border border-outline/25 bg-surface-variant/40 rounded-xl px-2.5 py-2 text-[11px] text-muted-foreground max-w-fit ${gen.thinkingOpen ? '' : 'cursor-pointer'}`}
-                    onClick={() => setGen(g => ({ ...g, thinkingOpen: !g.thinkingOpen }))}>
-                    <div className="flex items-center gap-1.5 select-none">
-                      {gen.phase === 'thinking' ? (
-                        <span className="w-2.5 h-2.5 rounded-full border-2 border-outline/40 border-t-purple-500 animate-spin flex-shrink-0" />
-                      ) : (
-                        <ChevronRight className={`w-2.5 h-2.5 flex-shrink-0 transition-transform ${gen.thinkingOpen ? 'rotate-90' : ''}`} />
-                      )}
-                      <span>{gen.thinkingLabel}</span>
-                    </div>
-                    {gen.thinkingOpen && (
-                      <div className="flex flex-col gap-1 mt-1.5 pl-2.5 ml-1 border-l-2 border-outline/25">
-                        {gen.steps.slice(0, gen.visibleSteps).map((s, si) => (
-                          <span key={si} className="animate-in fade-in slide-in-from-bottom-1 duration-300">{s}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <ThinkingBlock
+                    steps={gen.steps}
+                    spinning={gen.phase === 'thinking'}
+                    open={gen.thinkingOpen}
+                    label={gen.thinkingLabel}
+                    onToggle={() => setGen(g => ({ ...g, thinkingOpen: !g.thinkingOpen }))}
+                  />
 
-                  {/* Searching chip */}
                   {gen.phase === 'searching' && (
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground border border-outline/25 bg-surface-variant/40 px-2.5 py-1.5 rounded-full mt-1.5 w-fit">
                       <Search className="w-2.5 h-2.5" />
@@ -381,29 +429,13 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                     </div>
                   )}
 
-                  {/* Source cards */}
-                  {gen.visibleSources > 0 && gen.sources.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto mt-1.5 pb-1">
-                      {gen.sources.slice(0, gen.visibleSources).map((s, si) => (
-                        <a key={si} href={s.url} target="_blank" rel="noopener noreferrer"
-                          className="flex-shrink-0 w-32 border border-outline/25 bg-surface rounded-lg p-2 text-[10px] hover:border-purple-400 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-300">
-                          <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-[8px] font-bold mb-1">
-                            {s.domain.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="font-medium text-foreground line-clamp-2">{s.title}</div>
-                          <div className="text-muted-foreground mt-0.5">{s.domain}</div>
-                        </a>
-                      ))}
-                    </div>
-                  )}
+                  <SourceCards sources={gen.sources} />
 
-                  {/* Typing answer */}
-                  {gen.phase === 'typing' && (
+                  {gen.phase === 'typing' && gen.typedText && (
                     <div className="mt-1.5 inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl rounded-tl-sm bg-surface-variant text-foreground text-[12px] text-left leading-relaxed">
                       <div className="chat-markdown">
                         <Markdown>{gen.typedText}</Markdown>
                       </div>
-                      <span className="inline-block w-[2px] h-[1em] bg-foreground align-text-bottom ml-0.5 animate-pulse" />
                     </div>
                   )}
                 </div>
