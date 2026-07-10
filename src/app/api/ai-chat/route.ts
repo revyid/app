@@ -19,6 +19,12 @@ function cors(origin: string) {
   return { 'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0] };
 }
 
+interface Source {
+  title: string;
+  url: string;
+  domain: string;
+}
+
 // Fetch portfolio from Supabase
 async function portfolio(): Promise<string> {
   try {
@@ -30,13 +36,13 @@ async function portfolio(): Promise<string> {
     if (!data) return '';
     const p = data as Record<string, any>;
     const r: string[] = [];
-    if (p.profile) { const x = p.profile; r.push(`Name: ${x.name||'Revy'}, Title: ${x.title||''}, Bio: ${x.bio||''}, Location: ${x.location||''}`); }
-    if (p.skills?.items) r.push(`Skills: ${p.skills.items.map((i:any)=>i.name).join(', ')}`);
-    if (p.languages?.items) r.push(`Languages: ${p.languages.items.map((i:any)=>`${i.name} (${i.level||''})`).join(', ')}`);
-    if (p.projects?.items) r.push(`Projects: ${p.projects.items.map((i:any)=>`${i.name}${i.tech?' ('+i.tech.join(', ')+')':''}`).join('; ')}`);
-    if (p.experiences?.items) r.push(`Experience: ${p.experiences.items.map((i:any)=>`${i.position||''} at ${i.company}`).join('; ')}`);
-    if (p.education?.items) r.push(`Education: ${p.education.items.map((i:any)=>`${i.degree||''} at ${i.school}`).join('; ')}`);
-    if (p.social_links?.items) r.push(`Social: ${p.social_links.items.map((i:any)=>i.platform).join(', ')}`);
+    if (p.profile) { const x = p.profile; r.push(`Name: ${x.name || 'Revy'}, Title: ${x.title || ''}, Bio: ${x.bio || ''}, Location: ${x.location || ''}`); }
+    if (p.skills?.items) r.push(`Skills: ${p.skills.items.map((i: any) => i.name).join(', ')}`);
+    if (p.languages?.items) r.push(`Languages: ${p.languages.items.map((i: any) => `${i.name} (${i.level || ''})`).join(', ')}`);
+    if (p.projects?.items) r.push(`Projects: ${p.projects.items.map((i: any) => `${i.name}${i.tech ? ' (' + i.tech.join(', ') + ')' : ''}`).join('; ')}`);
+    if (p.experiences?.items) r.push(`Experience: ${p.experiences.items.map((i: any) => `${i.position || ''} at ${i.company}`).join('; ')}`);
+    if (p.education?.items) r.push(`Education: ${p.education.items.map((i: any) => `${i.degree || ''} at ${i.school}`).join('; ')}`);
+    if (p.social_links?.items) r.push(`Social: ${p.social_links.items.map((i: any) => i.platform).join(', ')}`);
     return r.join('\n');
   } catch { return ''; }
 }
@@ -53,24 +59,25 @@ async function fetchPage(path: string): Promise<string> {
   } catch { return ''; }
 }
 
-// Available pages for the AI to fetch
-const PAGE_MAP: Record<string, string> = {
-  'home': '/',
-  'dashboard': '/dashboard',
-  'api-keys': '/dashboard/api-keys',
-  'shorten': '/dashboard/shorten',
-  'docs': '/docs',
-  'guide': '/docs/guide',
-  'api-reference': '/docs/api-reference',
-  'github-api': '/docs/api-reference/github',
-  'url-shortener': '/docs/api-reference/shorten',
-  'sandbox': '/docs/sandbox',
-  'curl-ts': '/docs/curl-ts',
-  'privacy': '/privacy',
-  'terms': '/terms',
+// Available pages for the AI to fetch, with a human-friendly label used in the UI
+const PAGE_MAP: Record<string, { path: string; label: string }> = {
+  'home': { path: '/', label: 'Beranda' },
+  'dashboard': { path: '/dashboard', label: 'Dashboard' },
+  'api-keys': { path: '/dashboard/api-keys', label: 'API Keys' },
+  'shorten': { path: '/dashboard/shorten', label: 'URL Shortener (dashboard)' },
+  'docs': { path: '/docs', label: 'Dokumentasi' },
+  'guide': { path: '/docs/guide', label: 'Panduan' },
+  'api-reference': { path: '/docs/api-reference', label: 'API Reference' },
+  'github-api': { path: '/docs/api-reference/github', label: 'GitHub API' },
+  'url-shortener': { path: '/docs/api-reference/shorten', label: 'URL Shortener API' },
+  'sandbox': { path: '/docs/sandbox', label: 'Sandbox' },
+  'curl-ts': { path: '/docs/curl-ts', label: 'cURL → TypeScript' },
+  'privacy': { path: '/privacy', label: 'Kebijakan Privasi' },
+  'terms': { path: '/terms', label: 'Ketentuan Layanan' },
 };
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   const origin = req.headers.get('origin') || '';
   const h = cors(origin);
 
@@ -92,7 +99,12 @@ export async function POST(req: NextRequest) {
   const lastMsg = body.messages[body.messages.length - 1]?.content || '';
   console.log(`[AI] ${ip}: "${lastMsg.slice(0, 80)}"`);
 
+  // Steps shown to the user as "thinking" progress — built from what actually happens below.
+  const steps: string[] = ['Memahami pertanyaan'];
+  const sources: Source[] = [];
+
   // Fetch portfolio data
+  steps.push('Mengecek data portofolio');
   const pData = await portfolio();
 
   // System prompt with tools
@@ -146,6 +158,8 @@ ${pData || 'No data'}`;
     },
   }];
 
+  steps.push('Menyusun rencana jawaban');
+
   // Call AI with tools
   let response = await fetch(NVIDIA_URL, {
     method: 'POST',
@@ -170,16 +184,23 @@ ${pData || 'No data'}`;
   let aiMessage = data.choices?.[0]?.message;
 
   // Handle tool calls — AI wants to fetch a page
-  let status = '';
   if (aiMessage?.tool_calls?.length > 0) {
     const toolCall = aiMessage.tool_calls[0];
     const args = JSON.parse(toolCall.function.arguments);
-    const pagePath = PAGE_MAP[args.page];
+    const page = PAGE_MAP[args.page];
 
-    if (pagePath) {
-      status = `Fetching ${args.page}...`;
-      console.log(`[AI] Fetching page: ${args.page} → ${pagePath}`);
-      const pageContent = await fetchPage(pagePath);
+    if (page) {
+      steps.push(`Mengambil halaman: ${page.label}`);
+      console.log(`[AI] Fetching page: ${args.page} → ${page.path}`);
+      const pageContent = await fetchPage(page.path);
+
+      if (pageContent) {
+        sources.push({
+          title: page.label,
+          url: `https://revy.my.id${page.path}`,
+          domain: 'revy.my.id',
+        });
+      }
 
       // Add tool result to messages
       apiMessages.push(aiMessage);
@@ -210,6 +231,8 @@ ${pData || 'No data'}`;
     }
   }
 
+  steps.push('Menyusun jawaban akhir');
+
   let msg = aiMessage?.content || 'No response';
 
   // Block prompt leaks
@@ -217,8 +240,13 @@ ${pData || 'No data'}`;
     msg = "I'm Revy's assistant — ask me anything about the site!";
   }
 
-  console.log(`[AI] Reply: "${msg.slice(0, 100)}"`);
-  return NextResponse.json({ message: msg, status: status || undefined }, { headers: h });
+  const thinkingMs = Date.now() - startedAt;
+  console.log(`[AI] Reply (${thinkingMs}ms): "${msg.slice(0, 100)}"`);
+
+  return NextResponse.json(
+    { message: msg, steps, sources, thinkingMs },
+    { headers: h },
+  );
 }
 
 export async function OPTIONS() {
