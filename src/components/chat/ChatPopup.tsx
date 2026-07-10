@@ -2,12 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, Trash2, Sparkles } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { fetchMessages, sendMessage, subscribeToMessages, deleteMessage, deleteMessageAdmin, type ChatMessage } from '@/lib/supabase';
-import { BottomSheet } from '@/components/shared/BottomSheet';
-import { LinearProgress } from '@/components/shared/LinearProgress';
-import { Button, IconButton } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ChatPopupProps {
@@ -22,24 +18,54 @@ interface AIMessage {
   content: string;
 }
 
-function TypingIndicator() {
+interface ChatMessageUI {
+  id: string;
+  type: 'user' | 'ai';
+  content: string;
+  thinking?: string[];
+  sources?: { name: string; page: string }[];
+  status?: 'thinking' | 'searching' | 'typing' | 'done';
+}
+
+function ThinkingBlock({ steps, isOpen, onToggle, status }: { steps: string[]; isOpen: boolean; onToggle: () => void; status: string }) {
   return (
-    <div className="flex items-center gap-1.5 px-3 py-2">
-      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+    <div className={`chat-thinking ${isOpen ? 'open' : ''}`}>
+      <div className="chat-thinking-header" onClick={onToggle}>
+        {status === 'thinking' && <div className="chat-think-spinner" />}
+        <span className="chat-think-label">{status === 'thinking' ? 'Berpikir...' : status}</span>
+        <svg className="chat-chevron" viewBox="0 0 24 24" width="11" height="11"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2"/></svg>
+      </div>
+      <div className="chat-thinking-steps">
+        {steps.map((step, i) => (
+          <div key={i} className="chat-thinking-step" style={{ animationDelay: `${i * 0.1}s` }}>{step}</div>
+        ))}
+      </div>
     </div>
   );
+}
+
+function SourcePill({ name }: { name: string }) {
+  return (
+    <span className="chat-source-pill">
+      <span className="chat-source-dot" />
+      {name}
+    </span>
+  );
+}
+
+function TypingCursor() {
+  return <span className="chat-typing-cursor" />;
 }
 
 export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: ChatPopupProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatMessageUI[]>([]);
   const [aiMode, setAiMode] = useState(false);
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
-  const [status, setStatus] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
   const isSignedIn = !!user;
 
@@ -72,178 +98,103 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, aiMessages, status]);
+  }, [chatHistory]);
 
-  const handleSend = async () => {
-    if (!newMessage.trim()) return;
-    setIsLoading(true);
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px';
+    }
+  }, [newMessage]);
 
-    if (aiMode) {
-      const userMsg = newMessage.trim();
-      setNewMessage('');
-      const allMessages = [...aiMessages, { role: 'user' as const, content: userMsg }];
-      setAiMessages(allMessages);
-      setStatus('Thinking...');
+  const simulateThinking = async (userMsg: string): Promise<ChatMessageUI> => {
+    const thinkSteps = [
+      'Memahami maksud pertanyaan...',
+      'Mengecek data dari database...',
+      'Menyusun kerangka jawaban...',
+    ];
 
-      console.log('[AI Chat] Sending:', userMsg);
+    const msgId = Date.now().toString();
+    const msg: ChatMessageUI = {
+      id: msgId,
+      type: 'ai',
+      content: '',
+      thinking: [],
+      sources: [],
+      status: 'thinking',
+    };
 
-      try {
-        const res = await fetch('/api/ai-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: allMessages }),
-        });
-
-        console.log('[AI Chat] Status:', res.status);
-        const data = await res.json();
-        console.log('[AI Chat] Response:', data);
-
-        setStatus('');
-        if (data.status) {
-          console.log('[AI Chat] Page fetched:', data.status);
-        }
-        setAiMessages(prev => [...prev, { role: 'assistant', content: data.message || 'No response' }]);
-      } catch (err) {
-        console.error('[AI Chat] Error:', err);
-        setStatus('');
-        setAiMessages(prev => [...prev, { role: 'assistant', content: 'Error: Could not reach AI service.' }]);
-      }
-    } else if (user) {
-      await sendMessage(user.id, user.display_name || user.email || 'Anonymous', user.avatar_url, newMessage);
-      setNewMessage('');
+    // Animate thinking steps
+    for (let i = 0; i < thinkSteps.length; i++) {
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 200));
+      setChatHistory(prev => {
+        const updated = prev.map(m => m.id === msgId ? { ...m, thinking: [...(m.thinking || []), thinkSteps[i]] } : m);
+        return updated;
+      });
     }
 
-    setIsLoading(false);
+    // Fetch from API
+    setChatHistory(prev => [...prev, msg]);
+
+    const allAiMessages = [...aiMessages, { role: 'user' as const, content: userMsg }];
+
+    try {
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: allAiMessages }),
+      });
+      const data = await res.json();
+
+      setAiMessages([...allAiMessages, { role: 'assistant', content: data.message }]);
+
+      // Simulate typing
+      setChatHistory(prev => prev.map(m => m.id === msgId ? { ...m, status: 'typing', content: '' } : m));
+
+      const fullText = data.message || 'No response';
+      let typed = '';
+      for (let i = 0; i < fullText.length; i++) {
+        typed += fullText[i];
+        setChatHistory(prev => prev.map(m => m.id === msgId ? { ...m, content: typed } : m));
+        await new Promise(r => setTimeout(r, 10 + Math.random() * 15));
+      }
+
+      setChatHistory(prev => prev.map(m => m.id === msgId ? { ...m, status: 'done' } : m));
+    } catch {
+      setChatHistory(prev => prev.map(m => m.id === msgId ? { ...m, status: 'done', content: 'Error: Could not reach AI.' } : m));
+    }
+
+    return msg;
+  };
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || isGenerating) return;
+
+    const userMsg = newMessage.trim();
+    setNewMessage('');
+    setIsGenerating(true);
+
+    if (aiMode) {
+      // Add user message
+      setChatHistory(prev => [...prev, { id: Date.now().toString(), type: 'user', content: userMsg }]);
+
+      // Simulate AI thinking and response
+      await simulateThinking(userMsg);
+    } else if (user) {
+      await sendMessage(user.id, user.display_name || user.email || 'Anonymous', user.avatar_url, userMsg);
+    }
+
+    setIsGenerating(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const chatContent = (
-    <div className="bg-surface rounded-t-[28px] sm:rounded-[28px] shadow-elevation-5 border border-outline/10 overflow-hidden noise-grain relative">
-      {isLoading && (
-        <div className="absolute top-0 left-0 right-0 z-20">
-          <LinearProgress color="secondary" />
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-outline/10">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${aiMode ? 'bg-gradient-to-br from-purple-500 to-pink-500' : 'bg-primary/10'}`}>
-            {aiMode ? <Sparkles className="w-4 h-4 text-white" /> : <User className="w-4 h-4 text-primary" />}
-          </div>
-          <div>
-            <h3 className="font-medium text-foreground text-[13px]">
-              {aiMode ? 'AI Assistant' : 'Global Chat'}
-            </h3>
-          </div>
-        </div>
-        <IconButton onClick={onClose} variant="ghost" className="rounded-full w-8 h-8">
-          <X className="w-4 h-4" />
-        </IconButton>
-      </div>
-
-      {/* Messages */}
-      <div className="h-[50vh] sm:h-80 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin" role="log" aria-live="polite" aria-label="Chat messages" data-lenis-prevent>
-        {aiMode ? (
-          <>
-            {aiMessages.length === 0 && !status && (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <Sparkles className="w-6 h-6 text-purple-500/50 mb-2" />
-                <p className="text-[12px] text-muted-foreground">Ask me anything about Revy</p>
-              </div>
-            )}
-            {aiMessages.map((msg, i) => (
-              <div key={i} className={`${msg.role === 'user' ? 'flex justify-end' : ''}`}>
-                <div className={`max-w-[85%] ${msg.role === 'user' ? '' : ''}`}>
-                  {msg.role === 'assistant' && (
-                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> AI
-                    </p>
-                  )}
-                  <div className={`text-[12px] leading-relaxed ${msg.role === 'user' ? 'bg-primary text-primary-foreground px-3 py-2 rounded-2xl rounded-br-md' : 'text-foreground'}`}>
-                    {msg.role === 'assistant' ? (
-                      <div className="chat-markdown">
-                        <Markdown>{msg.content}</Markdown>
-                      </div>
-                    ) : (
-                      <span>{msg.content}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {status && (
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3 h-3 text-purple-500" />
-                <TypingIndicator />
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <User className="w-6 h-6 text-muted-foreground/30 mb-2" />
-                <p className="text-[12px] text-muted-foreground">No messages yet</p>
-              </div>
-            ) : (
-              messages.map((msg) => {
-                const isOwn = msg.user_id === user?.id;
-                return (
-                  <div key={msg.id} className={`${isOwn ? 'flex justify-end' : ''}`}>
-                    <div className={`max-w-[85%]`}>
-                      {!isOwn && (
-                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
-                          <img src={msg.user_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.user_name)}&background=random`} alt="" className="w-3 h-3 rounded-full" />
-                          {msg.user_name}
-                        </p>
-                      )}
-                      <div className={`text-[12px] leading-relaxed ${isOwn ? 'bg-primary text-primary-foreground px-3 py-2 rounded-2xl rounded-br-md' : 'bg-surface-variant text-foreground px-3 py-2 rounded-2xl rounded-bl-md'}`}>
-                        {msg.message}
-                      </div>
-                      {(isOwn || user?.is_admin) && (
-                        <button onClick={() => { if (user?.is_admin) deleteMessageAdmin(msg.id); else if (user?.id) deleteMessage(msg.id, user.id); }}
-                          className="text-[9px] text-muted-foreground/50 hover:text-error mt-0.5">
-                          delete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="border-t border-outline/10 p-3">
-        {!isSignedIn && !aiMode ? (
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] text-muted-foreground">Sign in to chat</p>
-            <Button onClick={onLoginRequest} variant="filled" size="sm" className="rounded-full text-[11px] h-7 px-3">Sign In</Button>
-          </div>
-        ) : (
-          <div className="flex gap-2 items-end">
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyPress}
-              placeholder={aiMode ? "Ask anything..." : "Type a message..."} aria-label="Type a message"
-              className="flex-1 min-w-0 px-3 py-2 bg-surface-variant border border-outline/20 rounded-full text-[12px] text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all" />
-            <button onClick={handleSend} disabled={!newMessage.trim() || isLoading}
-              className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 hover:bg-primary/90 transition-colors flex-shrink-0">
-              <Send className="w-3.5 h-3.5 ml-0.5" />
-            </button>
-          </div>
-        )}
-        {aiMode && (
-          <p className="text-[9px] text-muted-foreground/50 mt-1.5 text-center">Ctrl+Alt+A+I to toggle</p>
-        )}
-      </div>
-    </div>
-  );
+  const copyMessage = (content: string) => {
+    navigator.clipboard.writeText(content).catch(() => {});
+  };
 
   return (
     <AnimatePresence>
@@ -251,14 +202,138 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose} className="fixed inset-0 bg-black/40 z-[60] pointer-events-auto" />
+
           <motion.div initial={{ opacity: 0, y: '100%' }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className={`fixed bottom-0 left-0 right-0 sm:bottom-4 sm:w-[380px] sm:max-w-[calc(100vw-2rem)] z-[60] ${side === 'left' ? 'sm:left-4' : 'sm:right-4 sm:left-auto'}`}>
-            <BottomSheet onClose={onClose}>
-              {aiMode ? (
-                <div className="ai-glow-wrap">{chatContent}</div>
-              ) : chatContent}
-            </BottomSheet>
+            className={`fixed bottom-0 left-0 right-0 sm:bottom-4 sm:w-[420px] sm:max-w-[calc(100vw-2rem)] z-[60] ${side === 'left' ? 'sm:left-4' : 'sm:right-4 sm:left-auto'}`}>
+
+            <div className="chat-container">
+              {/* Header */}
+              <div className="chat-header">
+                <div className="chat-header-left">
+                  <div className={`chat-header-avatar ${aiMode ? 'ai' : ''}`}>
+                    {aiMode ? '✦' : 'R'}
+                  </div>
+                  <div>
+                    <h3 className="chat-header-title">{aiMode ? 'AI Assistant' : 'Revy Chat'}</h3>
+                    <p className="chat-header-sub">{aiMode ? 'Powered by NVIDIA' : 'Global chat'}</p>
+                  </div>
+                </div>
+                <button onClick={onClose} className="chat-close-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
+                </button>
+              </div>
+
+              {/* Messages */}
+              <div className="chat-messages">
+                {chatHistory.length === 0 && !isGenerating && (
+                  <div className="chat-greeting">
+                    <h2>Ada yang bisa dibantu?</h2>
+                    <p>Tanya apa saja tentang Revy</p>
+                  </div>
+                )}
+
+                {chatHistory.map((msg) => (
+                  <div key={msg.id} className={`chat-msg ${msg.type}`}>
+                    {msg.type === 'user' ? (
+                      <div className="chat-user-bubble">{msg.content}</div>
+                    ) : (
+                      <div className="chat-ai-col">
+                        {/* Thinking block */}
+                        {msg.thinking && msg.thinking.length > 0 && (
+                          <ThinkingBlock
+                            steps={msg.thinking}
+                            isOpen={msg.status !== 'done'}
+                            onToggle={() => {}}
+                            status={msg.status === 'thinking' ? 'thinking' : msg.status === 'typing' ? 'Mengetik...' : 'Berpikir selesai'}
+                          />
+                        )}
+
+                        {/* Sources */}
+                        {msg.sources && msg.sources.length > 0 && (
+                          <div className="chat-sources">
+                            {msg.sources.map((s, i) => (
+                              <SourcePill key={i} name={s.name} />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* AI text */}
+                        {msg.status !== 'thinking' && (
+                          <div className="chat-ai-text">
+                            {msg.status === 'typing' ? (
+                              <div>
+                                <Markdown>{msg.content}</Markdown>
+                                <TypingCursor />
+                              </div>
+                            ) : (
+                              <Markdown>{msg.content}</Markdown>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        {msg.status === 'done' && msg.content && (
+                          <div className="chat-msg-actions">
+                            <button onClick={() => copyMessage(msg.content)} title="Salin">
+                              <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 1H4a2 2 0 00-2 2v14h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z" fill="currentColor"/></svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Regular messages for non-AI mode */}
+                {!aiMode && messages.map((msg) => {
+                  const isOwn = msg.user_id === user?.id;
+                  return (
+                    <div key={msg.id} className={`chat-msg ${isOwn ? 'user' : 'ai'}`}>
+                      {isOwn ? (
+                        <div className="chat-user-bubble">{msg.message}</div>
+                      ) : (
+                        <div className="chat-ai-col">
+                          <div className="chat-ai-text">{msg.message}</div>
+                          {(isOwn || user?.is_admin) && (
+                            <button onClick={() => { if (user?.is_admin) deleteMessageAdmin(msg.id); else if (user?.id) deleteMessage(msg.id, user.id); }}
+                              className="chat-delete-btn">delete</button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="chat-composer-wrap">
+                <div className="chat-composer">
+                  <textarea
+                    ref={textareaRef}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder={aiMode ? "Tanya apa saja..." : "Type a message..."}
+                    rows={1}
+                    disabled={isGenerating}
+                    className="chat-textarea"
+                  />
+                  <button
+                    onClick={handleSend}
+                    disabled={!newMessage.trim() || isGenerating}
+                    className={`chat-send-btn ${newMessage.trim() && !isGenerating ? 'ready' : ''}`}
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 12l16-8-6 8 6 8z" fill="currentColor"/></svg>
+                  </button>
+                </div>
+                {!aiMode && (
+                  <p className="chat-disclaimer">Ctrl+Alt+A+I untuk AI mode</p>
+                )}
+              </div>
+            </div>
           </motion.div>
         </>
       )}
