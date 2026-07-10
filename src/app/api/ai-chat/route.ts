@@ -177,21 +177,18 @@ export async function POST(req: NextRequest) {
       };
 
       try {
-        send({ type: 'step', label: 'Understanding request' });
-        send({ type: 'step', label: 'Fetching portfolio data' });
-        
-        // Run independent fetches in parallel for speed
+        // Fetch data in parallel — no fake steps, just real work
         const [pData, kbRes] = await Promise.all([
           getPortfolio(),
           fetchWithTimeout('https://revy.my.id/ai-knowledge.md', { next: { revalidate: 300 } }, 5000).then(r => r.text()).catch(() => '')
         ]);
 
-        send({ type: 'step', label: 'Analyzing knowledge base' });
         const detectedPage = detectPage(lastMsg);
         let pageContent = '';
         let sources: Source[] = [];
 
         if (detectedPage) {
+          // Only show step when actually fetching a page
           send({ type: 'step', label: `Reading: ${detectedPage.label}` });
           pageContent = await fetchPageContent(detectedPage.path);
           if (pageContent) {
@@ -199,8 +196,6 @@ export async function POST(req: NextRequest) {
             send({ type: 'sources', sources });
           }
         }
-
-        send({ type: 'step', label: 'Generating response' });
 
         const systemPrompt = `You are Revy's smart AI assistant on revy.my.id. Answer DIRECTLY — NEVER say "check the docs".
 CAPABILITIES:

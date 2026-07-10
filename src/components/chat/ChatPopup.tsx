@@ -238,8 +238,11 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
 
           if (evt.type === 'step') {
             console.log('[AI Chat] Step:', evt.label);
-            steps = [...steps, evt.label];
-            setGen(g => ({ ...g, steps }));
+            // Only add step if it's a real operation (page fetch), not fake labels
+            if (evt.label.startsWith('Reading:')) {
+              steps = [...steps, evt.label];
+              setGen(g => ({ ...g, steps }));
+            }
           } else if (evt.type === 'sources') {
             console.log('[AI Chat] Sources:', evt.sources?.length);
             sources = evt.sources || [];
