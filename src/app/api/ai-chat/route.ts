@@ -239,7 +239,7 @@ ${kbRes || 'No knowledge base available'}`;
             'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
+            model: 'openai/gpt-oss-120b',
             messages: apiMessages,
             max_tokens: 4096,
             temperature: 0.7,
