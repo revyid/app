@@ -38,7 +38,7 @@ interface AIMessage {
 type GenPhase = 'thinking' | 'searching' | 'typing' | null;
 
 // Live generation state — every field here is driven by real events coming from the
-// server as they happen (NDJSON stream), not by simulated timers.
+// server as they happen (SSE stream), not by simulated timers.
 interface GenState {
   phase: GenPhase;
   steps: string[];
@@ -117,12 +117,12 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
   const [gen, setGen] = useState<GenState>(EMPTY_GEN);
   const [feedback, setFeedback] = useState<Record<number, 'up' | 'down' | undefined>>({});
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  // Whether each historical message's thinking trace is expanded — collapsed by default,
-  // but the trace itself is always kept (never wiped after the answer finishes).
+  
   const [openThinkIdx, setOpenThinkIdx] = useState<Record<number, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const genStartRef = useRef<number>(0);
   const abortRef = useRef<AbortController | null>(null);
+  
   const { user } = useAuth();
   const isSignedIn = !!user;
 
@@ -161,9 +161,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, aiMessages, gen]);
 
-  // Consumes the NDJSON stream from /api/ai-chat in real time: thinking steps, sources,
-  // and answer tokens are all rendered the instant they arrive from the server — nothing
-  // here is simulated or replayed after the fact.
+  // Consumes the Standard SSE stream from /api/ai-chat in real time.
   const streamAI = async (history: AIMessage[]) => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -204,13 +202,27 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
         const { value, done } = await reader.read();
         if (done) break;
         buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop() ?? '';
+        
+        // Standard SSE chunks are separated by \n\n
+        const chunks = buf.split('\n\n');
+        buf = chunks.pop() ?? ''; // Keep the last incomplete chunk in buffer
 
-        for (const line of lines) {
-          if (!line.trim()) continue;
+        for (const chunk of chunks) {
+          if (!chunk.trim()) continue;
+          
+          // Extract just the data payload from the SSE chunk
+          const dataLine = chunk.split('\n').find(l => l.startsWith('data:'));
+          if (!dataLine) continue;
+          
+          const payload = dataLine.slice(5).trim(); // remove 'data:'
+          if (!payload) continue;
+          
           let evt: any;
-          try { evt = JSON.parse(line); } catch { continue; }
+          try { 
+            evt = JSON.parse(payload); 
+          } catch { 
+            continue; 
+          }
 
           if (evt.type === 'step') {
             steps = [...steps, evt.label];
