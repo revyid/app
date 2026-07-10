@@ -78,6 +78,9 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
       const allMessages = [...aiMessages, { role: 'user' as const, content: userMsg }];
       setAiMessages(allMessages);
 
+      // Add thinking indicator
+      setAiMessages(prev => [...prev, { role: 'assistant', content: '🔍 Thinking...' }]);
+
       try {
         const res = await fetch('/api/ai-chat', {
           method: 'POST',
@@ -85,11 +88,21 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
           body: JSON.stringify({ messages: allMessages }),
         });
         const data = await res.json();
-        if (data.message) {
-          setAiMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
-        }
+
+        // Remove thinking indicator and add real response
+        setAiMessages(prev => {
+          const without = prev.slice(0, -1); // remove "Thinking..."
+          if (data.status) {
+            // Show status like "Fetching page..."
+            return [...without, { role: 'assistant', content: `🔍 ${data.status}` }, { role: 'assistant', content: data.message }];
+          }
+          return [...without, { role: 'assistant', content: data.message || 'No response' }];
+        });
       } catch {
-        setAiMessages(prev => [...prev, { role: 'assistant', content: 'Error: Could not reach AI service.' }]);
+        setAiMessages(prev => {
+          const without = prev.slice(0, -1);
+          return [...without, { role: 'assistant', content: 'Error: Could not reach AI service.' }];
+        });
       }
     } else if (user) {
       await sendMessage(user.id, user.display_name || user.email || 'Anonymous', user.avatar_url, newMessage);
