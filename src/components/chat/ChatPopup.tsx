@@ -108,16 +108,28 @@ function SourceCards({ sources }: { sources: AISource[] }) {
   );
 }
 
+// localStorage helpers
+const CHAT_KEY = 'revy_ai_chat';
+const loadChat = (): { aiMessages: AIMessage[]; aiMode: boolean } => {
+  try {
+    const d = localStorage.getItem(CHAT_KEY);
+    return d ? JSON.parse(d) : { aiMessages: [], aiMode: false };
+  } catch { return { aiMessages: [], aiMode: false }; }
+};
+const saveChat = (msgs: AIMessage[], mode: boolean) => {
+  try { localStorage.setItem(CHAT_KEY, JSON.stringify({ aiMessages: msgs, aiMode: mode })); } catch {}
+};
+
 export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: ChatPopupProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [aiMode, setAiMode] = useState(false);
-  const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
+  const [aiMode, setAiMode] = useState(() => loadChat().aiMode);
+  const [aiMessages, setAiMessages] = useState<AIMessage[]>(() => loadChat().aiMessages);
   const [gen, setGen] = useState<GenState>(EMPTY_GEN);
   const [feedback, setFeedback] = useState<Record<number, 'up' | 'down' | undefined>>({});
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  
+
   const [openThinkIdx, setOpenThinkIdx] = useState<Record<number, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const genStartRef = useRef<number>(0);
@@ -156,6 +168,11 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
     );
     return () => { channel.unsubscribe(); };
   }, [isOpen]);
+
+  // Save AI chat to localStorage
+  useEffect(() => {
+    saveChat(aiMessages, aiMode);
+  }, [aiMessages, aiMode]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
