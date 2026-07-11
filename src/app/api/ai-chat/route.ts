@@ -73,40 +73,50 @@ async function getPortfolio(): Promise<string> {
       if (l?.items) r.push(`Languages: ${l.items.map((i: any) => `${i.name} (${i.level || ''})`).join(', ')}`);
     }
 
-    // Projects
+    // Projects — can be array or {items: array}
     if (p.projects) {
+      let items: any[] = [];
       const pr = typeof p.projects === 'string' ? JSON.parse(p.projects) : p.projects;
-      if (pr?.items) r.push(`Projects: ${pr.items.map((i: any) => `${i.title || i.name}${i.tech ? ' (' + i.tech.join(', ') + ')' : ''}${i.role ? ' - ' + i.role : ''}`).join('; ')}`);
+      if (Array.isArray(pr)) items = pr;
+      else if (pr?.items) items = pr.items;
+      if (items.length > 0) {
+        r.push(`Projects: ${items.map((i: any) => `${i.title || i.name || 'Untitled'}${i.role ? ' (' + i.role + ')' : ''}`).join('; ')}`);
+      }
     }
 
     // Experiences
     if (p.experiences) {
       const exp = typeof p.experiences === 'string' ? JSON.parse(p.experiences) : p.experiences;
-      if (exp?.items) r.push(`Experience: ${exp.items.map((i: any) => `${i.position || ''} at ${i.company || ''}`).join('; ')}`);
+      const expItems = Array.isArray(exp) ? exp : exp?.items || [];
+      if (expItems.length > 0) r.push(`Experience: ${expItems.map((i: any) => `${i.position || ''} at ${i.company || ''}`).join('; ')}`);
     }
 
     // Education
     if (p.education) {
       const edu = typeof p.education === 'string' ? JSON.parse(p.education) : p.education;
-      if (edu?.items) r.push(`Education: ${edu.items.map((i: any) => `${i.degree || ''} at ${i.school || ''}`).join('; ')}`);
+      const eduItems = Array.isArray(edu) ? edu : edu?.items || [];
+      if (eduItems.length > 0) r.push(`Education: ${eduItems.map((i: any) => `${i.degree || ''} at ${i.school || ''}`).join('; ')}`);
     }
 
     // Social links
     if (p.social_links) {
       const sl = typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links;
-      if (sl?.items) r.push(`Social: ${sl.items.map((i: any) => i.platform).join(', ')}`);
+      const slItems = Array.isArray(sl) ? sl : sl?.items || [];
+      if (slItems.length > 0) r.push(`Social: ${slItems.map((i: any) => i.platform).join(', ')}`);
     }
 
     // Testimonials
     if (p.testimonials) {
       const t = typeof p.testimonials === 'string' ? JSON.parse(p.testimonials) : p.testimonials;
-      if (t?.items) r.push(`Testimonials: ${t.items.map((i: any) => `${i.name}: "${(i.text || i.quote || '').slice(0, 50)}..."`).join('; ')}`);
+      const tItems = Array.isArray(t) ? t : t?.items || [];
+      if (tItems.length > 0) r.push(`Testimonials: ${tItems.map((i: any) => `${i.name}: "${(i.text || i.quote || '').slice(0, 50)}..."`).join('; ')}`);
     }
 
     // Contacts
     if (p.contacts) {
       const c = typeof p.contacts === 'string' ? JSON.parse(p.contacts) : p.contacts;
-      if (c?.items) r.push(`Contact: ${c.items.map((i: any) => `${i.type}: ${i.value || i.url || ''}`).join(', ')}`);
+      const cItems = Array.isArray(c) ? c : c?.items || [];
+      if (cItems.length > 0) r.push(`Contact: ${cItems.map((i: any) => `${i.type}: ${i.value || i.url || ''}`).join(', ')}`);
     }
 
     console.log('[Portfolio] Real-time data fetched:', r.length, 'sections');
