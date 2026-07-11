@@ -564,6 +564,14 @@
 .chat-markdown strong { font-weight: 600; }
 .chat-markdown a { color: hsl(var(--primary)); text-decoration: underline; }
 
+/* Tables */
+.chat-markdown table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 11px; }
+.chat-markdown th, .chat-markdown td { border: 1px solid hsl(var(--outline) / 0.15); padding: 5px 8px; text-align: left; }
+.chat-markdown th { background: hsl(var(--surface-variant)); font-weight: 600; }
+.chat-markdown tr:nth-child(even) { background: hsl(var(--surface-variant) / 0.3); }
+.chat-markdown hr { border: none; border-top: 1px solid hsl(var(--outline) / 0.15); margin: 8px 0; }
+.chat-markdown blockquote { border-left: 3px solid hsl(var(--primary) / 0.3); padding-left: 10px; margin: 6px 0; color: hsl(var(--muted-foreground)); font-style: italic; }
+
 .ai-glow-wrap {
   position: relative;
   border-radius: 32px;

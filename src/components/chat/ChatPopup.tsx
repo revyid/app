@@ -7,6 +7,7 @@ import {
   Copy, RotateCcw, ThumbsUp, ThumbsDown, Check,
 } from 'lucide-react';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchMessages, sendMessage, subscribeToMessages, deleteMessage, deleteMessageAdmin, type ChatMessage } from '@/lib/supabase';
 import { modalBackdrop } from '@/lib/motion-presets';
@@ -412,7 +413,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                     <div className={`inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[12px] text-left leading-relaxed overflow-hidden ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-surface-variant text-foreground rounded-tl-sm'}`}>
                       {msg.role === 'assistant' ? (
                         <div className="chat-markdown">
-                          <Markdown>{msg.content}</Markdown>
+                          <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
                         </div>
                       ) : (
                         <span className="break-words">{msg.content}</span>
@@ -489,7 +490,7 @@ export function ChatPopup({ isOpen, onClose, onLoginRequest, side = 'right' }: C
                   {gen.phase === 'typing' && gen.typedText && (
                     <div className="mt-1.5 inline-block max-w-full px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl rounded-tl-sm bg-surface-variant text-foreground text-[12px] text-left leading-relaxed">
                       <div className="chat-markdown">
-                        <Markdown>{gen.typedText}</Markdown>
+                        <Markdown remarkPlugins={[remarkGfm]}>{gen.typedText}</Markdown>
                       </div>
                     </div>
                   )}
