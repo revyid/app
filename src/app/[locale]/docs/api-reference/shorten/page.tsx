@@ -2,7 +2,7 @@
 
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 
 function CopyBtn({ text }: { text: string }) {
   const [ok, setOk] = useState(false);

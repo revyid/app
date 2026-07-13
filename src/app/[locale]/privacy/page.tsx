@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Shield, Eye, Database, Lock, Mail, ArrowLeft } from 'lucide-react';
 
 const sections = [
