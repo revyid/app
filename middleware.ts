@@ -1,32 +1,16 @@
-import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
-import { locales, defaultLocale } from '@/i18n/config';
-
-const intlMiddleware = createMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: 'as-needed',
-});
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip i18n for API routes, auth callbacks, short URLs, and static files
+  // Skip for API routes, auth callbacks, short URLs, static files
   const isApiRoute = pathname.startsWith('/api/');
   const isAuthCallback = pathname.startsWith('/auth/');
   const isShortUrl = pathname.startsWith('/s/');
-  const isStaticFile = pathname.includes('.') && !pathname.endsWith('.json');
+  const isLocalePath = pathname.startsWith('/en') || pathname.startsWith('/id');
 
-  if (isApiRoute || isAuthCallback || isShortUrl || isStaticFile) {
+  if (isApiRoute || isAuthCallback || isShortUrl) {
     const response = NextResponse.next();
-
-    // CSP for non-API routes
-    if (!isApiRoute) {
-      response.headers.set(
-        'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' https://accounts.google.com https://static.cloudflareinsights.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://vercel.live; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com; frame-src https://accounts.google.com https://vercel.live; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';"
-      );
-    }
 
     if (isApiRoute) {
       response.headers.set('Cache-Control', 'no-store');
@@ -46,18 +30,22 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // Apply i18n middleware for all other routes
-  const intlResponse = intlMiddleware(request);
-  if (intlResponse) return intlResponse;
+  // If already has locale prefix, continue
+  if (isLocalePath) {
+    return NextResponse.next();
+  }
 
-  // CSP for other routes
-  const response = NextResponse.next();
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' https://accounts.google.com https://static.cloudflareinsights.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://vercel.live; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com; frame-src https://accounts.google.com https://vercel.live; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';"
-  );
+  // For root path, rewrite to /en (default locale)
+  if (pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/en';
+    return NextResponse.rewrite(url);
+  }
 
-  return response;
+  // For other paths without locale, rewrite to /en + path
+  const url = request.nextUrl.clone();
+  url.pathname = `/en${pathname}`;
+  return NextResponse.rewrite(url);
 }
 
 export const config = {

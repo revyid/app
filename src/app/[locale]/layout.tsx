@@ -1,5 +1,7 @@
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import en from '../../../messages/en.json';
+import id from '../../../messages/id.json';
+
+const messages: Record<string, any> = { en, id };
 
 export default async function LocaleLayout({
   children,
@@ -9,11 +11,11 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const messages = await getMessages();
+  const msgs = messages[locale] || messages.en;
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <div lang={locale}>
       {children}
-    </NextIntlClientProvider>
+    </div>
   );
 }
