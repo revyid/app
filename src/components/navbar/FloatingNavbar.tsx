@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useThemeStore } from '@/stores/theme-store';
 import { floatingNavbar } from '@/lib/motion-presets';
 import { getSiteSetting } from '@/lib/auth';
 
@@ -36,7 +36,8 @@ export const FloatingNavbar = memo(function FloatingNavbar({
   onProfileClick,
   onAdminClick,
 }: FloatingNavbarProps) {
-  const { effectiveTheme, setTheme } = useTheme();
+  const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
+  const setTheme = useThemeStore((s) => s.setTheme);
   const isDark = effectiveTheme === 'dark';
 
   const { ref, toggleSwitchTheme } = useModeAnimation({

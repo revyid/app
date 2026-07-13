@@ -1,10 +1,8 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { getThemes } from '@/lib/auth';
+import { create } from 'zustand';
+import { getThemes, upsertTheme, type ThemeData } from '@/lib/auth';
 import { generateId } from '@/lib/utils';
 
-// ==========================================
-// HEX → HSL Utility
-// ==========================================
+// ─── HEX → HSL Utility ──────────────────────────────────────────────
 
 function hexToHsl(hex: string) {
   let r = 0, g = 0, b = 0;
@@ -35,9 +33,7 @@ function hexToHsl(hex: string) {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-// ==========================================
-// M3 Color Token Mapping
-// ==========================================
+// ─── M3 Color Token Mapping ─────────────────────────────────────────
 
 const colorMapping: Record<string, string[]> = {
   primary: ['primary', 'ring'],
@@ -74,9 +70,7 @@ const colorMapping: Record<string, string[]> = {
   outlineVariant: ['outline-variant'],
 };
 
-// ==========================================
-// Theme Profile Types
-// ==========================================
+// ─── Theme Profile Types ────────────────────────────────────────────
 
 export interface ThemeColorProfile {
   id: string;
@@ -93,18 +87,6 @@ export interface ThemeColorProfile {
 
 type ThemeMode = 'light' | 'dark' | 'system';
 type EffectiveTheme = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: ThemeMode;
-  effectiveTheme: EffectiveTheme;
-  setTheme: (theme: ThemeMode) => void;
-  toggleTheme: () => void;
-  colorProfileId: string;
-  setColorProfile: (id: string) => void;
-  availableProfiles: ThemeColorProfile[];
-  addColorProfile: (profile: ThemeColorProfile) => void;
-  currentProfile: ThemeColorProfile;
-}
 
 // Default fallback theme
 const defaultProfile: ThemeColorProfile = {
@@ -203,146 +185,95 @@ const defaultProfile: ThemeColorProfile = {
   }
 };
 
-// ==========================================
-// Context & Provider
-// ==========================================
+// ─── Apply Colors to DOM ────────────────────────────────────────────
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+function applyColors(activeTheme: EffectiveTheme, profile: ThemeColorProfile) {
+  if (typeof window === 'undefined') return;
+  const root = window.document.documentElement;
+  const scheme = activeTheme === 'dark' ? profile.schemes.dark : profile.schemes.light;
+  const vars: Record<string, string> = {};
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(() => {
-    if (typeof window === 'undefined') return 'system';
-    return (localStorage.getItem('theme') as ThemeMode) || 'system';
-  });
-
-  const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('light');
-
-  const [profiles, setProfiles] = useState<ThemeColorProfile[]>([defaultProfile]);
-
-  // Load themes from DB + realtime subscription
-  useEffect(() => {
-    let channel: any;
-    const loadThemes = async () => {
-      try {
-        const themes = await getThemes();
-        const themeProfiles: ThemeColorProfile[] = themes.map(theme => {
-          const parseScheme = (s: any): Record<string, string> => {
-            if (typeof s === 'string') { try { return JSON.parse(s); } catch { return {}; } }
-            return s || {};
-          };
-          return {
-            id: theme.id || generateId(),
-            name: theme.name,
-            description: theme.description,
-            seed: theme.seed_color,
-            schemes: {
-              light: parseScheme(theme.light_scheme),
-              dark: parseScheme(theme.dark_scheme),
-            }
-          };
-        });
-        
-        setProfiles([defaultProfile, ...themeProfiles]);
-
-        // If selected theme was deleted, fallback to default
-        const currentId = localStorage.getItem('colorProfileId') || defaultProfile.id;
-        const exists = currentId === defaultProfile.id || themeProfiles.some(t => t.id === currentId);
-        if (!exists) {
-          localStorage.setItem('colorProfileId', defaultProfile.id);
-          setColorProfileIdState(defaultProfile.id);
-        }
-      } catch (error) {
-        console.error('Failed to load themes:', error);
-      }
-    };
-    
-    loadThemes();
-
-    // Realtime: refetch when themes table changes
-    import('@/lib/supabase').then(({ getSupabase }) => {
-      getSupabase().then(client => {
-        channel = client.channel('themes-changes')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'themes' }, () => {
-            loadThemes();
-          })
-          .subscribe();
+  Object.entries(colorMapping).forEach(([jsonKey, cssKeys]) => {
+    const hex = scheme[jsonKey as keyof typeof scheme];
+    if (hex) {
+      const hsl = hexToHsl(hex);
+      cssKeys.forEach(cssKey => {
+        root.style.setProperty(`--${cssKey}`, hsl);
+        vars[cssKey] = hsl;
       });
-    });
-
-    return () => { if (channel) import('@/lib/supabase').then(({ getSupabase }) => getSupabase().then(c => c.removeChannel(channel))); };
-  }, []);
-
-  const [colorProfileId, setColorProfileIdState] = useState<string>(() => {
-    if (typeof window === 'undefined') return defaultProfile.id;
-    return localStorage.getItem('colorProfileId') || defaultProfile.id;
+    }
   });
 
-  const currentProfile = useMemo(
-    () => profiles.find(p => p.id === colorProfileId) || defaultProfile,
-    [profiles, colorProfileId]
-  );
+  try { localStorage.setItem('themeVars', JSON.stringify(vars)); } catch {}
+}
 
-  // Apply theme colors to :root
-  const applyColors = useCallback((activeTheme: EffectiveTheme, profile: ThemeColorProfile) => {
-    const root = window.document.documentElement;
-    const scheme = activeTheme === 'dark' ? profile.schemes.dark : profile.schemes.light;
-    const vars: Record<string, string> = {};
+// ─── Store ──────────────────────────────────────────────────────────
 
-    Object.entries(colorMapping).forEach(([jsonKey, cssKeys]) => {
-      const hex = scheme[jsonKey as keyof typeof scheme];
-      if (hex) {
-        const hsl = hexToHsl(hex);
-        cssKeys.forEach(cssKey => {
-          root.style.setProperty(`--${cssKey}`, hsl);
-          vars[cssKey] = hsl;
-        });
-      }
-    });
+interface ThemeStore {
+  theme: ThemeMode;
+  effectiveTheme: EffectiveTheme;
+  setTheme: (theme: ThemeMode) => void;
+  toggleTheme: () => void;
+  colorProfileId: string;
+  setColorProfile: (id: string) => void;
+  availableProfiles: ThemeColorProfile[];
+  currentProfile: ThemeColorProfile;
+  addColorProfile: (profile: ThemeColorProfile) => void;
+  init: () => void;
+  loadThemes: () => Promise<void>;
+}
 
-    // Cache for next visit (so inline script can apply before React hydrates)
-    try { localStorage.setItem('themeVars', JSON.stringify(vars)); } catch {}
-  }, []);
+export const useThemeStore = create<ThemeStore>((set, get) => ({
+  theme: 'system',
+  effectiveTheme: 'light',
+  colorProfileId: 'default',
+  availableProfiles: [defaultProfile],
+  currentProfile: defaultProfile,
 
-  // Main effect: apply theme mode + color profile
-  useEffect(() => {
-    const root = window.document.documentElement;
+  setTheme: (theme) => {
+    set({ theme });
+    localStorage.setItem('theme', theme);
 
-    const applyTheme = (t: ThemeMode) => {
-      const active: EffectiveTheme = t === 'system'
-        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : t as EffectiveTheme;
+    const state = get();
+    const active: EffectiveTheme = theme === 'system'
+      ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : theme as EffectiveTheme;
 
-      setEffectiveTheme(active);
+    set({ effectiveTheme: active });
 
-      // Only touch classList if not already correct (avoids fighting useModeAnimation)
+    if (typeof window !== 'undefined') {
       const root = window.document.documentElement;
       if (!root.classList.contains(active)) {
         root.classList.remove('light', 'dark');
         root.classList.add(active);
       }
-
-      applyColors(active, currentProfile);
-    };
-
-    applyTheme(theme);
-    localStorage.setItem('theme', theme);
-
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = () => applyTheme('system');
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
     }
-  }, [theme, currentProfile, applyColors]);
 
-  const setColorProfile = useCallback((id: string) => {
-    setColorProfileIdState(id);
+    applyColors(active, state.currentProfile);
+  },
+
+  toggleTheme: () => {
+    const { theme } = get();
+    if (theme === 'system') {
+      const isDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      get().setTheme(isDark ? 'light' : 'dark');
+    } else {
+      get().setTheme(theme === 'light' ? 'dark' : 'light');
+    }
+  },
+
+  setColorProfile: (id) => {
+    set({ colorProfileId: id });
     localStorage.setItem('colorProfileId', id);
-  }, []);
 
-  const addColorProfile = useCallback(async (profile: ThemeColorProfile) => {
+    const state = get();
+    const profile = state.availableProfiles.find(p => p.id === id) || defaultProfile;
+    set({ currentProfile: profile });
+    applyColors(state.effectiveTheme, profile);
+  },
+
+  addColorProfile: async (profile) => {
     try {
-      const { upsertTheme } = await import('@/lib/auth');
       const result = await upsertTheme({
         id: profile.id !== 'default' ? profile.id : undefined,
         name: profile.name,
@@ -352,59 +283,104 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         dark_scheme: profile.schemes.dark,
         is_public: true
       });
-      
+
       if (result.error) {
         console.error('Failed to save theme:', result.error);
         return;
       }
-      
+
       const savedProfile = {
         ...profile,
         id: result.id || profile.id
       };
-      
-      setProfiles(prev => {
-        const existing = prev.findIndex(p => p.id === savedProfile.id);
+
+      set(state => {
+        const existing = state.availableProfiles.findIndex(p => p.id === savedProfile.id);
         if (existing >= 0) {
-          const updated = [...prev];
+          const updated = [...state.availableProfiles];
           updated[existing] = savedProfile;
-          return updated;
+          return { availableProfiles: updated };
         }
-        return [...prev, savedProfile];
+        return { availableProfiles: [...state.availableProfiles, savedProfile] };
       });
     } catch (error) {
       console.error('Failed to save theme:', error);
     }
-  }, []);
+  },
 
-  const toggleTheme = () => {
-    setThemeState((prev) => {
-      if (prev === 'system') {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
+  init: () => {
+    if (typeof window === 'undefined') return;
+
+    const stored = localStorage.getItem('theme') as ThemeMode || 'system';
+    const profileId = localStorage.getItem('colorProfileId') || 'default';
+
+    const active: EffectiveTheme = stored === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : stored as EffectiveTheme;
+
+    set({ theme: stored, effectiveTheme: active, colorProfileId: profileId });
+
+    const root = window.document.documentElement;
+    if (!root.classList.contains(active)) {
+      root.classList.remove('light', 'dark');
+      root.classList.add(active);
+    }
+
+    // System theme listener
+    if (stored === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => get().setTheme('system');
+      mediaQuery.addEventListener('change', handler);
+    }
+
+    // Load themes from DB
+    get().loadThemes();
+
+    // Apply initial colors after profiles load
+    const state = get();
+    const profile = state.availableProfiles.find(p => p.id === profileId) || defaultProfile;
+    set({ currentProfile: profile });
+    applyColors(active, profile);
+  },
+
+  loadThemes: async () => {
+    try {
+      const themes = await getThemes();
+      const themeProfiles: ThemeColorProfile[] = themes.map(theme => {
+        const parseScheme = (s: any): Record<string, string> => {
+          if (typeof s === 'string') { try { return JSON.parse(s); } catch { return {}; } }
+          return s || {};
+        };
+        return {
+          id: theme.id || generateId(),
+          name: theme.name,
+          description: theme.description,
+          seed: theme.seed_color,
+          schemes: {
+            light: parseScheme(theme.light_scheme),
+            dark: parseScheme(theme.dark_scheme),
+          }
+        };
+      });
+
+      const currentId = get().colorProfileId;
+      const exists = currentId === 'default' || themeProfiles.some(t => t.id === currentId);
+      if (!exists) {
+        localStorage.setItem('colorProfileId', 'default');
+        set({ colorProfileId: 'default' });
       }
-      return prev === 'light' ? 'dark' : 'light';
-    });
-  };
 
-  return (
-    <ThemeContext.Provider value={{
-      theme,
-      effectiveTheme,
-      setTheme: setThemeState,
-      toggleTheme,
-      colorProfileId,
-      setColorProfile,
-      availableProfiles: profiles,
-      addColorProfile,
-      currentProfile,
-    }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
+      set(state => {
+        const profiles = [defaultProfile, ...themeProfiles];
+        const profile = profiles.find(p => p.id === (exists ? currentId : 'default')) || defaultProfile;
+        return { availableProfiles: profiles, currentProfile: profile };
+      });
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within ThemeProvider');
-  return context;
-};
+      // Apply colors with new profiles
+      const state = get();
+      applyColors(state.effectiveTheme, state.currentProfile);
+    } catch (error) {
+      console.error('Failed to load themes:', error);
+    }
+  },
+}));

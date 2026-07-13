@@ -1,0 +1,54 @@
+{
+  "common": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "docs": "Docs",
+    "about": "About",
+    "contact": "Contact",
+    "projects": "Projects",
+    "skills": "Skills",
+    "experience": "Experience",
+    "education": "Education",
+    "testimonials": "Testimonials",
+    "languages": "Languages",
+    "intro": "Intro",
+    "logout": "Logout",
+    "login": "Login",
+    "settings": "Settings",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "docs": "Documentation",
+    "shortener": "URL Shortener",
+    "apiKeys": "API Keys",
+    "guide": "Guide",
+    "apiReference": "API Reference",
+    "sandbox": "Sandbox",
+    "curlTs": "curl-ts"
+  },
+  "profile": {
+    "about": "About Me",
+    "role": "Full-Stack Software Engineer",
+    "location": "Jambi, Indonesia",
+    "verified": "Verified"
+  },
+  "sections": {
+    "intro": "Intro",
+    "about": "About",
+    "skills": "Skills",
+    "projects": "Projects",
+    "experience": "Experience",
+    "education": "Education",
+    "testimonials": "Testimonials",
+    "contact": "Contact",
+    "languages": "Languages"
+  }
+}

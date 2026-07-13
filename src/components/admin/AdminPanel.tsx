@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generateId } from '@/lib/utils';
 import { X, Save, ChevronDown, ChevronUp, Shield, Plus, Trash2, Palette, BarChart3, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePortfolio } from '@/contexts/PortfolioContext';
+import { usePortfolioStore } from '@/stores/portfolio-store';
 import { upsertPortfolioSection } from '@/lib/auth';
 import { Button, IconButton } from '@/components/ui/button';
 import { modalBackdrop, bottomSheetContent } from '@/lib/motion-presets';
 import type { Project, Experience, Education, SocialLink, Contact, Language, Testimonial } from '@/types';
-import type { ProfileData, IntroData } from '@/contexts/PortfolioContext';
+import type { ProfileData, IntroData } from '@/stores/portfolio-store';
 import { ThemeBuilder } from './ThemeBuilder';
 import { SiteSettings } from './SiteSettings';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
@@ -404,7 +404,8 @@ interface AdminPanelProps { isOpen: boolean; onClose: () => void; }
 
 export function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const { user } = useAuth();
-  const { data, refresh } = usePortfolio();
+  const data = usePortfolioStore((s) => s.data);
+  const refresh = usePortfolioStore((s) => s.refresh);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'themes' | 'settings' | 'analytics' | 'users'>('portfolio');
 
   return (

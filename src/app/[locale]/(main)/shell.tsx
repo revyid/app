@@ -13,8 +13,8 @@ import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
 import { AdminPanel } from '@/components/admin/AdminPanel';
 import { CustomLogin } from '@/components/auth/CustomLogin';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
-import { useTheme } from '@/contexts/ThemeContext';
-import { usePortfolio } from '@/contexts/PortfolioContext';
+import { useThemeStore } from '@/stores/theme-store';
+import { usePortfolioStore } from '@/stores/portfolio-store';
 import { trackEvent } from '@/lib/auth';
 import { Footer } from '@/components/layout/Footer';
 import { ProfileHeader } from '@/components/sections/ProfileHeader';
@@ -79,8 +79,8 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { isReady } = usePortfolio();
-  const { toggleTheme } = useTheme();
+  const isReady = usePortfolioStore((s) => s.isReady);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
   useEffect(() => {
     trackEvent('page_view', { page: window.location.pathname }, navigator.userAgent, undefined, document.referrer);

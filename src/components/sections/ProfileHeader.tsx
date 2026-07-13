@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Heart, MapPin, Briefcase } from 'lucide-react';
-import { usePortfolio } from '@/contexts/PortfolioContext';
+import { usePortfolioStore } from '@/stores/portfolio-store';
 import { SPRING_BOUNCY } from '@/lib/motion-presets';
 
 export function ProfileHeader() {
-  const { data } = usePortfolio();
+  const data = usePortfolioStore((s) => s.data);
   const profileData = data.profile;
   const easterEgg = profileData.easter_egg;
   const [isNawaMode, setIsNawaMode] = useState(false);

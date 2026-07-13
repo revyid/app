@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Palette, Save, Upload, Download, Trash2, Shuffle, Sun, Moon } from 'lucide-react';
 import { argbFromHex, hexFromArgb, DynamicScheme, Variant, Hct } from '@material/material-color-utilities';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useThemeStore } from '@/stores/theme-store';
 import { upsertTheme, deleteTheme } from '@/lib/auth';
 import { Button, IconButton } from '@/components/ui/button';
 
@@ -43,7 +43,9 @@ const PRESET_COLORS = [
 ];
 
 export function ThemeBuilder() {
-  const { availableProfiles, setColorProfile, colorProfileId } = useTheme();
+  const availableProfiles = useThemeStore((s) => s.availableProfiles);
+  const setColorProfile = useThemeStore((s) => s.setColorProfile);
+  const colorProfileId = useThemeStore((s) => s.colorProfileId);
   const [themeName, setThemeName] = useState('');
   const [themeDescription, setThemeDescription] = useState('');
   const [seedColor, setSeedColor] = useState('#6750A4');

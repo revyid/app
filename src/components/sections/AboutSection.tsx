@@ -1,10 +1,10 @@
 import { SectionLabel } from '@/components/shared/SectionLabel';
-import { usePortfolio } from '@/contexts/PortfolioContext';
+import { usePortfolioStore } from '@/stores/portfolio-store';
 
 export function AboutSection() {
-  const { data } = usePortfolio();
+  const data = usePortfolioStore((s) => s.data);
   return (
-    <div>
+    <div data-aos="fade-up">
       <SectionLabel text="About" />
       <p className="text-body-sm text-muted-foreground leading-relaxed break-words">
         {data.profile.about}

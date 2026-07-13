@@ -1,0 +1,54 @@
+{
+  "common": {
+    "home": "Beranda",
+    "dashboard": "Dasbor",
+    "docs": "Dokumentasi",
+    "about": "Tentang",
+    "contact": "Kontak",
+    "projects": "Proyek",
+    "skills": "Keahlian",
+    "experience": "Pengalaman",
+    "education": "Pendidikan",
+    "testimonials": "Testimoni",
+    "languages": "Bahasa",
+    "intro": "Perkenalan",
+    "logout": "Keluar",
+    "login": "Masuk",
+    "settings": "Pengaturan",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "loading": "Memuat...",
+    "error": "Kesalahan",
+    "success": "Berhasil"
+  },
+  "nav": {
+    "home": "Beranda",
+    "dashboard": "Dasbor",
+    "docs": "Dokumentasi",
+    "shortener": "Pemendek URL",
+    "apiKeys": "Kunci API",
+    "guide": "Panduan",
+    "apiReference": "Referensi API",
+    "sandbox": "Sandbox",
+    "curlTs": "curl-ts"
+  },
+  "profile": {
+    "about": "Tentang Saya",
+    "role": "Insinyur Perangkat Lunak Full-Stack",
+    "location": "Jambi, Indonesia",
+    "verified": "Terverifikasi"
+  },
+  "sections": {
+    "intro": "Perkenalan",
+    "about": "Tentang",
+    "skills": "Keahlian",
+    "projects": "Proyek",
+    "experience": "Pengalaman",
+    "education": "Pendidikan",
+    "testimonials": "Testimoni",
+    "contact": "Kontak",
+    "languages": "Bahasa"
+  }
+}

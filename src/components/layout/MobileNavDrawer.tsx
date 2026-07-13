@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, X, Home, LayoutDashboard, Key, FileText, Globe, Link2, Code as CodeIcon, PlayCircle, BookOpen } from 'lucide-react';
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useThemeStore } from '@/stores/theme-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { Shield, MessageCircle, User } from 'lucide-react';
 
@@ -82,7 +82,8 @@ interface MobileNavDrawerProps {
 
 export function MobileNavDrawer({ nav = [], showNav = true, onChatClick, onProfileClick, onAdminClick }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
-  const { effectiveTheme, setTheme } = useTheme();
+  const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
+  const setTheme = useThemeStore((s) => s.setTheme);
   const isDark = effectiveTheme === 'dark';
   const { user } = useAuth();
 

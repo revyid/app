@@ -726,3 +726,74 @@
 .dark .popup-backdrop {
   background: rgba(0, 0, 0, 0.6);
 }
+
+/* ============================================
+   MAGIC BENTO — GSAP-powered card effects
+   ============================================ */
+
+.magic-bento-container {
+  --spotlight-x: 50%;
+  --spotlight-y: 50%;
+  --primary-rgb: 82, 230, 53;
+}
+
+.magic-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.magic-card:hover {
+  z-index: 10;
+}
+
+/* Particle animation */
+.magic-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  pointer-events: none;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+}
+
+/* ============================================
+   AOS OVERRIDES — Smooth, M3-aligned
+   ============================================ */
+
+[data-aos] {
+  pointer-events: auto !important;
+}
+
+[data-aos].aos-animate {
+  pointer-events: auto !important;
+}
+
+/* ============================================
+   GSAP UTILITY CLASSES
+   ============================================ */
+
+.gsap-fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.gsap-fade-in {
+  opacity: 0;
+}
+
+.gsap-scale-in {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.gsap-slide-left {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.gsap-slide-right {
+  opacity: 0;
+  transform: translateX(30px);
+}

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, MessageCircle, User, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useThemeStore } from '@/stores/theme-store';
 
 interface SidebarProps {
   children: ReactNode;
@@ -17,7 +17,8 @@ interface SidebarProps {
 }
 
 function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatClick?: () => void; onProfileClick?: () => void; onAdminClick?: () => void }) {
-  const { effectiveTheme, setTheme } = useTheme();
+  const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
+  const setTheme = useThemeStore((s) => s.setTheme);
   const { user } = useAuth();
   const isDark = effectiveTheme === 'dark';
 

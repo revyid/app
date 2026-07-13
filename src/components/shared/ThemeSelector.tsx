@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme, type ThemeColorProfile } from '@/contexts/ThemeContext';
+import { useThemeStore, type ThemeColorProfile } from '@/stores/theme-store';
 import { Check, Palette, Sun, Moon, Monitor } from 'lucide-react';
 import { SPRING_BOUNCY, SPRING_SNAPPY } from '@/lib/motion-presets';
 
@@ -87,13 +87,11 @@ function ProfileCard({
 }
 
 export function ThemeSelector({ className = '' }: ThemeSelectorProps) {
-  const {
-    theme,
-    setTheme,
-    colorProfileId,
-    setColorProfile,
-    availableProfiles,
-  } = useTheme();
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const colorProfileId = useThemeStore((s) => s.colorProfileId);
+  const setColorProfile = useThemeStore((s) => s.setColorProfile);
+  const availableProfiles = useThemeStore((s) => s.availableProfiles);
 
   const themeOptions = [
     { id: 'light' as const, label: 'Light', icon: Sun },

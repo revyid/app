@@ -62,6 +62,10 @@ Collects: account data, usage data, short URLs. No payment/biometrics. Data in S
 ### Terms of Service (/terms)
 No spam, no abuse, no reverse engineering. Rate: 100/hr. Contact: revy8k@gmail.com
 
+## Projects (from database)
+- **Redeploy** — Deploy dashboard at deploy.revy.my.id. Role: Fullstack Developer.
+- **Redeploy CLI** — CLI tool for DevOps at github.com/revyid/redeploy-cli. Role: Backend/CLI Developer.
+
 ## Features
 - GitHub API Proxy — access GitHub data via REST
 - URL Shortener — create short links with analytics

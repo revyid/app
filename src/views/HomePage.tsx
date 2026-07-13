@@ -2,9 +2,9 @@ import { useEffect, lazy, Suspense, memo } from 'react';
 import { IntroSection } from '@/components/sections/IntroSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
 import { Footer } from '@/components/sections/Footer';
-import { MobileSidebarSections } from '@/app/(main)/shell';
+import { MobileSidebarSections } from '@/app/[locale]/(main)/shell';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
-import { useActiveSection } from '@/contexts/ActiveSectionContext';
+import { useActiveSectionStore } from '@/stores/active-section-store';
 
 const ProjectsSection = lazy(() => import('@/components/sections/ProjectsSection').then(m => ({ default: m.ProjectsSection })));
 const ExperienceSection = lazy(() => import('@/components/sections/ExperienceSection').then(m => ({ default: m.ExperienceSection })));
@@ -25,7 +25,7 @@ const SectionDivider = memo(function SectionDivider() {
 
 export function HomePage() {
   const activeId = useScrollSpy(SECTION_IDS);
-  const { setActiveSection } = useActiveSection();
+  const setActiveSection = useActiveSectionStore((s) => s.setActiveSection);
 
   useEffect(() => {
     setActiveSection(activeId);

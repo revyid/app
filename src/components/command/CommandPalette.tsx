@@ -6,7 +6,7 @@ import {
   Search, Home, Briefcase, GraduationCap, MessageCircle,
   User, LogOut, X, ArrowRight, Palette, Mail, BarChart3, Layers,
 } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useThemeStore } from '@/stores/theme-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { modalBackdrop, bottomSheetContent } from '@/lib/motion-presets';
 import { BottomSheet } from '@/components/shared/BottomSheet';
@@ -33,7 +33,8 @@ interface CommandPaletteProps {
 export function CommandPalette({ isOpen, onClose, onLoginClick, onProfileClick, onChatClick }: CommandPaletteProps) {
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const { effectiveTheme, toggleTheme } = useTheme();
+  const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const { user, signOut } = useAuth();
   const isSignedIn = !!user;
   const inputRef = useRef<HTMLInputElement>(null);

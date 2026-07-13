@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import 'aos/dist/aos.css';
 import { RootProviders } from './root-providers';
 import { ClientShell } from '@/components/layout/ClientShell';
+import { AOSInit } from '@/components/shared/AOSInit';
 
 export const metadata: Metadata = {
   title: 'Revy — Full-Stack Software Engineer · Jambi, Indonesia',
@@ -36,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#82E635" />
         <link rel="preconnect" href="https://ui-avatars.com" />
@@ -70,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-background text-foreground antialiased" style={{ overflowX: 'clip', position: 'relative' }} suppressHydrationWarning>
+        <AOSInit />
         <RootProviders><ClientShell>{children}</ClientShell></RootProviders>
       </body>
     </html>

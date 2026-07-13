@@ -1,6 +1,6 @@
 import { Mail, Globe, Phone, Calendar, Twitter, Linkedin } from 'lucide-react';
 import { SectionLabel } from '@/components/shared/SectionLabel';
-import { usePortfolio } from '@/contexts/PortfolioContext';
+import { usePortfolioStore } from '@/stores/portfolio-store';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Mail, Globe, Phone, Calendar, Twitter, Linkedin,
@@ -11,7 +11,7 @@ function obfuscateEmail(email: string): string {
 }
 
 export function ContactSection() {
-  const { data } = usePortfolio();
+  const data = usePortfolioStore((s) => s.data);
   return (
     <div className="mb-6">
       <SectionLabel text="Contact" />
