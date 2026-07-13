@@ -1,5 +1,5 @@
 import { Globe, Link2, PlayCircle, Code as CodeIcon, BookOpen } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 
 export default function DocsPage() {
   return (

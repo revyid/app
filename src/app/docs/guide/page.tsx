@@ -1,6 +1,6 @@
 'use client';
 
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 import { BookOpen, Key, Link2, Globe, Code, Shield, Zap, AlertTriangle } from 'lucide-react';
 
 const sections = [

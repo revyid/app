@@ -1,6 +1,6 @@
 'use client';
 
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 import { FileText, CheckCircle, XCircle, AlertTriangle, Scale, Mail, ArrowLeft } from 'lucide-react';
 
 const sections = [

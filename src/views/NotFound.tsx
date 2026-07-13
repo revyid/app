@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 
 export function NotFound() {
   return (

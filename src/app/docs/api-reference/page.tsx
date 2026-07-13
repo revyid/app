@@ -1,7 +1,7 @@
 'use client';
 
 import { Globe, Link2, PlayCircle, ExternalLink } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 
 const APIS = [
   {

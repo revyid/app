@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, X, Home, LayoutDashboard, Key, FileText, Globe, Link2, Code as CodeIcon, PlayCircle, BookOpen } from 'lucide-react';

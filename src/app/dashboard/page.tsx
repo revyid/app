@@ -3,12 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Key, Activity, Shield, ArrowRight, ExternalLink, Link2, Trash2, Copy, Check, Pencil, X, AlertCircle } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/lib/supabase';
 import { listApiKeys, getApiUsageToday, getShortenUsageToday, getSiteSetting, listShortUrls, deleteShortUrl, updateShortUrl } from '@/lib/auth';
 import { containerVariants, itemVariants, SPRING_BOUNCY } from '@/lib/motion-presets';
-import { MagicBento, MagicCard } from '@/components/shared/MagicBento';
 
 interface ShortUrl {
   id: string;
@@ -260,73 +259,55 @@ export default function DashboardPage() {
       className="space-y-8"
     >
       {/* Stats */}
-      <motion.div variants={itemVariants}>
-        <MagicBento spotlight={false} particles glow>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <MagicCard>
-              <StatCard label="API Keys" value={String(keyCount)} icon={<Key className="w-5 h-5 text-primary" />} color="bg-primary-container" />
-            </MagicCard>
-            <MagicCard>
-              <StatCard
-                label="GitHub (today)" value={`${ghUsage}/${ghLimit}`}
-                icon={<Activity className="w-5 h-5 text-secondary" />} color="bg-secondary-container"
-                progress={(ghUsage / ghLimit) * 100} delay={0.1}
-              />
-            </MagicCard>
-            <MagicCard>
-              <StatCard
-                label="Shortener (today)" value={`${shortenUsage}/${shortenLimit}`}
-                icon={<Link2 className="w-5 h-5 text-tertiary" />} color="bg-tertiary-container"
-                progress={(shortenUsage / shortenLimit) * 100} delay={0.2}
-              />
-            </MagicCard>
-          </div>
-        </MagicBento>
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard label="API Keys" value={String(keyCount)} icon={<Key className="w-5 h-5 text-primary" />} color="bg-primary-container" />
+        <StatCard
+          label="GitHub (today)" value={`${ghUsage}/${ghLimit}`}
+          icon={<Activity className="w-5 h-5 text-secondary" />} color="bg-secondary-container"
+          progress={(ghUsage / ghLimit) * 100} delay={0.1}
+        />
+        <StatCard
+          label="Shortener (today)" value={`${shortenUsage}/${shortenLimit}`}
+          icon={<Link2 className="w-5 h-5 text-tertiary" />} color="bg-tertiary-container"
+          progress={(shortenUsage / shortenLimit) * 100} delay={0.2}
+        />
       </motion.div>
 
       {/* Quick Links */}
-      <motion.div variants={itemVariants}>
-        <MagicBento spotlight={false} particles={false} glow>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <MagicCard>
-              <Link href="/dashboard/api-keys" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-primary/40 hover:bg-surface-container/50 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center">
-                      <Key className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-title-sm font-semibold text-foreground">API Keys</h3>
-                      <p className="text-body-sm text-muted-foreground">Create and manage your keys</p>
-                    </div>
-                  </div>
-                  <motion.div whileHover={{ x: 4 }} transition={SPRING_BOUNCY}>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </motion.div>
-                </div>
-              </Link>
-            </MagicCard>
-
-            <MagicCard>
-              <Link href="/dashboard/shorten" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-secondary/40 hover:bg-surface-container/50 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center">
-                      <Link2 className="w-6 h-6 text-secondary" />
-                    </div>
-                    <div>
-                      <h3 className="text-title-sm font-semibold text-foreground">URL Shortener</h3>
-                      <p className="text-body-sm text-muted-foreground">Create and manage short URLs</p>
-                    </div>
-                  </div>
-                  <motion.div whileHover={{ x: 4 }} transition={SPRING_BOUNCY}>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-secondary transition-colors" />
-                  </motion.div>
-                </div>
-              </Link>
-            </MagicCard>
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link href="/dashboard/api-keys" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-primary/40 hover:bg-surface-container/50 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center">
+                <Key className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-title-sm font-semibold text-foreground">API Keys</h3>
+                <p className="text-body-sm text-muted-foreground">Create and manage your keys</p>
+              </div>
+            </div>
+            <motion.div whileHover={{ x: 4 }} transition={SPRING_BOUNCY}>
+              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </motion.div>
           </div>
-        </MagicBento>
+        </Link>
+
+        <Link href="/dashboard/shorten" className="group block p-6 rounded-2xl bg-surface border border-outline/20 hover:border-secondary/40 hover:bg-surface-container/50 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center">
+                <Link2 className="w-6 h-6 text-secondary" />
+              </div>
+              <div>
+                <h3 className="text-title-sm font-semibold text-foreground">URL Shortener</h3>
+                <p className="text-body-sm text-muted-foreground">Create and manage short URLs</p>
+              </div>
+            </div>
+            <motion.div whileHover={{ x: 4 }} transition={SPRING_BOUNCY}>
+              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-secondary transition-colors" />
+            </motion.div>
+          </div>
+        </Link>
       </motion.div>
     </motion.div>
   );

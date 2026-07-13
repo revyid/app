@@ -2,7 +2,7 @@ import { useEffect, lazy, Suspense, memo } from 'react';
 import { IntroSection } from '@/components/sections/IntroSection';
 import { SkillsSection } from '@/components/sections/SkillsSection';
 import { Footer } from '@/components/sections/Footer';
-import { MobileSidebarSections } from '@/app/[locale]/(main)/shell';
+import { MobileSidebarSections } from '@/app/(main)/shell';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { useActiveSectionStore } from '@/stores/active-section-store';
 
