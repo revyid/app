@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import handler from '../../api/track';
+import { POST, OPTIONS } from '../app/api/track/route';
+
+// Route handler dispatcher — mirrors how Next.js would route by method.
+// Tests call `handler(req)` exactly as before; this wrapper picks POST/OPTIONS
+// based on the request method, or returns 405 for anything else (matching
+// Next.js's behavior for un-exported methods).
+async function handler(req: Request): Promise<Response> {
+  if (req.method === 'POST') return POST(req);
+  if (req.method === 'OPTIONS') return OPTIONS(req);
+  return new Response(null, { status: 405 });
+}
 
 function makeRequest(body: unknown, method = 'POST', headers: Record<string, string> = {}) {
   return new Request('http://localhost/api/track', {
@@ -15,8 +25,10 @@ vi.stubGlobal('fetch', mockFetch);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-  vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
+  // Route reads NEXT_PUBLIC_* env vars (not VITE_* — that was the old Vite SPA
+  // convention). Phase 2 audit found the test was stubbing the wrong names.
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://test.supabase.co');
+  vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'test-anon-key');
 });
 
 describe('POST /api/track', () => {
@@ -43,8 +55,8 @@ describe('POST /api/track', () => {
   });
 
   it('returns 500 when supabase env missing', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', '');
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', '');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', '');
     const res = await handler(makeRequest({ event_type: 'page_view' }));
     expect(res.status).toBe(500);
   });

@@ -10,15 +10,27 @@ import { resetSupabase } from './supabase';
 
 // ─── Error Helpers ──────────────────────────────────────────────────
 function handleAuthError(err: unknown, fallback: string): string {
-  if (err instanceof Error) {
-    // Check for connection errors and reset client for retry
-    if (err.message.includes('Failed to fetch') ||
-        err.message.includes('NetworkError') ||
-        err.message.includes('timeout') ||
-        err.message.includes('not configured')) {
-      resetSupabase();
+  // Supabase RPC errors come back as plain objects shaped like
+  // `{ message, code, details, hint }` (PostgrestError), NOT as Error instances.
+  // Extract `.message` from either shape so the user sees the real DB-side
+  // error (e.g. "Invalid credentials") instead of a generic fallback.
+  const message =
+    err instanceof Error ? err.message :
+    (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string')
+      ? (err as any).message
+      : null;
+
+  if (message) {
+    if (err instanceof Error) {
+      // Check for connection errors and reset client for retry
+      if (message.includes('Failed to fetch') ||
+          message.includes('NetworkError') ||
+          message.includes('timeout') ||
+          message.includes('not configured')) {
+        resetSupabase();
+      }
     }
-    return err.message;
+    return message;
   }
   return fallback;
 }
@@ -45,15 +57,23 @@ const TOKEN_KEY = 'app_session_token';
 const SITE_API_KEY_STORAGE = 'site_api_key';
 
 // ─── Token Storage ──────────────────────────────────────────────────
+// All localStorage access is guarded with `typeof window !== 'undefined'` so
+// these functions are safe to call from SSR contexts (Server Components,
+// middleware, getServerSideProps) without throwing. They return null/no-op
+// on the server. This is defensive — if these modules ever get imported into
+// a Server Component, the guards prevent "localStorage is not defined" crashes.
 export function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
   return localStorage.getItem(TOKEN_KEY);
 }
 
 export function storeToken(token: string): void {
+  if (typeof window === 'undefined') return;
   localStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearToken(): void {
+  if (typeof window === 'undefined') return;
   localStorage.removeItem(TOKEN_KEY);
 }
 
@@ -64,10 +84,12 @@ export function getStoredSiteApiKey(): string | null {
 }
 
 export function storeSiteApiKey(key: string): void {
+  if (typeof window === 'undefined') return;
   localStorage.setItem(SITE_API_KEY_STORAGE, key);
 }
 
 export function clearSiteApiKey(): void {
+  if (typeof window === 'undefined') return;
   localStorage.removeItem(SITE_API_KEY_STORAGE);
 }
 
@@ -586,13 +608,13 @@ export async function regenerateSiteApiKey(): Promise<{ key?: string; error?: st
 
 // ─── Short URLs ────────────────────────────────────────────────────
 
-export async function listShortUrls(): Promise<Array<{ id: string; slug: string; short_url: string; original_url: string; clicks: number; created_at: string }>> {
+export async function listShortUrls(): Promise<Array<{ id: string; slug: string; short_url: string; original_url: string; clicks: number; created_at: string; expires_at?: string | null; is_active?: boolean }>> {
   const token = getStoredToken();
   if (!token) return [];
   const user = await validateSession(token);
   if (!user.user) return [];
   try {
-    const res = await fetch('/api/short-urls');
+    const res = await fetch(`/api/short-urls?token=${encodeURIComponent(token)}`);
     const data = await res.json();
     return data.urls || [];
   } catch {
@@ -606,7 +628,7 @@ export async function getShortenUsageToday(): Promise<number> {
   const user = await validateSession(token);
   if (!user.user) return 0;
   try {
-    const res = await fetch('/api/short-urls?action=count-today');
+    const res = await fetch(`/api/short-urls?action=count-today&token=${encodeURIComponent(token)}`);
     const data = await res.json();
     return data.count || 0;
   } catch {
@@ -659,4 +681,141 @@ export async function updateShortUrl(slug: string, newOriginalUrl: string, newSl
   } catch (e: any) {
     return { error: e.message };
   }
+}
+
+export async function reactivateShortUrl(slug: string, expiresIn?: string): Promise<{ ok?: boolean; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+  try {
+    const session = await validateSession(token);
+    if (!session.user) return { error: 'Invalid session' };
+    const siteKey = await getSiteSetting('site_api_key');
+    if (!siteKey) return { error: 'No API key configured' };
+    const res = await fetch(`/api/shorten?slug=${encodeURIComponent(slug)}`, {
+      method: 'PATCH',
+      headers: { 'x-api-key': siteKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: true, expires_in: expiresIn }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: data.error || 'Failed to reactivate' };
+    return { ok: true };
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
+// ─── Admin Oversight (Phase 7b) ─────────────────────────────────────
+// All of these call admin-verified RPCs (verify_admin_internal on the server).
+// They return typed payloads matching what the admin UI components expect.
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  provider: string;
+  is_admin: boolean;
+  created_at: string;
+}
+
+export interface AdminApiKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  rate_limit: number;
+  is_active: boolean;
+  created_at: string;
+  last_used_at: string | null;
+  expires_at: string | null;
+  user_id: string;
+  owner_email: string | null;
+}
+
+export interface AdminShortUrl {
+  id: string;
+  slug: string;
+  short_url: string;
+  original_url: string;
+  clicks: number;
+  created_at: string;
+  expires_at: string | null;
+  user_id: string;
+  owner_email: string | null;
+}
+
+export interface AdminChatMessage {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_image: string | null;
+  message: string;
+  created_at: string;
+  avatar_url: string | null;
+}
+
+async function adminRpc<T>(fn: string, params: Record<string, unknown>): Promise<{ data?: T; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc(fn, { ...params, p_token: token });
+    if (error) return { error: handleAuthError(error, `${fn} failed`) };
+    const result = data as { error?: string } | T;
+    if (result && typeof result === 'object' && 'error' in result && typeof (result as any).error === 'string') {
+      return { error: (result as any).error };
+    }
+    return { data: data as T };
+  } catch (err) {
+    return { error: handleAuthError(err, `${fn} failed`) };
+  }
+}
+
+export async function adminListUsers(): Promise<{ users?: AdminUser[]; error?: string }> {
+  const { data, error } = await adminRpc<{ users: AdminUser[] }>('admin_list_users', {});
+  return { users: data?.users, error };
+}
+
+export async function adminGetUserKeys(userId: string): Promise<{ keys?: AdminApiKey[]; error?: string }> {
+  const { data, error } = await adminRpc<{ keys: AdminApiKey[] }>('admin_get_user_keys', { p_user_id: userId });
+  return { keys: data?.keys, error };
+}
+
+export async function adminToggleUserAdmin(userId: string, isAdmin: boolean): Promise<{ error?: string }> {
+  const { error } = await adminRpc('admin_toggle_user_admin', { p_user_id: userId, p_is_admin: isAdmin });
+  return { error };
+}
+
+export async function adminSetUserRateLimit(userId: string, rateLimit: number): Promise<{ error?: string }> {
+  const { error } = await adminRpc('admin_set_user_rate_limit', { p_user_id: userId, p_rate_limit: rateLimit });
+  return { error };
+}
+
+export async function adminListShortUrls(limit = 100, offset = 0): Promise<{ urls?: AdminShortUrl[]; error?: string }> {
+  const { data, error } = await adminRpc<{ urls: AdminShortUrl[] }>('admin_list_short_urls', { p_limit: limit, p_offset: offset });
+  return { urls: data?.urls, error };
+}
+
+export async function adminListApiKeys(): Promise<{ keys?: AdminApiKey[]; error?: string }> {
+  const { data, error } = await adminRpc<{ keys: AdminApiKey[] }>('admin_list_api_keys', {});
+  return { keys: data?.keys, error };
+}
+
+export async function adminDeleteApiKey(keyId: string): Promise<{ error?: string }> {
+  const { error } = await adminRpc('admin_delete_api_key', { p_key_id: keyId });
+  return { error };
+}
+
+export async function adminDeleteShortUrl(slug: string): Promise<{ error?: string }> {
+  const { error } = await adminRpc('admin_delete_short_url', { p_slug: slug });
+  return { error };
+}
+
+export async function adminListChatMessages(limit = 100, offset = 0): Promise<{ messages?: AdminChatMessage[]; error?: string }> {
+  const { data, error } = await adminRpc<{ messages: AdminChatMessage[] }>('admin_list_chat_messages', { p_limit: limit, p_offset: offset });
+  return { messages: data?.messages, error };
+}
+
+export async function adminDeleteChatMessage(messageId: string): Promise<{ error?: string }> {
+  const { error } = await adminRpc('delete_message_admin', { p_message_id: messageId });
+  return { error };
 }

@@ -62,7 +62,7 @@ export default function ApiKeysPage() {
 
     getSupabase().then(client => {
       channelRef.current = client
-        .channel('api-keys-realtime')
+        .channel()
         .on('postgres_changes', { event: '*', schema: 'public', table: 'api_keys' }, () => {
           fetchKeys();
         })

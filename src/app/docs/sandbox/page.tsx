@@ -119,10 +119,50 @@ async function runCurl(code: string, log: LogFn): Promise<void> {
   } catch (e: any) { log(`Error: ${e.message}`); }
 }
 
+/**
+ * Run Go / Rust / PHP code via the /api/playground route, which proxies to
+ * glot.io (server-side, so the GLOT_API_TOKEN stays server-only).
+ *
+ * Wired up in Phase 2 — previously the route existed and was fully implemented
+ * but nothing in the sandbox UI called it, so Go/Rust/PHP were not actually
+ * runnable. See CHANGELOG (Phase 2).
+ */
+async function runGlot(lang: 'go' | 'rust' | 'php', code: string, log: LogFn): Promise<void> {
+  log(`# Sending ${lang} code to /api/playground (glot.io proxy)...\n`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch('/api/playground', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang, code }),
+      signal: controller.signal,
+    });
+    const data = await res.json().catch(() => ({ error: true, output: 'Invalid JSON response from server.' }));
+    if (data.error) {
+      // Surface the documented error cases: missing token, unsupported lang,
+      // glot.io failure, compile error, timeout. The route normalizes all of
+      // these into { error: true, output: '...' } (optionally with stage).
+      const stage = data.stage ? `[${data.stage}] ` : '';
+      log(`Error: ${stage}${data.output}`);
+    } else {
+      log(data.output);
+    }
+  } catch (e: unknown) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      log('Error: Request timed out. The sandbox may be busy — try again.');
+    } else {
+      log(`Error: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /* ─── UI Components ────────────────────────────────────────────────── */
 
-type Lang = 'JavaScript' | 'Python' | 'TypeScript' | 'cURL';
-const LANGS: Lang[] = ['JavaScript', 'Python', 'TypeScript', 'cURL'];
+type Lang = 'JavaScript' | 'Python' | 'TypeScript' | 'cURL' | 'Go' | 'Rust' | 'PHP';
+const LANGS: Lang[] = ['JavaScript', 'Python', 'TypeScript', 'cURL', 'Go', 'Rust', 'PHP'];
 const EXAMPLES = [
   { id: 'user', label: 'User Profile', path: 'users/revyid' },
   { id: 'repos', label: 'Repos', path: 'users/revyid/repos' },
@@ -136,10 +176,42 @@ const LANG_INFO: Record<Lang, string> = {
   Python: 'Real CPython via Pyodide (WebAssembly); requests patched to use browser network.',
   TypeScript: 'Transpiles to JS via official TS compiler, then runs natively.',
   cURL: 'Parses curl commands and executes via server proxy — no CORS restrictions.',
+  Go: 'Compiles & runs via glot.io (server-side proxy). No outbound network from the sandbox.',
+  Rust: 'Compiles & runs via glot.io (server-side proxy). No outbound network from the sandbox.',
+  PHP: 'Runs via glot.io (server-side proxy). No outbound network from the sandbox.',
 };
 
 function sdkCode(lang: Lang, p: string): string {
   const k = 'rv_your_key';
+
+  // Go / Rust / PHP run via glot.io which has NO outbound network, so the
+  // example is a standalone demo program (not an API call). The user can edit
+  // it. Selection of the GitHub/Shorten/Stats example still matters for the
+  // client-side languages.
+  if (lang === 'Go') {
+    return `package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from Go!")
+    fmt.Println("Sandbox: glot.io (no outbound network)")
+    fmt.Printf("Selected example: %s\n", "${p}")
+}`;
+  }
+  if (lang === 'Rust') {
+    return `fn main() {
+    println!("Hello from Rust!");
+    println!("Sandbox: glot.io (no outbound network)");
+    println!("Selected example: {}", "${p}");
+}`;
+  }
+  if (lang === 'PHP') {
+    return `<?php
+echo "Hello from PHP!\n";
+echo "Sandbox: glot.io (no outbound network)\n";
+echo "Selected example: ${p}\n";`;
+  }
 
   // GitHub API examples
   if (p !== '__shorten__' && p !== '__stats__') {
@@ -255,6 +327,9 @@ export default function SandboxPage() {
       else if (curLang === 'Python') await runPython(src, addLine);
       else if (curLang === 'TypeScript') await runTypeScript(src, addLine);
       else if (curLang === 'cURL') await runCurl(src, addLine);
+      else if (curLang === 'Go') await runGlot('go', src, addLine);
+      else if (curLang === 'Rust') await runGlot('rust', src, addLine);
+      else if (curLang === 'PHP') await runGlot('php', src, addLine);
     } catch (e: unknown) { addLine(`Error: ${e instanceof Error ? e.message : String(e)}`); }
     setRunning(false);
   };
@@ -291,7 +366,7 @@ export default function SandboxPage() {
             <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-xl shadow-lg border border-outline/20">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-body-sm font-medium text-foreground">
-                {lang === 'Python' ? 'Loading Python...' : lang === 'TypeScript' ? 'Transpiling...' : 'Running...'}
+                {lang === 'Python' ? 'Loading Python...' : lang === 'TypeScript' ? 'Transpiling...' : (lang === 'Go' || lang === 'Rust' || lang === 'PHP') ? 'Compiling & running on glot.io...' : 'Running...'}
               </span>
             </div>
           </div>

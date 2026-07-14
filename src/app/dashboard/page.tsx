@@ -213,7 +213,7 @@ export default function DashboardPage() {
 
     getSupabase().then(client => {
       channelRef.current = client
-        .channel('dashboard-realtime')
+        .channel()
         .on('postgres_changes', { event: '*', schema: 'public', table: 'short_urls' }, () => {
           listShortUrls().then(setShortUrls);
         })

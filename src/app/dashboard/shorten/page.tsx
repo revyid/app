@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, Plus, Trash2, Copy, Check, ExternalLink, BarChart3, Pencil } from 'lucide-react';
+import { Link2, Plus, Trash2, Copy, Check, ExternalLink, BarChart3, Pencil, Clock, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { listShortUrls, deleteShortUrl, updateShortUrl } from '@/lib/auth';
+import { listShortUrls, deleteShortUrl, updateShortUrl, reactivateShortUrl } from '@/lib/auth';
 import { containerVariants, itemVariants, SPRING_BOUNCY } from '@/lib/motion-presets';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ interface ShortUrl {
   clicks: number;
   created_at: string;
   expires_at?: string | null;
+  is_active?: boolean;
 }
 
 export default function ShortenPage() {
@@ -45,6 +46,10 @@ export default function ShortenPage() {
   // Delete confirm
   const [deletingUrl, setDeletingUrl] = useState<ShortUrl | null>(null);
 
+  // Extend/reactivate
+  const [extendingUrl, setExtendingUrl] = useState<ShortUrl | null>(null);
+  const [extendExpiry, setExtendExpiry] = useState('30d');
+
   // Realtime
   const channelRef = useRef<any>(null);
 
@@ -67,7 +72,7 @@ export default function ShortenPage() {
     import('@/lib/supabase').then(({ getSupabase }) => {
       getSupabase().then(client => {
         channelRef.current = client
-          .channel('short-urls-realtime')
+          .channel()
           .on('postgres_changes', { event: '*', schema: 'public', table: 'short_urls' }, () => {
             fetchUrls();
           })
@@ -145,6 +150,18 @@ export default function ShortenPage() {
     setDeletingUrl(null);
   };
 
+  const handleExtend = async () => {
+    if (!extendingUrl) return;
+    const result = await reactivateShortUrl(extendingUrl.slug, extendExpiry);
+    if (result.ok) {
+      setExtendingUrl(null);
+      fetchUrls();
+    } else if (result.error) {
+      setError(result.error);
+      setExtendingUrl(null);
+    }
+  };
+
   const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
@@ -174,7 +191,7 @@ export default function ShortenPage() {
         {[
           { label: 'Total URLs', value: urls.length, icon: Link2 },
           { label: 'Total Clicks', value: urls.reduce((s, u) => s + (u.clicks ?? 0), 0), icon: BarChart3 },
-          { label: 'Active', value: urls.length, icon: Check },
+          { label: 'Active', value: urls.filter(u => u.is_active !== false && (!u.expires_at || new Date(u.expires_at) >= new Date())).length, icon: Check },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1, type: 'spring', stiffness: 300, damping: 25 }}
@@ -213,16 +230,20 @@ export default function ShortenPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.2 }}
-                  className="p-4 bg-surface-variant/40 rounded-2xl border border-outline/10 hover:border-outline/25 transition-colors"
+                  className={`p-4 rounded-2xl border transition-colors ${url.is_active === false || (url.expires_at && new Date(url.expires_at) < new Date())
+                    ? 'bg-error/5 border-error/20 opacity-80'
+                    : 'bg-surface-variant/40 border-outline/10 hover:border-outline/25'}`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center flex-shrink-0">
-                        <Link2 className="w-5 h-5 text-muted-foreground" />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${url.is_active === false || (url.expires_at && new Date(url.expires_at) < new Date()) ? 'bg-error/10' : 'bg-surface'}`}>
+                        {url.is_active === false || (url.expires_at && new Date(url.expires_at) < new Date())
+                          ? <Clock className="w-5 h-5 text-error" />
+                          : <Link2 className="w-5 h-5 text-muted-foreground" />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <code className="text-body-sm font-mono text-primary truncate">{url.short_url}</code>
+                          <code className={`text-body-sm font-mono truncate ${url.is_active === false || (url.expires_at && new Date(url.expires_at) < new Date()) ? 'text-muted-foreground' : 'text-primary'}`}>{url.short_url}</code>
                           <button
                             onClick={() => copyUrl(url.short_url, url.id)}
                             className="p-0.5 rounded hover:bg-surface-variant transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
@@ -236,15 +257,37 @@ export default function ShortenPage() {
                         </p>
                         <p className="text-label-sm text-muted-foreground/60 mt-0.5">
                           {url.clicks} clicks · {formatDate(url.created_at)}
-                          {url.expires_at && <span className="ml-2 text-warning">· expires {formatDate(url.expires_at)}</span>}
+                          {url.expires_at && (url.is_active === false || new Date(url.expires_at) < new Date())
+                            ? <span className="ml-2 text-error font-medium">· expired {formatDate(url.expires_at)}</span>
+                            : url.expires_at && <span className="ml-2 text-warning">· expires {formatDate(url.expires_at)}</span>
+                          }
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 self-end sm:self-center">
-                      <button
-                        onClick={() => window.open(url.short_url, '_blank')}
-                        className="p-2 rounded-xl hover:bg-surface-variant text-muted-foreground hover:text-foreground transition-colors"
+                      {(url.is_active === false || (url.expires_at && new Date(url.expires_at) < new Date())) ? (
+                        <>
+                          <button
+                            onClick={() => setExtendingUrl(url)}
+                            className="px-3 py-1.5 rounded-xl text-label-sm font-medium bg-success/10 text-success hover:bg-success/20 transition-colors flex items-center gap-1"
+                            title="Extend / Reactivate"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Extend
+                          </button>
+                          <button
+                            onClick={() => setDeletingUrl(url)}
+                            className="p-2 rounded-xl hover:bg-error/10 text-muted-foreground hover:text-error transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => window.open(url.short_url, '_blank')}
+                            className="p-2 rounded-xl hover:bg-surface-variant text-muted-foreground hover:text-foreground transition-colors"
                         title="Open"
                       >
                         <ExternalLink className="w-4 h-4" />
@@ -263,6 +306,8 @@ export default function ShortenPage() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -321,6 +366,36 @@ export default function ShortenPage() {
           </motion.div>
         </div>
       )}
+
+      {/* Extend/Reactivate Dialog */}
+      <AnimatePresence>
+        {extendingUrl && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/50" onClick={() => setExtendingUrl(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="relative w-full max-w-md bg-surface rounded-2xl border border-outline/20 shadow-elevation-5 p-6 space-y-4">
+              <h3 className="text-title-sm font-semibold text-foreground">Extend Short URL</h3>
+              <p className="text-body-sm text-muted-foreground">Reactivate <strong>{extendingUrl.short_url}</strong> with a new expiry.</p>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">New Expiry</label>
+                <select value={extendExpiry} onChange={e => setExtendExpiry(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <option value="30d">30 days</option>
+                  <option value="90d">90 days</option>
+                  <option value="180d">6 months</option>
+                  <option value="365d">1 year</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outlined" size="sm" onClick={() => setExtendingUrl(null)}>Cancel</Button>
+                <Button size="sm" onClick={handleExtend}>Extend</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirm Dialog */}
       <ConfirmDialog

@@ -209,20 +209,25 @@ export async function sendMessage(
   }
 }
 
-export async function deleteMessage(messageId: string, userId: string): Promise<boolean> {
+export async function deleteMessage(messageId: string, _userId: string): Promise<boolean> {
+  // Phase 7b security fix: the chat_delete RLS policy is now `using (false)`
+  // (denies all direct deletes). Self-deletes must go through the
+  // delete_own_message RPC, which validates the session token AND checks
+  // ownership server-side. The _userId param is kept for API compatibility
+  // but no longer trusted — the server re-checks ownership.
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('app_session_token') : null;
+    if (!token) return false;
     const client = await getSupabase();
-    const { error } = await client
-      .from('chat_messages')
-      .delete()
-      .eq('id', messageId)
-      .eq('user_id', userId);
-
+    const { data, error } = await client.rpc('delete_own_message', {
+      p_token: token,
+      p_message_id: messageId,
+    });
     if (error) {
       console.error('Error deleting message:', error.message);
       return false;
     }
-    return true;
+    return (data as { success?: boolean })?.success === true;
   } catch (err) {
     console.error('Failed to delete message:', err instanceof Error ? err.message : 'Unknown error');
     return false;
@@ -230,18 +235,23 @@ export async function deleteMessage(messageId: string, userId: string): Promise<
 }
 
 export async function deleteMessageAdmin(messageId: string): Promise<boolean> {
+  // Phase 7b security fix: previously this did a direct client-side delete
+  // relying on the permissive `chat_delete` RLS policy (`using (true)`), which
+  // meant ANY client (not just admins) could delete ANY message. Now it goes
+  // through the delete_message_admin RPC, which calls verify_admin_internal.
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('app_session_token') : null;
+    if (!token) return false;
     const client = await getSupabase();
-    const { error } = await client
-      .from('chat_messages')
-      .delete()
-      .eq('id', messageId);
-
+    const { data, error } = await client.rpc('delete_message_admin', {
+      p_token: token,
+      p_message_id: messageId,
+    });
     if (error) {
       console.error('Error deleting message (admin):', error.message);
       return false;
     }
-    return true;
+    return (data as { success?: boolean })?.success === true;
   } catch (err) {
     console.error('Failed to delete message (admin):', err instanceof Error ? err.message : 'Unknown error');
     return false;

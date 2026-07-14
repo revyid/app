@@ -2,6 +2,13 @@
 -- CONSOLIDATED DATABASE SCHEMA (Latest)
 -- Run once in Supabase SQL Editor to set up everything.
 -- This file includes ALL migrations merged into one.
+--
+-- This is the SINGLE SOURCE OF TRUTH for the current schema. Do not run
+-- loose files from sql/ against a fresh database — historical patches live
+-- in sql/archive/ for audit trail only and may reference obsolete signatures.
+-- New schema changes should be written directly into this file PLUS a dated
+-- file under sql/migrations/ (create that folder if it doesn't exist yet).
+-- Dev-only seed data lives in sql/seed/ — clearly separate from migrations.
 -- ============================================================
 
 -- Extensions
@@ -26,7 +33,14 @@ create policy "chat_read" on public.chat_messages for select to public using (tr
 drop policy if exists "chat_insert" on public.chat_messages;
 create policy "chat_insert" on public.chat_messages for insert to public with check (true);
 drop policy if exists "chat_delete" on public.chat_messages;
-create policy "chat_delete" on public.chat_messages for delete to public using (true);
+drop policy if exists "chat_delete_owner" on public.chat_messages;
+-- Phase 7b security fix: previously `chat_delete` was `to public using (true)`
+-- which let ANY client (not just admins) delete ANY message via direct Supabase
+-- client calls. Now direct deletes are denied at the RLS level; all deletes
+-- must go through the `delete_message_admin` RPC (admin-verified) or a future
+-- `delete_own_message` RPC. The `deleteMessageAdmin` function in supabase.ts
+-- has been updated to call the RPC instead of direct delete.
+create policy "chat_delete" on public.chat_messages for delete to public using (false);
 do $$ begin alter publication supabase_realtime add table chat_messages; exception when others then null; end $$;
 
 -- App users
@@ -466,6 +480,174 @@ exception when others then return json_build_object('error', sqlerrm);
 end; $$;
 
 -- ============================================================
+-- ADMIN OVERSIGHT RPC FUNCTIONS (Phase 7b)
+-- All admin-verified via verify_admin_internal(p_token).
+-- Pattern: p_token text first param, raises if not admin.
+-- ============================================================
+
+-- List all users (admin only). Excludes password_hash.
+create or replace function public.admin_list_users(p_token text) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  return json_build_object('users', coalesce((
+    select json_agg(json_build_object(
+      'id', u.id, 'email', u.email, 'display_name', u.display_name,
+      'avatar_url', u.avatar_url, 'provider', u.provider,
+      'is_admin', u.is_admin, 'created_at', u.created_at
+    ) order by u.created_at desc)
+    from app_users u
+  ), '[]'::json));
+end; $$;
+
+-- List a specific user's API keys (admin only). Used by User Management panel
+-- to show per-user key count + rate limits.
+create or replace function public.admin_get_user_keys(p_token text, p_user_id uuid) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  return json_build_object('keys', coalesce((
+    select json_agg(json_build_object(
+      'id', k.id, 'name', k.name, 'key_prefix', k.key_prefix,
+      'rate_limit', k.rate_limit, 'is_active', k.is_active,
+      'created_at', k.created_at, 'last_used_at', k.last_used_at,
+      'expires_at', k.expires_at
+    ) order by k.created_at desc)
+    from api_keys k where k.user_id = p_user_id
+  ), '[]'::json));
+end; $$;
+
+-- Toggle a user's admin flag (admin only). Refuses to demote the last admin
+-- to prevent lockout.
+create or replace function public.admin_toggle_user_admin(p_token text, p_user_id uuid, p_is_admin boolean) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; v_admin_count int; begin
+  v_admin := public.verify_admin_internal(p_token);
+  -- Prevent demoting the last admin
+  if p_is_admin = false then
+    select count(*) into v_admin_count from app_users where is_admin = true;
+    if v_admin_count <= 1 then
+      return json_build_object('error', 'Cannot demote the last admin.');
+    end if;
+  end if;
+  update app_users set is_admin = p_is_admin where id = p_user_id;
+  return json_build_object('success', true);
+end; $$;
+
+-- Set rate_limit on ALL of a user's API keys (admin only). The UI assumes
+-- per-user rate limit; the schema is per-key, so we update every key the user owns.
+create or replace function public.admin_set_user_rate_limit(p_token text, p_user_id uuid, p_rate_limit int) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  update api_keys set rate_limit = p_rate_limit where user_id = p_user_id;
+  return json_build_object('success', true);
+end; $$;
+
+-- List ALL short URLs across all users (admin only). For the admin Short URLs tab.
+create or replace function public.admin_list_short_urls(p_token text, p_limit int default 100, p_offset int default 0) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  return json_build_object('urls', coalesce((
+    select json_agg(json_build_object(
+      'id', s.id, 'slug', s.slug, 'short_url', 'https://revy.my.id/s/' || s.slug,
+      'original_url', s.original_url, 'clicks', s.clicks,
+      'created_at', s.created_at, 'expires_at', s.expires_at,
+      'user_id', s.user_id, 'owner_email', u.email
+    ) order by s.created_at desc)
+    from short_urls s
+    left join app_users u on u.id = s.user_id
+    limit p_limit offset p_offset
+  ), '[]'::json));
+end; $$;
+
+-- List ALL API keys across all users (admin only). For the admin API Keys tab.
+-- Does NOT return the key_hash (security). Returns owner email for oversight.
+create or replace function public.admin_list_api_keys(p_token text) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  return json_build_object('keys', coalesce((
+    select json_agg(json_build_object(
+      'id', k.id, 'name', k.name, 'key_prefix', k.key_prefix,
+      'rate_limit', k.rate_limit, 'is_active', k.is_active,
+      'created_at', k.created_at, 'last_used_at', k.last_used_at,
+      'expires_at', k.expires_at, 'user_id', k.user_id,
+      'owner_email', u.email
+    ) order by k.created_at desc)
+    from api_keys k
+    left join app_users u on u.id = k.user_id
+  ), '[]'::json));
+end; $$;
+
+-- Admin-delete any API key (admin only). Bypasses the caller-ownership check
+-- in the regular delete_api_key.
+create or replace function public.admin_delete_api_key(p_token text, p_key_id uuid) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  delete from api_keys where id = p_key_id;
+  return json_build_object('success', true);
+end; $$;
+
+-- Admin-delete any short URL (admin only). Bypasses the caller-ownership check.
+create or replace function public.admin_delete_short_url(p_token text, p_slug text) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; v_deleted short_urls%rowtype; begin
+  v_admin := public.verify_admin_internal(p_token);
+  delete from short_urls where slug = p_slug returning * into v_deleted;
+  if v_deleted.id is null then return json_build_object('error', 'Not found'); end if;
+  return json_build_object('success', true);
+end; $$;
+
+-- Admin-delete any chat message (admin only). Fixes a security hole: the old
+-- RLS policy `chat_delete` was `to public using (true)` which let ANY client
+-- (not just admins) delete any message. This RPC uses verify_admin_internal.
+-- The RLS policy has been tightened to self-delete only (see policy section).
+create or replace function public.delete_message_admin(p_token text, p_message_id uuid) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; v_deleted chat_messages%rowtype; begin
+  v_admin := public.verify_admin_internal(p_token);
+  delete from chat_messages where id = p_message_id returning * into v_deleted;
+  if v_deleted.id is null then return json_build_object('error', 'Not found'); end if;
+  return json_build_object('success', true);
+end; $$;
+
+-- Self-delete: a user can delete their own message by session token.
+-- Replaces the old direct-client-delete path that the tightened RLS policy
+-- now blocks. user_id in chat_messages is varchar, app_users.id is uuid.
+create or replace function public.delete_own_message(p_token text, p_message_id uuid) returns json
+language plpgsql security definer as $$
+declare v_user_id uuid; v_msg_user_id varchar; begin
+  select user_id into v_user_id from app_sessions where token = p_token and is_active = true and expires_at > now();
+  if v_user_id is null then return json_build_object('error', 'Invalid session.'); end if;
+  select user_id into v_msg_user_id from chat_messages where id = p_message_id;
+  if v_msg_user_id is null then return json_build_object('error', 'Not found'); end if;
+  if v_msg_user_id != v_user_id::text then return json_build_object('error', 'Forbidden.'); end if;
+  delete from chat_messages where id = p_message_id;
+  return json_build_object('success', true);
+end; $$;
+
+-- List recent chat messages for the admin moderation view (admin only).
+-- Note: chat_messages.user_id is varchar (not a uuid FK), so we cast for the join.
+create or replace function public.admin_list_chat_messages(p_token text, p_limit int default 100, p_offset int default 0) returns json
+language plpgsql security definer as $$
+declare v_admin uuid; begin
+  v_admin := public.verify_admin_internal(p_token);
+  return json_build_object('messages', coalesce((
+    select json_agg(json_build_object(
+      'id', m.id, 'user_id', m.user_id, 'user_name', m.user_name,
+      'user_image', m.user_image, 'message', m.message,
+      'created_at', m.created_at, 'avatar_url', u.avatar_url
+    ) order by m.created_at desc)
+    from chat_messages m
+    left join app_users u on u.id::text = m.user_id
+    limit p_limit offset p_offset
+  ), '[]'::json));
+end; $$;
+
+-- ============================================================
 -- SITE SETTINGS RPC FUNCTIONS
 -- ============================================================
 
@@ -664,6 +846,20 @@ declare v_key api_keys%rowtype; begin
   return json_build_object('valid', true, 'user_id', v_key.user_id, 'rate_limit', v_key.rate_limit);
 end; $$;
 
+-- validate_api_key_for_shorten: like validate_api_key but ALSO updates
+-- last_used_at and returns key_id. Used by /api/shorten (POST/GET/DELETE/PATCH)
+-- which needs the key_id to associate the short URL with the API key that
+-- created it. Merged from sql/short_urls.sql during Phase 5 reconciliation —
+-- previously missing from database.sql, which broke /api/shorten on fresh deploys.
+create or replace function public.validate_api_key_for_shorten(p_key_hash text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_key api_keys%rowtype; begin
+  select * into v_key from public.api_keys where key_hash = p_key_hash and is_active = true;
+  if v_key.id is null then return jsonb_build_object('valid', false); end if;
+  update public.api_keys set last_used_at = now() where id = v_key.id;
+  return jsonb_build_object('valid', true, 'user_id', v_key.user_id, 'key_id', v_key.id);
+end; $$;
+
 create or replace function public.check_expired_keys() returns void language plpgsql security definer as $$
 begin
   update public.api_keys SET is_active = false WHERE expires_at IS NOT NULL AND expires_at < now() AND is_active = true;
@@ -743,6 +939,22 @@ declare v_session app_sessions%rowtype; begin
   ));
 end; $$;
 
+-- list_short_urls(uuid): overload used by /api/shorten GET (list mode) after
+-- API-key validation. Takes user_id directly (the route has already resolved
+-- the key to a user). Returns jsonb (not json) to match the other /api/shorten
+-- RPCs. Merged from sql/short_urls.sql during Phase 5 reconciliation.
+create or replace function public.list_short_urls(p_user_id uuid) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  return (
+    select coalesce(jsonb_agg(jsonb_build_object(
+      'id', s.id, 'slug', s.slug, 'short_url', 'https://revy.my.id/s/' || s.slug,
+      'original_url', s.original_url, 'clicks', s.clicks, 'created_at', s.created_at
+    ) order by s.created_at desc), '[]'::jsonb)
+    from short_urls s where s.user_id = p_user_id
+  );
+end; $$;
+
 create or replace function public.delete_short_url(p_user_id uuid, p_slug text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare v_deleted short_urls%rowtype; begin
@@ -799,8 +1011,23 @@ grant execute on function public.regenerate_site_api_key(text) to anon;
 grant execute on function public.increment_short_url_clicks(text) to anon;
 grant execute on function public.create_short_url(uuid, uuid, text, text) to anon;
 grant execute on function public.list_short_urls(text) to anon;
+grant execute on function public.list_short_urls(uuid) to anon;
 grant execute on function public.delete_short_url(uuid, text) to anon;
 grant execute on function public.get_short_url_stats(uuid, text) to anon;
+grant execute on function public.validate_api_key_for_shorten(text) to anon;
+
+-- Phase 7b admin oversight RPCs
+grant execute on function public.admin_list_users(text) to anon;
+grant execute on function public.admin_get_user_keys(text, uuid) to anon;
+grant execute on function public.admin_toggle_user_admin(text, uuid, boolean) to anon;
+grant execute on function public.admin_set_user_rate_limit(text, uuid, int) to anon;
+grant execute on function public.admin_list_short_urls(text, int, int) to anon;
+grant execute on function public.admin_list_api_keys(text) to anon;
+grant execute on function public.admin_delete_api_key(text, uuid) to anon;
+grant execute on function public.admin_delete_short_url(text, text) to anon;
+grant execute on function public.delete_message_admin(text, uuid) to anon;
+grant execute on function public.delete_own_message(text, uuid) to anon;
+grant execute on function public.admin_list_chat_messages(text, int, int) to anon;
 
 -- ============================================================
 -- DEFAULT SITE SETTINGS (idempotent)

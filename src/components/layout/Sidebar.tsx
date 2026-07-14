@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, MessageCircle, User, Shield } from 'lucide-react';
+import { Menu, X, MessageCircle, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useThemeStore } from '@/stores/theme-store';
@@ -13,20 +13,24 @@ interface SidebarProps {
   showMobile?: boolean;
   onChatClick?: () => void;
   onProfileClick?: () => void;
-  onAdminClick?: () => void;
 }
 
-function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatClick?: () => void; onProfileClick?: () => void; onAdminClick?: () => void }) {
+function SidebarFooter({ onChatClick, onProfileClick }: { onChatClick?: () => void; onProfileClick?: () => void }) {
   const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
   const setTheme = useThemeStore((s) => s.setTheme);
   const { user } = useAuth();
   const isDark = effectiveTheme === 'dark';
+  const userToggledRef = useRef(false);
 
   const { ref, toggleSwitchTheme } = useModeAnimation({
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
     onDarkModeChange: (dark: boolean) => {
+      if (!userToggledRef.current) return;
+      userToggledRef.current = false;
+      const current = useThemeStore.getState().theme;
+      if (current === 'system') return;
       setTheme(dark ? 'dark' : 'light');
     },
   });
@@ -37,7 +41,7 @@ function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatCl
         <button onClick={onChatClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Chat">
           <MessageCircle className="w-[18px] h-[18px]" />
         </button>
-        <button ref={ref} onClick={toggleSwitchTheme} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Toggle theme">
+        <button ref={ref} onClick={() => { userToggledRef.current = true; toggleSwitchTheme(); }} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Toggle theme">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {isDark ? <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> : (
               <>
@@ -54,11 +58,6 @@ function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatCl
             )}
           </svg>
         </button>
-        {user?.is_admin && (
-          <button onClick={onAdminClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors" aria-label="Admin">
-            <Shield className="w-[18px] h-[18px]" />
-          </button>
-        )}
         <button onClick={onProfileClick} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-variant/50 transition-colors overflow-hidden" aria-label="Profile">
           {user?.avatar_url ? (
             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -71,7 +70,7 @@ function SidebarFooter({ onChatClick, onProfileClick, onAdminClick }: { onChatCl
   );
 }
 
-export function Sidebar({ children, showFooter = false, showMobile = true, onChatClick, onProfileClick, onAdminClick }: SidebarProps) {
+export function Sidebar({ children, showFooter = false, showMobile = true, onChatClick, onProfileClick }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -83,7 +82,7 @@ export function Sidebar({ children, showFooter = false, showMobile = true, onCha
             <div className="space-y-2.5 flex-1 flex flex-col">
               {children}
             </div>
-            {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
+            {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} />}
           </div>
         </div>
       </aside>
@@ -132,7 +131,7 @@ export function Sidebar({ children, showFooter = false, showMobile = true, onCha
                   <div className="space-y-2.5">
                     {children}
                   </div>
-                  {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} onAdminClick={onAdminClick} />}
+                  {showFooter && <SidebarFooter onChatClick={onChatClick} onProfileClick={onProfileClick} />}
                 </div>
               </motion.aside>
             </>

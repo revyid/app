@@ -10,7 +10,6 @@ import { CommandPalette } from '@/components/command/CommandPalette';
 import { ShortcutHelp } from '@/components/shared/ShortcutHelp';
 import { ChatPopup } from '@/components/chat/ChatPopup';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
-import { AdminPanel } from '@/components/admin/AdminPanel';
 import { CustomLogin } from '@/components/auth/CustomLogin';
 import { useKeyboardShortcuts, defaultShortcuts } from '@/lib/keyboard-shortcuts';
 import { useThemeStore } from '@/stores/theme-store';

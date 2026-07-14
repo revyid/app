@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Settings, Key, Copy, Check, RefreshCw, Gauge } from 'lucide-react';
+import { toast } from 'sonner';
 import { getSiteSetting, updateSiteSetting, getSiteApiKey, regenerateSiteApiKey } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 
 export function SiteSettings() {
   const [siteLogo, setSiteLogo] = useState('');
+  const [favicon, setFavicon] = useState('');
+  const [profileHeader, setProfileHeader] = useState('');
+  const [siteTitle, setSiteTitle] = useState('');
+  const [siteDescription, setSiteDescription] = useState('');
   const [githubUsername, setGithubUsername] = useState('');
   const [unlimitedApiKeys, setUnlimitedApiKeys] = useState(false);
   const [rateLimitGithub, setRateLimitGithub] = useState('100');
@@ -23,12 +28,20 @@ export function SiteSettings() {
   useEffect(() => {
     Promise.all([
       getSiteSetting('site_logo'),
+      getSiteSetting('favicon'),
+      getSiteSetting('profile_header'),
+      getSiteSetting('site_title'),
+      getSiteSetting('site_description'),
       getSiteSetting('github_username'),
       getSiteSetting('unlimited_api_keys'),
       getSiteSetting('rate_limit_github'),
       getSiteSetting('rate_limit_shorten'),
-    ]).then(([logo, github, unlimited, ghLimit, shortLimit]) => {
+    ]).then(([logo, fav, header, title, desc, github, unlimited, ghLimit, shortLimit]) => {
       setSiteLogo(logo || '');
+      setFavicon(fav || '');
+      setProfileHeader(header || '');
+      setSiteTitle(title || '');
+      setSiteDescription(desc || '');
       setGithubUsername(github || '');
       setUnlimitedApiKeys(unlimited === 'true');
       setRateLimitGithub(ghLimit || '100');
@@ -48,14 +61,18 @@ export function SiteSettings() {
     try {
       await Promise.all([
         updateSiteSetting('site_logo', siteLogo),
+        updateSiteSetting('favicon', favicon),
+        updateSiteSetting('profile_header', profileHeader),
+        updateSiteSetting('site_title', siteTitle),
+        updateSiteSetting('site_description', siteDescription),
         updateSiteSetting('github_username', githubUsername),
         updateSiteSetting('unlimited_api_keys', unlimitedApiKeys ? 'true' : 'false'),
         updateSiteSetting('rate_limit_github', rateLimitGithub),
         updateSiteSetting('rate_limit_shorten', rateLimitShorten),
       ]);
-      alert('Settings saved!');
-    } catch {
-      alert('Failed to save settings');
+      toast.success('Settings saved.');
+    } catch (err) {
+      toast.error('Failed to save settings.');
     } finally {
       setSaving(false);
     }
@@ -70,7 +87,7 @@ export function SiteSettings() {
       setSiteKey(result.key);
       setSiteKeyVisible(true);
     } else {
-      alert(result.error || 'Failed to regenerate key');
+      toast.error(result.error || 'Failed to regenerate key');
     }
     setSiteKeyRegenerating(false);
   };
@@ -97,6 +114,38 @@ export function SiteSettings() {
       <div className="space-y-1">
         <label className="text-xs font-medium text-on-surface-variant">Site Icon</label>
         <ImageUpload value={siteLogo} onChange={setSiteLogo} previewClass="aspect-square max-w-[48px]" placeholder="Icon URL" />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-on-surface-variant">Favicon</label>
+        <ImageUpload value={favicon} onChange={setFavicon} previewClass="aspect-square max-w-[48px]" placeholder="Favicon URL" />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-on-surface-variant">Profile Header Image</label>
+        <ImageUpload value={profileHeader} onChange={setProfileHeader} previewClass="aspect-video max-w-[200px]" placeholder="Header URL" />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-on-surface-variant">Site Title</label>
+        <input
+          type="text"
+          value={siteTitle}
+          onChange={(e) => setSiteTitle(e.target.value)}
+          placeholder="Revy — Full-Stack Software Engineer"
+          className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-on-surface-variant">Site Description (meta description)</label>
+        <textarea
+          value={siteDescription}
+          onChange={(e) => setSiteDescription(e.target.value)}
+          placeholder="Full-stack software engineer from Jambi, Indonesia."
+          rows={2}
+          className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
+        />
       </div>
 
       <div className="space-y-1">
@@ -132,7 +181,7 @@ export function SiteSettings() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-on-surface-variant">GitHub API (req/min)</label>
+            <label className="text-xs font-medium text-on-surface-variant">GitHub API (req/hour)</label>
             <input
               type="number"
               value={rateLimitGithub}
@@ -143,7 +192,7 @@ export function SiteSettings() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-on-surface-variant">URL Shortener (req/min)</label>
+            <label className="text-xs font-medium text-on-surface-variant">URL Shortener (req/hour)</label>
             <input
               type="number"
               value={rateLimitShorten}

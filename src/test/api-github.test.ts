@@ -114,7 +114,12 @@ describe('GET /api/github', () => {
     mockRpc.mockResolvedValueOnce({ data: { valid: true, user_id: 'u1', rate_limit: 100 } });
     mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
     const res = await GET(req('users/revyid', { apiKey: 'rv_test' }));
-    expect(res.headers.get('Cache-Control')).toContain('s-maxage=300');
+    // Phase 3: route emits `private, max-age=300` (per-caller, NOT public
+    // s-maxage) because the response is gated by the caller's x-api-key +
+    // rate-limit check. See CHANGELOG (Phase 3) and the inline comment in
+    // src/app/api/github/route.ts.
+    expect(res.headers.get('Cache-Control')).toContain('max-age=300');
+    expect(res.headers.get('Cache-Control')).toContain('private');
   });
 
   it('returns 502 on GitHub 500', async () => {

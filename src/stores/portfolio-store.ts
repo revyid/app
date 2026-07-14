@@ -40,8 +40,27 @@ export interface PortfolioData {
   testimonials: Testimonial[];
 }
 
+// ─── localStorage cache layer (design decision — Phase 6) ──────────────
+// The homepage loads portfolio data via getAllPortfolioData() in lib/auth.ts,
+// which calls the Supabase RPC `get_all_portfolio_data` directly (NOT via
+// /api/portfolio). This localStorage cache sits in front of that RPC to avoid
+// a round-trip on every page load: on first visit we fetch + cache; on
+// subsequent visits within CACHE_TTL we serve from cache, then revalidate.
+//
+// This is SEPARATE from the HTTP cache on /api/portfolio (s-maxage=3600),
+// which only benefits EXTERNAL consumers of the public Portfolio API. The
+// homepage doesn't go through /api/portfolio, so the HTTP cache doesn't help
+// the homepage — the localStorage cache does.
+//
+// Decision: KEEP both layers. They serve different consumers:
+//   - localStorage cache → homepage client (fast first paint, 5min TTL)
+//   - HTTP cache (/api/portfolio) → external API consumers (1h TTL, edge-cached)
+// Removing the localStorage layer would add a network round-trip to every
+// homepage load, which is a performance regression for the primary user flow.
 const CACHE_KEY = 'revy_portfolio_v2';
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — shorter than the HTTP cache so
+                                 // admin edits show up reasonably fast after
+                                 // the admin clears the cache via refresh(true).
 
 const defaultData: PortfolioData = {
   profile: staticProfile,

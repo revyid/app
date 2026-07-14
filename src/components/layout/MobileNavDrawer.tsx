@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,7 +8,7 @@ import { ChevronRight, X, Home, LayoutDashboard, Key, FileText, Globe, Link2, Co
 import { useModeAnimation, ThemeAnimationType } from 'react-theme-switch-animation';
 import { useThemeStore } from '@/stores/theme-store';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, MessageCircle, User } from 'lucide-react';
+import { MessageCircle, User } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -20,7 +20,6 @@ export interface NavItem {
 function TreeItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(() => {
-    // auto-open if current path is under this item
     return item.href === '/' ? false : pathname.startsWith(item.href);
   });
   const Icon = item.icon;
@@ -77,21 +76,25 @@ interface MobileNavDrawerProps {
   showNav?: boolean;
   onChatClick?: () => void;
   onProfileClick?: () => void;
-  onAdminClick?: () => void;
 }
 
-export function MobileNavDrawer({ nav = [], showNav = true, onChatClick, onProfileClick, onAdminClick }: MobileNavDrawerProps) {
+export function MobileNavDrawer({ nav = [], showNav = true, onChatClick, onProfileClick }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
   const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
   const setTheme = useThemeStore((s) => s.setTheme);
   const isDark = effectiveTheme === 'dark';
   const { user } = useAuth();
+  const userToggledRef = useRef(false);
 
   const { ref, toggleSwitchTheme } = useModeAnimation({
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
     onDarkModeChange: (dark: boolean) => {
+      if (!userToggledRef.current) return;
+      userToggledRef.current = false;
+      const current = useThemeStore.getState().theme;
+      if (current === 'system') return;
       setTheme(dark ? 'dark' : 'light');
     },
   });
@@ -118,7 +121,7 @@ export function MobileNavDrawer({ nav = [], showNav = true, onChatClick, onProfi
           )}
 
           {/* Theme toggle */}
-          <button ref={ref} onClick={toggleSwitchTheme} aria-label="Toggle theme"
+          <button ref={ref} onClick={() => { userToggledRef.current = true; toggleSwitchTheme(); }} aria-label="Toggle theme"
             className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-surface-variant transition-colors text-muted-foreground hover:text-foreground flex-shrink-0">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {isDark ? <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> : (
@@ -136,13 +139,6 @@ export function MobileNavDrawer({ nav = [], showNav = true, onChatClick, onProfi
               )}
             </svg>
           </button>
-
-          {user?.is_admin && onAdminClick && (
-            <button onClick={onAdminClick} aria-label="Admin"
-              className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-surface-variant transition-colors text-primary flex-shrink-0">
-              <Shield className="w-[17px] h-[17px]" />
-            </button>
-          )}
 
           {onChatClick && (
             <button onClick={onChatClick} aria-label="Chat"

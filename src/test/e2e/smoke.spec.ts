@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error - playwright types resolve at runtime via the playwright runner
 import { test, expect } from '@playwright/test';
 
 test.describe('smoke: homepage', () => {
@@ -37,13 +37,26 @@ test.describe('smoke: navigation', () => {
 });
 
 test.describe('smoke: api', () => {
-  test('GET /api/github returns 400 without path param', async ({ request }: any) => {
+  // Note: middleware.ts enforces `x-api-key` on /api/github BEFORE the route
+  // handler runs. So requests without a key get 401 from middleware, not 400/403
+  // from the route. Tests that exercise the route's own 400/403 paths must pass
+  // a dummy key to get past middleware. See CHANGELOG (Phase 2).
+  test('GET /api/github returns 401 without x-api-key (middleware)', async ({ request }: any) => {
     const res = await request.get('/api/github');
+    expect(res.status()).toBe(401);
+  });
+
+  test('GET /api/github returns 400 without path param (with dummy key)', async ({ request }: any) => {
+    const res = await request.get('/api/github', {
+      headers: { 'x-api-key': 'dummy-test-key' },
+    });
     expect(res.status()).toBe(400);
   });
 
-  test('GET /api/github returns 403 for disallowed path', async ({ request }: any) => {
-    const res = await request.get('/api/github?path=admin/users');
+  test('GET /api/github returns 403 for disallowed path (with dummy key)', async ({ request }: any) => {
+    const res = await request.get('/api/github?path=admin/users', {
+      headers: { 'x-api-key': 'dummy-test-key' },
+    });
     expect(res.status()).toBe(403);
   });
 

@@ -8,7 +8,6 @@ import { MobileNavDrawer } from '@/components/layout/MobileNavDrawer';
 import { PageTransition } from '@/components/shared/PageTransition';
 import { ChatPopup } from '@/components/chat/ChatPopup';
 import { UserProfilePopup } from '@/components/profile/UserProfilePopup';
-import { AdminPanel } from '@/components/admin/AdminPanel';
 import { Footer } from '@/components/layout/Footer';
 import { createPortal } from 'react-dom';
 import { NAV } from '@/lib/nav';
@@ -56,7 +55,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -66,7 +64,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           showMobile={false}
           onChatClick={() => setIsChatOpen(true)}
           onProfileClick={() => setIsProfileOpen(true)}
-          onAdminClick={() => setIsAdminOpen(true)}
         >
           <nav className="space-y-0.5">
             {NAV.map(item => (
@@ -88,13 +85,11 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         nav={NAV}
         onChatClick={() => setIsChatOpen(true)}
         onProfileClick={() => setIsProfileOpen(true)}
-        onAdminClick={() => setIsAdminOpen(true)}
       />
 
       <PopupPortal>
         <ChatPopup isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} onLoginRequest={() => {}} side="left" />
         <UserProfilePopup isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onLoginRequest={() => {}} side="left" />
-        <AdminPanel isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
       </PopupPortal>
     </div>
   );

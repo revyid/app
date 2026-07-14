@@ -212,7 +212,7 @@ export default function GitHubApiPage() {
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-3">Rate Limits</h2>
         <p className="text-body-sm text-muted-foreground mb-2">
-          Default: 100 requests per minute per API key. The site&apos;s own key bypasses this limit.
+          Default: 100 requests per hour per API key. The site&apos;s own key bypasses this limit.
         </p>
         <p className="text-body-sm text-muted-foreground">
           Responses are cached for 5 minutes to reduce GitHub API usage.

@@ -5,7 +5,7 @@ export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const ALLOWED_ORIGINS = new Set(['https://revy.my.id', 'https://dev.revy.my.id']);
+const ALLOWED_ORIGINS = new Set(['https://revy.my.id', 'https://dev.revy.my.id', 'http://localhost:3000']);
 
 // In-memory rate limiter (optimized for edge)
 const rl = new Map<string, { count: number; resetTime: number }>();

@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
   User,
-  Shield,
   LayoutDashboard,
   Key,
   FileText,
@@ -21,7 +20,6 @@ import { getSiteSetting } from '@/lib/auth';
 interface FloatingNavbarProps {
   onChatClick: () => void;
   onProfileClick: () => void;
-  onAdminClick?: () => void;
 }
 
 const navItems = [
@@ -34,17 +32,21 @@ const navItems = [
 export const FloatingNavbar = memo(function FloatingNavbar({
   onChatClick,
   onProfileClick,
-  onAdminClick,
 }: FloatingNavbarProps) {
   const effectiveTheme = useThemeStore((s) => s.effectiveTheme);
   const setTheme = useThemeStore((s) => s.setTheme);
   const isDark = effectiveTheme === 'dark';
+  const userToggledThemeRef = useRef(false);
 
   const { ref, toggleSwitchTheme } = useModeAnimation({
     animationType: ThemeAnimationType.CIRCLE,
     duration: 750,
     isDarkMode: isDark,
     onDarkModeChange: (dark: boolean) => {
+      if (!userToggledThemeRef.current) return;
+      userToggledThemeRef.current = false;
+      const current = useThemeStore.getState().theme;
+      if (current === 'system') return;
       setTheme(dark ? 'dark' : 'light');
     },
   });
@@ -128,14 +130,6 @@ export const FloatingNavbar = memo(function FloatingNavbar({
           {/* Divider */}
           <div className="w-px h-6 sm:h-7 bg-outline/30 mx-0.5" />
 
-          {/* Admin */}
-          {user?.is_admin && onAdminClick && (
-            <button onClick={onAdminClick} aria-label="Admin"
-              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-primary">
-              <Shield className="w-[18px] h-[18px]" />
-            </button>
-          )}
-
           {/* Chat */}
           <button onClick={onChatClick} aria-label="Chat"
             className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground">
@@ -143,7 +137,7 @@ export const FloatingNavbar = memo(function FloatingNavbar({
           </button>
 
           {/* Theme Toggle */}
-          <button ref={ref} onClick={toggleSwitchTheme} aria-label="Toggle theme"
+          <button ref={ref} onClick={() => { userToggledThemeRef.current = true; toggleSwitchTheme(); }} aria-label="Toggle theme"
             className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-surface-variant transition-colors duration-150 flex-shrink-0 text-muted-foreground hover:text-foreground">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {isDark ? <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> : (

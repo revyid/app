@@ -142,7 +142,12 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         ...cors,
-        'Cache-Control': 'private, no-cache',
+        // Per-caller private cache (5 min). NOT public/s-maxage because the
+        // response is gated by the caller's x-api-key + rate-limit check — a
+        // shared edge cache must not serve it to a different caller without
+        // re-validating them. Middleware skips /api/github so this header
+        // survives end-to-end. See CHANGELOG (Phase 3).
+        'Cache-Control': `private, max-age=${CACHE_TTL}`,
       },
     });
   } catch {

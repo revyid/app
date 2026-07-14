@@ -13,7 +13,7 @@ Portfolio homepage. Shows profile, skills, projects, experience, education, test
 User dashboard for managing API keys and short URLs. Requires sign-in.
 
 ### API Keys (/dashboard/api-keys)
-Create, view, delete API keys. Keys have optional expiry (30d, 90d, 6mo, 1yr, unlimited). Rate limit: 100 requests/min per key.
+Create, view, delete API keys. Keys have optional expiry (30d, 90d, 6mo, 1yr, unlimited). Rate limit: 100 requests/hour per key.
 
 ### URL Shortener Dashboard (/dashboard/shorten)
 Create short URLs with custom slugs, view click analytics.
@@ -26,7 +26,7 @@ Getting started: Sign in → Dashboard → API Keys → Create Key → Use x-api
 Authentication: All requests need x-api-key header.
 GitHub API: GET /api/github?path=users/{username}
 URL Shortener: POST /api/shorten
-Rate Limits: 100 requests/min per key, 429 on exceed.
+Rate Limits: 100 requests/hour per key, 429 on exceed.
 
 ### API Reference (/docs/api-reference)
 Base URL: https://revy.my.id
@@ -39,7 +39,7 @@ Endpoints:
 - GET /api/github?path=users/{username}/repos — User repos
 - GET /api/github?path=users/{username}/events — User activity
 - GET /api/github?path=repos/{owner}/{repo} — Repo details
-Auth: x-api-key header required. Rate: 100/min, cached 5min.
+Auth: x-api-key header required. Rate: 100/hour, cached 5min.
 
 ### URL Shortener API (/docs/api-reference/shorten)
 Create short links, track clicks.

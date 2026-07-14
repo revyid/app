@@ -28,8 +28,17 @@ const APIS = [
     iconColor: 'text-tertiary',
     iconBg: 'bg-tertiary/10',
     title: 'Code Sandbox',
-    desc: 'Run JavaScript, Python, TypeScript, and cURL in-browser.',
+    desc: 'Run JavaScript, Python, TypeScript, cURL in-browser — plus Go, Rust, PHP via server-side glot.io proxy.',
     tags: ['Interactive'],
+  },
+  {
+    href: '/api/portfolio',
+    icon: Globe,
+    iconColor: 'text-primary',
+    iconBg: 'bg-primary/10',
+    title: 'Portfolio API',
+    desc: 'Public, edge-cached (1h) read access to the full portfolio dataset (profile, projects, skills, experience, etc.). No auth required.',
+    tags: ['REST', 'Public', 'Cached'],
   },
 ];
 
