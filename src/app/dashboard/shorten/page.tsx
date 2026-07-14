@@ -52,6 +52,7 @@ export default function ShortenPage() {
 
   // Realtime
   const channelRef = useRef<any>(null);
+  const channelIdRef = useRef(`short-urls-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!authLoading && !user) window.location.href = '/';
@@ -72,7 +73,7 @@ export default function ShortenPage() {
     import('@/lib/supabase').then(({ getSupabase }) => {
       getSupabase().then(client => {
         channelRef.current = client
-          .channel()
+          .channel(channelIdRef.current)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'short_urls' }, () => {
             fetchUrls();
           })

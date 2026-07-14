@@ -44,6 +44,7 @@ export default function ApiKeysPage() {
     try { return JSON.parse(localStorage.getItem('revy_api_keys') ?? '{}'); } catch { return {}; }
   });
   const channelRef = useRef<any>(null);
+  const channelIdRef = useRef(`api-keys-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!authLoading && !user) window.location.href = '/';
@@ -62,7 +63,7 @@ export default function ApiKeysPage() {
 
     getSupabase().then(client => {
       channelRef.current = client
-        .channel()
+        .channel(channelIdRef.current)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'api_keys' }, () => {
           fetchKeys();
         })

@@ -183,6 +183,7 @@ export default function DashboardPage() {
   const [editingUrl, setEditingUrl] = useState<ShortUrl | null>(null);
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
   const channelRef = useRef<any>(null);
+  const channelIdRef = useRef(`dashboard-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!isLoading && !user) window.location.href = '/';
@@ -213,7 +214,7 @@ export default function DashboardPage() {
 
     getSupabase().then(client => {
       channelRef.current = client
-        .channel()
+        .channel(channelIdRef.current)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'short_urls' }, () => {
           listShortUrls().then(setShortUrls);
         })
