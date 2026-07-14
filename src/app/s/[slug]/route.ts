@@ -160,11 +160,11 @@ export async function GET(
 <body>
   <div class="card">
     <div class="timer">
-      Redirecting in <span id="countdown">5</span>s... <a href="${row.original_url}">Skip</a>
+      Redirecting in <span id="countdown">30</span>s... <a href="${row.original_url}">Skip</a>
     </div>
   </div>
   <script>
-    let t = 5;
+    let t = 30;
     const el = document.getElementById('countdown');
     const iv = setInterval(() => {
       t--;
