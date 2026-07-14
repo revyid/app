@@ -44,12 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://ui-avatars.com" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})()`,
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var v=localStorage.getItem('themeVars');if(v){var vars=JSON.parse(v);var r=document.documentElement;Object.keys(vars).forEach(function(k){r.style.setProperty('--'+k,vars[k])})}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=matchMedia('(prefers-color-scheme:dark)').matches;var isDark=t==='dark'||(!t&&d);document.documentElement.classList[isDark?'add':'remove']('dark');var v=localStorage.getItem('themeVars');if(v){var vars=JSON.parse(v);var r=document.documentElement;Object.keys(vars).forEach(function(k){r.style.setProperty('--'+k,vars[k])})}}catch(e){}})()`,
           }}
         />
         <script
