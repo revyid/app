@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Galeri foto - Koleksi karya fotografi terbaik">
+    <title>Gallery | Lens & Light</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/lens-light/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="/lens-light" class="logo">
+                <span class="logo-icon"><i class="fas fa-camera-retro"></i></span>
+                <span class="logo-text">Lens & Light</span>
+            </a>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="/lens-light" class="nav-link">Home</a></li>
+                <li><a href="/lens-light/gallery" class="nav-link active">Gallery</a></li>
+                <li><a href="/lens-light/about" class="nav-link">About</a></li>
+                <li><a href="/lens-light/contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Galeri Foto</h1>
+            <p class="page-subtitle">Koleksi karya fotografi dari berbagai momen dan tempat</p>
+        </div>
+    </section>
+
+    <!-- Gallery Filter -->
+    <section class="gallery-section">
+        <div class="container">
+            <div class="gallery-filter">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="landscape">Landscape</button>
+                <button class="filter-btn" data-filter="street">Street</button>
+                <button class="filter-btn" data-filter="portrait">Portrait</button>
+                <button class="filter-btn" data-filter="nature">Nature</button>
+            </div>
+
+            <!-- Gallery Grid -->
+            <div class="gallery-grid">
+                <div class="gallery-item" data-category="landscape">
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600"
+                        alt="Mountain landscape" loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Mountain Dawn</h3>
+                        <span>Landscape</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="street">
+                    <img src="https://images.unsplash.com/photo-1528716321680-815a8cdb8cbe?w=600" alt="City street"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>City Lights</h3>
+                        <span>Street</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600" alt="Portrait"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Natural Beauty</h3>
+                        <span>Portrait</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="nature">
+                    <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600" alt="Forest"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Forest Path</h3>
+                        <span>Nature</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="landscape">
+                    <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600" alt="Foggy hills"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Misty Morning</h3>
+                        <span>Landscape</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="street">
+                    <img src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=600" alt="Urban buildings"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Urban Jungle</h3>
+                        <span>Street</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600" alt="Portrait woman"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Golden Hour</h3>
+                        <span>Portrait</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="nature">
+                    <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600" alt="Mountain lake"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Serene Lake</h3>
+                        <span>Nature</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="landscape">
+                    <img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600" alt="Sunset"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Golden Sunset</h3>
+                        <span>Landscape</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="street">
+                    <img src="https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=600" alt="Cityscape"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Night City</h3>
+                        <span>Street</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="nature">
+                    <img src="https://images.unsplash.com/photo-1518173946687-a4c036bc3c7e?w=600" alt="Waterfall"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Hidden Falls</h3>
+                        <span>Nature</span>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="portrait">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600" alt="Man portrait"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Street Portrait</h3>
+                        <span>Portrait</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" aria-label="Close">&times;</button>
+        <button class="lightbox-prev" aria-label="Previous">&#10094;</button>
+        <button class="lightbox-next" aria-label="Next">&#10095;</button>
+        <div class="lightbox-content">
+            <img src="" alt="" id="lightbox-img">
+            <div class="lightbox-caption">
+                <h3 id="lightbox-title"></h3>
+                <span id="lightbox-category"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon"><i class="fas fa-camera-retro"></i></span>
+                    <span class="logo-text">Lens & Light</span>
+                </div>
+                <div class="footer-links">
+                    <a href="/lens-light">Home</a>
+                    <a href="/lens-light/gallery">Gallery</a>
+                    <a href="/lens-light/about">About</a>
+                    <a href="/lens-light/contact">Contact</a>
+                </div>
+                <div class="footer-social">
+                    <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link" aria-label="Flickr"><i class="fab fa-flickr"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Lens & Light. Dibuat dengan <i class="fas fa-heart" style="color: #e94560;"></i> untuk
+                    fotografi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/lens-light/js/main.js"></script>
+</body>
+
+</html>

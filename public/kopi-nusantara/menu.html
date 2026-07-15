@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Menu Kopi Nusantara - Berbagai pilihan kopi dan minuman khas Indonesia">
+    <title>Menu | Kopi Nusantara</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/kopi-nusantara/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="/kopi-nusantara" class="logo">
+                <span class="logo-icon"><i class="fas fa-mug-hot"></i></span>
+                <span class="logo-text">Kopi Nusantara</span>
+            </a>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="/kopi-nusantara" class="nav-link">Home</a></li>
+                <li><a href="/kopi-nusantara/menu" class="nav-link active">Menu</a></li>
+                <li><a href="/kopi-nusantara/about" class="nav-link">Tentang</a></li>
+                <li><a href="/kopi-nusantara/contact" class="nav-link">Kontak</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Menu Kami</h1>
+            <p class="page-subtitle">Pilihan kopi dan minuman terbaik dari biji pilihan Nusantara</p>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+        <div class="container">
+            <!-- Menu Filter -->
+            <div class="menu-filter">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="kopi">Kopi</button>
+                <button class="filter-btn" data-filter="non-kopi">Non-Kopi</button>
+                <button class="filter-btn" data-filter="makanan">Makanan</button>
+            </div>
+
+            <!-- Menu Grid -->
+            <div class="menu-grid-full">
+                <!-- Kopi -->
+                <div class="menu-card" data-category="kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400')">
+                        <span class="menu-badge">Best Seller</span>
+                    </div>
+                    <div class="menu-content">
+                        <h3>Kopi Gayo</h3>
+                        <p>Kopi Arabika premium dari dataran tinggi Aceh dengan aroma fruity dan aftertaste manis</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 28.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400')">
+                        <span class="menu-badge">Popular</span>
+                    </div>
+                    <div class="menu-content">
+                        <h3>Kopi Toraja</h3>
+                        <p>Kopi premium Sulawesi dengan body yang kuat dan rasa earthy yang khas</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 32.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400')">
+                        <span class="menu-badge">Favorite</span>
+                    </div>
+                    <div class="menu-content">
+                        <h3>Es Kopi Susu</h3>
+                        <p>Perpaduan espresso, susu segar, dan gula aren yang menyegarkan</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 25.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Cappuccino</h3>
+                        <p>Espresso dengan steamed milk dan foam yang lembut</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 28.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1485808191679-5f86510681a2?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Kopi Tubruk</h3>
+                        <p>Kopi tradisional Indonesia dengan cara seduh tubruk klasik</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 18.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400')">
+                        <span class="menu-badge">New</span>
+                    </div>
+                    <div class="menu-content">
+                        <h3>Affogato</h3>
+                        <p>Espresso panas disiram di atas es krim vanilla premium</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 35.000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Non-Kopi -->
+                <div class="menu-card" data-category="non-kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Matcha Latte</h3>
+                        <p>Green tea premium Jepang dengan susu segar</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 30.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="non-kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1558857563-b371033873b8?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Cokelat Panas</h3>
+                        <p>Cokelat premium dengan susu hangat dan whipped cream</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 28.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="non-kopi">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Teh Tarik</h3>
+                        <p>Teh susu khas Malaysia yang creamy dan manis</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 22.000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Makanan -->
+                <div class="menu-card" data-category="makanan">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Croissant</h3>
+                        <p>Croissant butter renyah dan lembut fresh from oven</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 25.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="makanan">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>French Toast</h3>
+                        <p>Roti panggang dengan madu, butter, dan buah segar</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 35.000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card" data-category="makanan">
+                    <div class="menu-image"
+                        style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400')">
+                    </div>
+                    <div class="menu-content">
+                        <h3>Pisang Goreng</h3>
+                        <p>Pisang goreng crispy dengan topping cokelat dan keju</p>
+                        <div class="menu-footer">
+                            <span class="menu-price">Rp 20.000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-mug-hot"></i></span>
+                        <span class="logo-text">Kopi Nusantara</span>
+                    </div>
+                    <p>Menyajikan kopi asli Indonesia dengan cita rasa yang autentik.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Navigasi</h4>
+                    <ul>
+                        <li><a href="/kopi-nusantara">Home</a></li>
+                        <li><a href="/kopi-nusantara/menu">Menu</a></li>
+                        <li><a href="/kopi-nusantara/about">Tentang</a></li>
+                        <li><a href="/kopi-nusantara/contact">Kontak</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Kontak</h4>
+                    <ul>
+                        <li><i class="fas fa-location-dot"></i> Jl. Kopi No. 123, Jakarta</li>
+                        <li><i class="fas fa-phone"></i> +62 812 3456 7890</li>
+                        <li><i class="fas fa-clock"></i> 08:00 - 22:00 WIB</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Kopi Nusantara. Dibuat dengan <i class="fas fa-heart"></i> di Indonesia.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/kopi-nusantara/js/main.js"></script>
+</body>
+
+</html>

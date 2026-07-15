@@ -7,6 +7,7 @@ import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { useActiveSectionStore } from '@/stores/active-section-store';
 
 const ProjectsSection = lazy(() => import('@/components/sections/ProjectsSection').then(m => ({ default: m.ProjectsSection })));
+const ShowcaseSection = lazy(() => import('@/components/sections/ShowcaseSection').then(m => ({ default: m.ShowcaseSection })));
 const ExperienceSection = lazy(() => import('@/components/sections/ExperienceSection').then(m => ({ default: m.ExperienceSection })));
 const TestimonialsSection = lazy(() => import('@/components/sections/TestimonialsSection').then(m => ({ default: m.TestimonialsSection })));
 const EducationSection = lazy(() => import('@/components/sections/EducationSection').then(m => ({ default: m.EducationSection })));
@@ -50,6 +51,11 @@ export function HomePage() {
           <ProjectsSection />
         </Suspense>
       </div>
+      <SectionDivider />
+
+      <Suspense fallback={<div className="mb-10 h-32 animate-pulse bg-surface-container/20 rounded-3xl" />}>
+        <ShowcaseSection />
+      </Suspense>
       <SectionDivider />
 
       <div id="stats" className="scroll-mt-24">

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hubungi saya untuk kolaborasi atau pertanyaan tentang fotografi">
+    <title>Contact | Lens & Light</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/lens-light/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="/lens-light" class="logo">
+                <span class="logo-icon"><i class="fas fa-camera-retro"></i></span>
+                <span class="logo-text">Lens & Light</span>
+            </a>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="/lens-light" class="nav-link">Home</a></li>
+                <li><a href="/lens-light/gallery" class="nav-link">Gallery</a></li>
+                <li><a href="/lens-light/about" class="nav-link">About</a></li>
+                <li><a href="/lens-light/contact" class="nav-link active">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Hubungi Saya</h1>
+            <p class="page-subtitle">Ada pertanyaan atau ingin berkolaborasi? Jangan ragu untuk menghubungi!</p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Contact Info -->
+                <div class="contact-info">
+                    <h2>Mari Terhubung</h2>
+                    <p class="contact-intro">
+                        Saya selalu senang mendengar dari sesama penggemar fotografi.
+                        Baik untuk project, kolaborasi, atau sekadar berbagi cerita tentang fotografi.
+                    </p>
+
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-envelope"></i></span>
+                            <div class="contact-text">
+                                <h4>Email</h4>
+                                <p>hello@lensandlight.com</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-phone"></i></span>
+                            <div class="contact-text">
+                                <h4>Telepon</h4>
+                                <p>+62 812 3456 7890</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-location-dot"></i></span>
+                            <div class="contact-text">
+                                <h4>Lokasi</h4>
+                                <p>Jakarta, Indonesia</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-social">
+                        <h4>Ikuti Saya</h4>
+                        <div class="social-links">
+                            <a href="#" class="social-btn" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i> Instagram
+                            </a>
+                            <a href="#" class="social-btn" aria-label="Twitter">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="#" class="social-btn" aria-label="Flickr">
+                                <i class="fab fa-flickr"></i> Flickr
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="contact-form-wrapper">
+                    <form class="contact-form" id="contact-form">
+                        <div class="form-group">
+                            <label for="name">Nama Lengkap *</label>
+                            <input type="text" id="name" name="name" placeholder="Masukkan nama Anda" required>
+                            <span class="error-message" id="name-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" placeholder="email@contoh.com" required>
+                            <span class="error-message" id="email-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subjek</label>
+                            <select id="subject" name="subject">
+                                <option value="">Pilih subjek...</option>
+                                <option value="collaboration">Kolaborasi Project</option>
+                                <option value="photoshoot">Sesi Pemotretan</option>
+                                <option value="question">Pertanyaan Umum</option>
+                                <option value="other">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Pesan *</label>
+                            <textarea id="message" name="message" rows="5" placeholder="Tulis pesan Anda di sini..."
+                                required></textarea>
+                            <span class="error-message" id="message-error"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span class="btn-text">Kirim Pesan</span>
+                            <span class="btn-loading" style="display: none;">Mengirim...</span>
+                        </button>
+                    </form>
+
+                    <!-- Success Message -->
+                    <div class="form-success" id="form-success" style="display: none;">
+                        <div class="success-icon"><i class="fas fa-circle-check"></i></div>
+                        <h3>Pesan Terkirim!</h3>
+                        <p>Terima kasih telah menghubungi. Saya akan membalas pesan Anda dalam 1-2 hari kerja.</p>
+                        <button class="btn btn-outline" onclick="resetForm()">Kirim Pesan Lagi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section (Placeholder) -->
+    <section class="map-section">
+        <div class="map-container" style="width: 100%; height: 400px;">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15865.204683515024!2d106.824241!3d-6.223838!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f3e4e9089e53%3A0x6a0595305141212!2sJakarta%2C%20Indonesia!5e0!3m2!1sen!2sid!4v1700000000000!5m2!1sen!2sid"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon"><i class="fas fa-camera-retro"></i></span>
+                    <span class="logo-text">Lens & Light</span>
+                </div>
+                <div class="footer-links">
+                    <a href="/lens-light">Home</a>
+                    <a href="/lens-light/gallery">Gallery</a>
+                    <a href="/lens-light/about">About</a>
+                    <a href="/lens-light/contact">Contact</a>
+                </div>
+                <div class="footer-social">
+                    <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link" aria-label="Flickr"><i class="fab fa-flickr"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Lens & Light. Dibuat dengan <i class="fas fa-heart" style="color: #e94560;"></i> untuk
+                    fotografi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/lens-light/js/main.js"></script>
+</body>
+
+</html>

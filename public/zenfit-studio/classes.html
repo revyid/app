@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kelas ZenFit Studio - Yoga, HIIT, Pilates, dan banyak lagi">
+    <title>Classes | ZenFit Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/zenfit-studio/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon"><i class="fas fa-dumbbell"></i></span>
+                <span class="logo-text">Zen<span class="accent">Fit</span></span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="classes.html" class="nav-link active">Classes</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+            </ul>
+            <a href="contact.html" class="btn btn-primary nav-cta">Join Now</a>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Our Classes</h1>
+            <p class="page-subtitle">Temukan kelas yang sesuai dengan goals Anda</p>
+        </div>
+    </section>
+
+    <!-- Classes Section -->
+    <section class="classes-section">
+        <div class="container">
+            <div class="classes-filter">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="yoga">Yoga</button>
+                <button class="filter-btn" data-filter="hiit">HIIT</button>
+                <button class="filter-btn" data-filter="strength">Strength</button>
+                <button class="filter-btn" data-filter="pilates">Pilates</button>
+            </div>
+
+            <div class="classes-grid-full">
+                <!-- Yoga Classes -->
+                <div class="class-card" data-category="yoga">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500" alt="Vinyasa Yoga">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 60 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level beginner">Beginner</span>
+                        <h3>Vinyasa Yoga</h3>
+                        <p>Flow movements untuk relaksasi dan fleksibilitas</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 300 cal</span>
+                            <span><i class="fas fa-users"></i> Max 20</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card" data-category="yoga">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500" alt="Hatha Yoga">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 75 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level beginner">Beginner</span>
+                        <h3>Hatha Yoga</h3>
+                        <p>Dasar yoga untuk pemula dengan fokus breathing</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 200 cal</span>
+                            <span><i class="fas fa-users"></i> Max 25</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card" data-category="yoga">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=500" alt="Power Yoga">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 60 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level intermediate">Intermediate</span>
+                        <h3>Power Yoga</h3>
+                        <p>Yoga dinamis dengan fokus strength building</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 400 cal</span>
+                            <span><i class="fas fa-users"></i> Max 18</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HIIT Classes -->
+                <div class="class-card" data-category="hiit">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=500"
+                            alt="HIIT Extreme">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 45 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level advanced">Advanced</span>
+                        <h3>HIIT Extreme</h3>
+                        <p>High intensity workout untuk fat burning maksimal</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 600 cal</span>
+                            <span><i class="fas fa-users"></i> Max 15</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card" data-category="hiit">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=500" alt="Tabata">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 30 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level intermediate">Intermediate</span>
+                        <h3>Tabata Blast</h3>
+                        <p>20 sec work, 10 sec rest, repeat!</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 450 cal</span>
+                            <span><i class="fas fa-users"></i> Max 20</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strength Classes -->
+                <div class="class-card" data-category="strength">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=500" alt="Full Body">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 50 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level intermediate">Intermediate</span>
+                        <h3>Full Body Strength</h3>
+                        <p>Latihan compound untuk seluruh tubuh</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 400 cal</span>
+                            <span><i class="fas fa-users"></i> Max 12</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card" data-category="strength">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500" alt="Upper Body">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 45 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level beginner">Beginner</span>
+                        <h3>Upper Body Focus</h3>
+                        <p>Build stronger arms, shoulders, and back</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 300 cal</span>
+                            <span><i class="fas fa-users"></i> Max 15</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pilates Classes -->
+                <div class="class-card" data-category="pilates">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=500" alt="Pilates">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 50 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level intermediate">Intermediate</span>
+                        <h3>Core Pilates</h3>
+                        <p>Perkuat core dan tingkatkan postur tubuh</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 350 cal</span>
+                            <span><i class="fas fa-users"></i> Max 18</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card" data-category="pilates">
+                    <div class="class-image">
+                        <img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=500" alt="Mat Pilates">
+                        <div class="class-overlay">
+                            <span class="class-duration"><i class="fas fa-clock"></i> 60 min</span>
+                        </div>
+                    </div>
+                    <div class="class-content">
+                        <span class="class-level beginner">Beginner</span>
+                        <h3>Mat Pilates</h3>
+                        <p>Dasar pilates dengan focus pada control</p>
+                        <div class="class-meta">
+                            <span><i class="fas fa-fire"></i> 250 cal</span>
+                            <span><i class="fas fa-users"></i> Max 20</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schedule CTA -->
+    <section class="schedule-cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>View Full Schedule</h2>
+                <p>Download jadwal lengkap kelas mingguan kami</p>
+                <a href="contact.html" class="btn btn-primary"><i class="fas fa-calendar"></i> Get Schedule</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-dumbbell"></i></span>
+                        <span class="logo-text">Zen<span class="accent">Fit</span></span>
+                    </div>
+                    <p>Transform your body and mind with us.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="classes.html">Classes</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-location-dot"></i> Jl. Fitness No. 88, Jakarta</p>
+                    <p><i class="fas fa-phone"></i> +62 812 8888 7777</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 ZenFit Studio</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/zenfit-studio/js/main.js"></script>
+</body>
+
+</html>

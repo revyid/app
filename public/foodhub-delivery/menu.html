@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FoodHub Menu - Pilihan makanan lezat">
+    <title>Menu | FoodHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/foodhub-delivery/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-solid">
+        <div class="container">
+            <a href="/foodhub-delivery" class="logo">
+                <span class="logo-icon">🍕</span>
+                <span class="logo-text">Food<span class="accent">Hub</span></span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/foodhub-delivery" class="nav-link">Home</a></li>
+                <li><a href="/foodhub-delivery/menu" class="nav-link active">Menu</a></li>
+                <li><a href="/foodhub-delivery/about" class="nav-link">About</a></li>
+                <li><a href="/foodhub-delivery/contact" class="nav-link">Contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count">0</span></button>
+                <a href="/foodhub-delivery/contact" class="btn btn-primary">Order Now</a>
+            </div>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+        </div>
+    </nav>
+
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Our Menu</h1>
+            <p class="page-subtitle">Pilihan makanan lezat untuk setiap selera</p>
+        </div>
+    </section>
+
+    <section class="menu-section">
+        <div class="container">
+            <div class="menu-filter">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="pizza">🍕 Pizza</button>
+                <button class="filter-btn" data-filter="burger">🍔 Burger</button>
+                <button class="filter-btn" data-filter="pasta">🍝 Pasta</button>
+                <button class="filter-btn" data-filter="sushi">🍣 Sushi</button>
+                <button class="filter-btn" data-filter="dessert">🍰 Dessert</button>
+            </div>
+
+            <div class="menu-grid">
+                <div class="food-card" data-category="pizza">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400" alt="Pizza">
+                        <span class="food-badge">Best Seller</span>
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Pizza</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.9</span>
+                        </div>
+                        <h3>Pepperoni Pizza</h3>
+                        <p>Pizza dengan pepperoni premium dan mozzarella</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 95.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="pizza">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400" alt="Margherita">
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Pizza</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.8</span>
+                        </div>
+                        <h3>Margherita Classic</h3>
+                        <p>Tomat segar, mozzarella, dan basil</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 85.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="burger">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400" alt="Burger">
+                        <span class="food-badge hot">Hot</span>
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Burger</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.8</span>
+                        </div>
+                        <h3>Classic Cheeseburger</h3>
+                        <p>Beef patty dengan double cheese</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 65.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="burger">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?w=400" alt="Bacon Burger">
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Burger</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.7</span>
+                        </div>
+                        <h3>BBQ Bacon Burger</h3>
+                        <p>Dengan crispy bacon dan saus BBQ</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 75.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="pasta">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=400" alt="Carbonara">
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Pasta</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.7</span>
+                        </div>
+                        <h3>Creamy Carbonara</h3>
+                        <p>Spaghetti dengan saus krim parmesan</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 75.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="pasta">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400" alt="Aglio Olio">
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Pasta</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.6</span>
+                        </div>
+                        <h3>Aglio e Olio</h3>
+                        <p>Garlic, olive oil, dan chili flakes</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 65.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="sushi">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400" alt="Sashimi">
+                        <span class="food-badge new">New</span>
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Sushi</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.9</span>
+                        </div>
+                        <h3>Salmon Sashimi Set</h3>
+                        <p>12 pcs salmon sashimi fresh</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 120.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="food-card" data-category="dessert">
+                    <div class="food-image">
+                        <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400" alt="Donut">
+                        <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="food-content">
+                        <div class="food-meta">
+                            <span class="food-category">Dessert</span>
+                            <span class="food-rating"><i class="fas fa-star"></i> 4.8</span>
+                        </div>
+                        <h3>Glazed Donuts</h3>
+                        <p>Soft donuts dengan glaze manis</p>
+                        <div class="food-footer">
+                            <span class="food-price">Rp 25.000</span>
+                            <button class="add-cart-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>© 2024 FoodHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/foodhub-delivery/js/main.js"></script>
+</body>
+
+</html>

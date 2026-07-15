@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hubungi Kopi Nusantara - Lokasi, jam operasional, dan cara menghubungi kami">
+    <title>Kontak | Kopi Nusantara</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/kopi-nusantara/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="/kopi-nusantara" class="logo">
+                <span class="logo-icon"><i class="fas fa-mug-hot"></i></span>
+                <span class="logo-text">Kopi Nusantara</span>
+            </a>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="/kopi-nusantara" class="nav-link">Home</a></li>
+                <li><a href="/kopi-nusantara/menu" class="nav-link">Menu</a></li>
+                <li><a href="/kopi-nusantara/about" class="nav-link">Tentang</a></li>
+                <li><a href="/kopi-nusantara/contact" class="nav-link active">Kontak</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Hubungi Kami</h1>
+            <p class="page-subtitle">Ada pertanyaan atau ingin reservasi? Kami siap membantu!</p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Contact Info -->
+                <div class="contact-info">
+                    <h2>Kunjungi Kedai Kami</h2>
+                    <p class="contact-intro">
+                        Nikmati suasana nyaman kedai kami sambil menyeruput kopi favorit Anda.
+                        Kami juga menyediakan area kerja dengan WiFi gratis!
+                    </p>
+
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-location-dot"></i></span>
+                            <div class="contact-text">
+                                <h4>Alamat</h4>
+                                <p>Jl. Kopi Nusantara No. 123<br>Menteng, Jakarta Pusat 10310</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-clock"></i></span>
+                            <div class="contact-text">
+                                <h4>Jam Operasional</h4>
+                                <p>Senin - Jumat: 07:00 - 22:00<br>Sabtu - Minggu: 08:00 - 23:00</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-phone"></i></span>
+                            <div class="contact-text">
+                                <h4>Telepon</h4>
+                                <p>+62 812 3456 7890</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon"><i class="fas fa-envelope"></i></span>
+                            <div class="contact-text">
+                                <h4>Email</h4>
+                                <p>hello@kopinusantara.id</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-social">
+                        <h4>Ikuti Kami</h4>
+                        <div class="social-links">
+                            <a href="#" class="social-btn">
+                                <i class="fab fa-instagram"></i> @kopinusantara
+                            </a>
+                            <a href="#" class="social-btn">
+                                <i class="fab fa-facebook-f"></i> Kopi Nusantara
+                            </a>
+                            <a href="#" class="social-btn">
+                                <i class="fab fa-tiktok"></i> @kopinusantara
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="contact-form-wrapper">
+                    <h3>Kirim Pesan</h3>
+                    <form class="contact-form" id="contact-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Nama *</label>
+                                <input type="text" id="name" name="name" placeholder="Nama Anda" required>
+                                <span class="error-message" id="name-error"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">No. Telepon</label>
+                                <input type="tel" id="phone" name="phone" placeholder="08xx xxxx xxxx">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" placeholder="email@contoh.com" required>
+                            <span class="error-message" id="email-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subjek</label>
+                            <select id="subject" name="subject">
+                                <option value="">Pilih subjek...</option>
+                                <option value="reservation">Reservasi Tempat</option>
+                                <option value="catering">Catering / Event</option>
+                                <option value="partnership">Kerjasama</option>
+                                <option value="feedback">Feedback</option>
+                                <option value="other">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Pesan *</label>
+                            <textarea id="message" name="message" rows="5" placeholder="Tulis pesan Anda..."
+                                required></textarea>
+                            <span class="error-message" id="message-error"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <span class="btn-text"><i class="fas fa-paper-plane"></i> Kirim Pesan</span>
+                            <span class="btn-loading" style="display: none;">Mengirim...</span>
+                        </button>
+                    </form>
+
+                    <!-- Success Message -->
+                    <div class="form-success" id="form-success" style="display: none;">
+                        <div class="success-icon"><i class="fas fa-circle-check"></i></div>
+                        <h3>Pesan Terkirim!</h3>
+                        <p>Terima kasih! Tim kami akan menghubungi Anda dalam 1x24 jam.</p>
+                        <button class="btn btn-outline" onclick="resetForm()">Kirim Pesan Lagi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="map-container" style="width: 100%; height: 450px;">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126920.24097437568!2d106.77708304999999!3d-6.2297465!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f3e945e34b9d%3A0x5371bf0fdad786a2!2sMenteng%2C%20Central%20Jakarta%20City%2C%20Jakarta!5e0!3m2!1sen!2sid!4v1716300000000!5m2!1sen!2sid"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-mug-hot"></i></span>
+                        <span class="logo-text">Kopi Nusantara</span>
+                    </div>
+                    <p>Menyajikan kopi asli Indonesia dengan cita rasa yang autentik.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Navigasi</h4>
+                    <ul>
+                        <li><a href="/kopi-nusantara">Home</a></li>
+                        <li><a href="/kopi-nusantara/menu">Menu</a></li>
+                        <li><a href="/kopi-nusantara/about">Tentang</a></li>
+                        <li><a href="/kopi-nusantara/contact">Kontak</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Kontak</h4>
+                    <ul>
+                        <li><i class="fas fa-location-dot"></i> Jl. Kopi No. 123, Jakarta</li>
+                        <li><i class="fas fa-phone"></i> +62 812 3456 7890</li>
+                        <li><i class="fas fa-clock"></i> 08:00 - 22:00 WIB</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Kopi Nusantara. Dibuat dengan <i class="fas fa-heart"></i> di Indonesia.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/kopi-nusantara/js/main.js"></script>
+</body>
+
+</html>

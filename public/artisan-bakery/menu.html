@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Menu Artisan Bakery - Roti, pastry, dan kue artisan">
+    <title>Menu | Artisan Bakery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/artisan-bakery/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="/artisan-bakery" class="logo">
+                <span class="logo-icon"><i class="fas fa-bread-slice"></i></span>
+                <span class="logo-text">Artisan</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/artisan-bakery" class="nav-link">Home</a></li>
+                <li><a href="/artisan-bakery/menu" class="nav-link active">Menu</a></li>
+                <li><a href="/artisan-bakery/about" class="nav-link">About</a></li>
+                <li><a href="/artisan-bakery/contact" class="nav-link">Contact</a></li>
+            </ul>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Menu Kami</h1>
+            <p class="page-subtitle">Roti, pastry, dan kue artisan dengan bahan terbaik</p>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section class="menu-section">
+        <div class="container">
+            <div class="menu-filter">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="bread">Breads</button>
+                <button class="filter-btn" data-filter="pastry">Pastries</button>
+                <button class="filter-btn" data-filter="cake">Cakes</button>
+            </div>
+
+            <div class="menu-grid">
+                <!-- Breads -->
+                <div class="product-card" data-category="bread">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400" alt="Sourdough">
+                        <span class="product-badge">Best Seller</span>
+                    </div>
+                    <div class="product-content">
+                        <h3>Sourdough Bread</h3>
+                        <p>Roti klasik dengan starter alami, kerak renyah</p>
+                        <span class="product-price">Rp 45.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="bread">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?w=400" alt="Baguette">
+                    </div>
+                    <div class="product-content">
+                        <h3>French Baguette</h3>
+                        <p>Baguette Prancis autentik dengan kerak sempurna</p>
+                        <span class="product-price">Rp 35.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="bread">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=400" alt="Ciabatta">
+                    </div>
+                    <div class="product-content">
+                        <h3>Ciabatta</h3>
+                        <p>Roti Italia dengan tekstur berongga dan lembut</p>
+                        <span class="product-price">Rp 38.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="bread">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=400" alt="Focaccia">
+                    </div>
+                    <div class="product-content">
+                        <h3>Focaccia Rosemary</h3>
+                        <p>Roti pipih Italia dengan rosemary dan olive oil</p>
+                        <span class="product-price">Rp 42.000</span>
+                    </div>
+                </div>
+
+                <!-- Pastries -->
+                <div class="product-card" data-category="pastry">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400" alt="Croissant">
+                        <span class="product-badge">Popular</span>
+                    </div>
+                    <div class="product-content">
+                        <h3>Butter Croissant</h3>
+                        <p>Croissant butter premium yang renyah berlapis</p>
+                        <span class="product-price">Rp 28.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="pastry">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?w=400"
+                            alt="Pain au Chocolat">
+                    </div>
+                    <div class="product-content">
+                        <h3>Pain au Chocolat</h3>
+                        <p>Croissant dengan isian cokelat Belgia</p>
+                        <span class="product-price">Rp 32.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="pastry">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1486427944544-d2c6e015ed22?w=400"
+                            alt="Cinnamon Roll">
+                    </div>
+                    <div class="product-content">
+                        <h3>Cinnamon Roll</h3>
+                        <p>Roll lembut dengan kayu manis dan cream cheese</p>
+                        <span class="product-price">Rp 32.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="pastry">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=400" alt="Danish">
+                    </div>
+                    <div class="product-content">
+                        <h3>Fruit Danish</h3>
+                        <p>Danish pastry dengan custard dan buah segar</p>
+                        <span class="product-price">Rp 35.000</span>
+                    </div>
+                </div>
+
+                <!-- Cakes -->
+                <div class="product-card" data-category="cake">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400"
+                            alt="Chocolate Cake">
+                        <span class="product-badge">New</span>
+                    </div>
+                    <div class="product-content">
+                        <h3>Chocolate Truffle</h3>
+                        <p>Kue cokelat premium dengan ganache</p>
+                        <span class="product-price">Rp 85.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="cake">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400" alt="Cheesecake">
+                    </div>
+                    <div class="product-content">
+                        <h3>New York Cheesecake</h3>
+                        <p>Cheesecake klasik dengan tekstur creamy</p>
+                        <span class="product-price">Rp 75.000</span>
+                    </div>
+                </div>
+                <div class="product-card" data-category="cake">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=400" alt="Tiramisu">
+                    </div>
+                    <div class="product-content">
+                        <h3>Tiramisu</h3>
+                        <p>Dessert Italia dengan espresso dan mascarpone</p>
+                        <span class="product-price">Rp 68.000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-bread-slice"></i></span>
+                        <span class="logo-text">Artisan</span>
+                    </div>
+                    <p>Fresh baked goods made with love.</p>
+                    <div class="footer-social">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Navigasi</h4>
+                    <ul>
+                        <li><a href="/artisan-bakery">Home</a></li>
+                        <li><a href="/artisan-bakery/menu">Menu</a></li>
+                        <li><a href="/artisan-bakery/about">About</a></li>
+                        <li><a href="/artisan-bakery/contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Kontak</h4>
+                    <p><i class="fas fa-location-dot"></i> Jl. Roti No. 12, Jakarta</p>
+                    <p><i class="fas fa-phone"></i> +62 812 9876 5432</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 Artisan Bakery</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/artisan-bakery/js/main.js"></script>
+</body>
+
+</html>

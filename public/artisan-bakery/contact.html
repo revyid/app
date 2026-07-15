@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hubungi Artisan Bakery - Lokasi, jam buka, dan kontak">
+    <title>Contact | Artisan Bakery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/artisan-bakery/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a href="/artisan-bakery" class="logo">
+                <span class="logo-icon"><i class="fas fa-bread-slice"></i></span>
+                <span class="logo-text">Artisan</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/artisan-bakery" class="nav-link">Home</a></li>
+                <li><a href="/artisan-bakery/menu" class="nav-link">Menu</a></li>
+                <li><a href="/artisan-bakery/about" class="nav-link">About</a></li>
+                <li><a href="/artisan-bakery/contact" class="nav-link active">Contact</a></li>
+            </ul>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Hubungi Kami</h1>
+            <p class="page-subtitle">Kami senang mendengar dari Anda</p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <h2>Kunjungi Bakery Kami</h2>
+                    <p>Nikmati aroma roti segar langsung dari oven kami</p>
+
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fas fa-location-dot"></i></div>
+                            <div class="info-content">
+                                <h4>Alamat</h4>
+                                <p>Jl. Roti Artisan No. 12<br>Kemang, Jakarta Selatan</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fas fa-clock"></i></div>
+                            <div class="info-content">
+                                <h4>Jam Buka</h4>
+                                <p>Setiap Hari<br>07:00 - 21:00 WIB</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fas fa-phone"></i></div>
+                            <div class="info-content">
+                                <h4>Telepon</h4>
+                                <p>+62 812 9876 5432<br>+62 21 7890 1234</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                            <div class="info-content">
+                                <h4>Email</h4>
+                                <p>hello@artisanbakery.id<br>order@artisanbakery.id</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-form-wrapper">
+                    <h3>Kirim Pesan</h3>
+                    <form class="contact-form" id="contact-form">
+                        <div class="form-group">
+                            <input type="text" id="name" placeholder="Nama Anda" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="email" placeholder="Email Anda" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="phone" placeholder="No. Telepon">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="message" rows="5" placeholder="Pesan Anda" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Kirim Pesan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="map-container" style="width: 100%; height: 400px;">
+             <!-- Kemang Map -->
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15863.626780365023!2d106.809476!3d-6.275817!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f18e9766db31%3A0xe54955b9e072ec22!2sKemang%2C%20South%20Jakarta%20City%2C%20Jakarta!5e0!3m2!1sen!2sid!4v1700000000000!5m2!1sen!2sid"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon"><i class="fas fa-bread-slice"></i></span>
+                        <span class="logo-text">Artisan</span>
+                    </div>
+                    <p>Fresh baked goods made with love.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Navigasi</h4>
+                    <ul>
+                        <li><a href="/artisan-bakery">Home</a></li>
+                        <li><a href="/artisan-bakery/menu">Menu</a></li>
+                        <li><a href="/artisan-bakery/about">About</a></li>
+                        <li><a href="/artisan-bakery/contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Kontak</h4>
+                    <p><i class="fas fa-location-dot"></i> Jl. Roti No. 12, Jakarta</p>
+                    <p><i class="fas fa-phone"></i> +62 812 9876 5432</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 Artisan Bakery</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/artisan-bakery/js/main.js"></script>
+</body>
+
+</html>
