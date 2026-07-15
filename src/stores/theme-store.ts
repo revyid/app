@@ -333,14 +333,19 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       mediaQuery.addEventListener('change', handler);
     }
 
-    // Load themes from DB
-    get().loadThemes();
+    // Apply cached themeVars immediately (from inline script, but ensure store is in sync)
+    const cachedVars = localStorage.getItem('themeVars');
+    if (cachedVars) {
+      try {
+        const vars = JSON.parse(cachedVars);
+        Object.entries(vars).forEach(([key, value]) => {
+          root.style.setProperty(`--${key}`, value as string);
+        });
+      } catch {}
+    }
 
-    // Apply initial colors after profiles load
-    const state = get();
-    const profile = state.availableProfiles.find(p => p.id === profileId) || defaultProfile;
-    set({ currentProfile: profile });
-    applyColors(active, profile);
+    // Load themes from DB (applies colors internally on completion)
+    get().loadThemes();
   },
 
   loadThemes: async () => {
