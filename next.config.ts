@@ -17,15 +17,15 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   async rewrites() {
     return [
-      // Subpages: /lens-light/gallery → /lens-light/gallery.html
+      // Subpages: /Showcase/lens-light/gallery → /Showcase/lens-light/gallery.html
       {
-        source: '/(lens-light|foodhub-delivery|kopi-nusantara|artisan-bakery|zenfit-studio)/:page([^\\.]+)',
-        destination: '/$1/:page.html',
+        source: '/Showcase/:project/:page([^\\.]+)',
+        destination: '/Showcase/:project/:page.html',
       },
-      // Root index: /lens-light → /lens-light/index.html
+      // Root index: /Showcase/lens-light → /Showcase/lens-light/index.html
       {
-        source: '/(lens-light|foodhub-delivery|kopi-nusantara|artisan-bakery|zenfit-studio)',
-        destination: '/$1/index.html',
+        source: '/Showcase/:project([^/]+)',
+        destination: '/Showcase/:project/index.html',
       },
     ];
   },
