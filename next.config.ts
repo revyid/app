@@ -15,6 +15,20 @@ const nextConfig: NextConfig = {
   // any incremental refactor from landing. TypeScript errors still fail the
   // build (typeCheck is not disabled).
   eslint: { ignoreDuringBuilds: true },
+  async rewrites() {
+    return [
+      // Subpages: /lens-light/gallery → /lens-light/gallery.html (exclude /s/ short links)
+      {
+        source: '/((?!s/|api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^/]+)/:page((?!api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^\\.]+)',
+        destination: '/$1/:page.html',
+      },
+      // Root index: /lens-light → /lens-light/index.html (exclude /s/ short links)
+      {
+        source: '/((?!s/|api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^/]+)',
+        destination: '/$1/index.html',
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'ui-avatars.com' },
