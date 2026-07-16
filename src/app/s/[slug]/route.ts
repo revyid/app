@@ -12,37 +12,38 @@ function themedPage(title: string, message: string, slug: string, icon: string) 
   <title>${title}</title>
   <style>
     :root {
-      --bg: 240 5% 97%; --fg: 240 10% 8%; --surface: 240 5% 94%;
+      --bg: 240 5% 97%; --fg: 240 10% 8%; --surface: 240 5% 94%; --surface-container: 240 5% 94%;
       --primary: 82 90% 48%; --primary-fg: 0 0% 5%; --primary-container: 82 75% 88%;
       --primary-container-fg: 82 100% 12%; --outline: 220 10% 70%;
-      --error: 0 80% 50%; --error-container: 0 75% 92%;
+      --error: 0 80% 50%; --error-container: 0 75% 92%; --muted: 220 10% 40%;
     }
     .dark {
-      --bg: 11 6% 9%; --fg: 232 7% 91%; --surface: 232 6% 14%;
+      --bg: 11 6% 9%; --fg: 232 7% 91%; --surface: 232 6% 14%; --surface-container: 232 6% 14%;
       --primary: 82 85% 55%; --primary-fg: 0 0% 5%; --primary-container: 82 35% 20%;
       --primary-container-fg: 82 75% 88%; --outline: 232 6% 45%;
-      --error: 0 72% 61%; --error-container: 0 40% 19%;
+      --error: 0 72% 61%; --error-container: 0 40% 19%; --muted: 232 6% 55%;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: hsl(var(--bg)); color: hsl(var(--fg));
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      -webkit-font-smoothing: antialiased;
+      -webkit-font-smoothing: antialiased; padding: 24px;
     }
-    .card {
-      max-width: 360px; width: 90%; text-align: center;
-      padding: 48px 32px; border-radius: 28px;
-      background: hsl(var(--surface));
-    }
-    .icon { font-size: 48px; margin-bottom: 20px; }
-    h1 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    p { font-size: 14px; opacity: 0.6; line-height: 1.6; }
+    .container { max-width: 440px; width: 100%; text-align: center; }
+    .big-number { font-size: 10rem; font-weight: 900; line-height: 1; color: hsl(var(--primary)); user-select: none; }
+    .card { border-radius: 32px; padding: 32px; margin-top: 32px; background: hsl(var(--surface-container)); }
+    .icon-box { width: 64px; height: 64px; border-radius: 16px; background: hsl(var(--primary-container));
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .icon-box svg { width: 32px; height: 32px; color: hsl(var(--primary-container-fg)); }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    p { font-size: 14px; color: hsl(var(--muted)); line-height: 1.6; }
     .slug { font-size: 13px; font-weight: 600; margin-top: 16px; opacity: 0.4; font-family: monospace; }
-    a { display: inline-block; margin-top: 24px; padding: 10px 28px; border-radius: 16px;
+    .btn { display: inline-block; margin-top: 24px; padding: 12px 28px; border-radius: 24px;
       background: hsl(var(--primary)); color: hsl(var(--primary-fg));
-      font-size: 13px; font-weight: 600; text-decoration: none; transition: opacity 0.15s; }
-    a:hover { opacity: 0.85; }
+      font-size: 14px; font-weight: 600; text-decoration: none; transition: transform 0.15s; }
+    .btn:hover { transform: scale(1.03); }
+    .path { font-size: 12px; color: hsl(var(--outline)); margin-top: 32px; word-break: break-all; }
   </style>
   <script>
     (function(){
@@ -57,12 +58,19 @@ function themedPage(title: string, message: string, slug: string, icon: string) 
   </script>
 </head>
 <body>
-  <div class="card">
-    <div class="icon">${icon}</div>
-    <h1>${title}</h1>
-    <p>${message}</p>
-    <div class="slug">/s/${slug}</div>
-    <a href="/">Go home</a>
+  <div class="container">
+    <div class="big-number">404</div>
+    <div class="card">
+      <div class="icon-box">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="11"/><line x1="11" y1="14" x2="11.01" y2="14"/>
+        </svg>
+      </div>
+      <h1>${title}</h1>
+      <p>${message}</p>
+      <a href="/" class="btn">Go home</a>
+    </div>
+    <div class="path">/s/${slug}</div>
   </div>
 </body>
 </html>`;
