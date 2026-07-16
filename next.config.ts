@@ -17,14 +17,14 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   async rewrites() {
     return [
-      // Subpages: /lens-light/gallery → /lens-light/gallery.html (exclude /s/ short links)
+      // Subpages: /lens-light/gallery → /lens-light/gallery.html
       {
-        source: '/((?!s/|api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^/]+)/:page((?!api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^\\.]+)',
+        source: '/(lens-light|foodhub-delivery|kopi-nusantara|artisan-bakery|zenfit-studio)/:page([^\\.]+)',
         destination: '/$1/:page.html',
       },
-      // Root index: /lens-light → /lens-light/index.html (exclude /s/ short links)
+      // Root index: /lens-light → /lens-light/index.html
       {
-        source: '/((?!s/|api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^/]+)',
+        source: '/(lens-light|foodhub-delivery|kopi-nusantara|artisan-bakery|zenfit-studio)',
         destination: '/$1/index.html',
       },
     ];
