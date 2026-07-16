@@ -19,13 +19,13 @@ const nextConfig: NextConfig = {
     return [
       // Subpages: /Showcase/lens-light/gallery → /Showcase/lens-light/gallery.html
       {
-        source: '/Showcase/:project/:page([^\\.]+)',
-        destination: '/Showcase/:project/:page.html',
+        source: '/showcase/:project/:page([^\\.]+)',
+        destination: '/showcase/:project/:page.html',
       },
       // Root index: /Showcase/lens-light → /Showcase/lens-light/index.html
       {
-        source: '/Showcase/:project([^/]+)',
-        destination: '/Showcase/:project/index.html',
+        source: '/showcase/:project([^/]+)',
+        destination: '/showcase/:project/index.html',
       },
     ];
   },

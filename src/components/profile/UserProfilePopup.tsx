@@ -578,7 +578,6 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest, side = 'righ
           </motion.div>
         </>
       )}
-    </AnimatePresence>
 
       {/* Delete Account Confirmation */}
       <AnimatePresence>
@@ -590,7 +589,7 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest, side = 'righ
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
             onClick={() => !deleting && setShowDeleteConfirm(false)}
           >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}

@@ -47,6 +47,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `(function(){try{var t=localStorage.getItem('theme');var d=matchMedia('(prefers-color-scheme:dark)').matches;var isDark=t==='dark'||(!t&&d);document.documentElement.classList[isDark?'add':'remove']('dark');var v=localStorage.getItem('themeVars');if(v){var vars=JSON.parse(v);var r=document.documentElement;Object.keys(vars).forEach(function(k){r.style.setProperty('--'+k,vars[k])})}}catch(e){}})()`,
           }}
         />
+        <script type="text/javascript" defer data-plerdy_code='1'>
+          {`var _protocol="https:"==document.location.protocol?"https://":"http://";
+          _site_hash_code = "8c33dfc72588663055a661574d83ac8e",_suid=78670, plerdyScript=document.createElement("script");
+          plerdyScript.setAttribute("defer",""),plerdyScript.dataset.plerdymainscript="plerdymainscript",
+          plerdyScript.src="https://a.plerdy.com/public/js/click/main.js?v="+Math.random();
+          var plerdymainscript=document.querySelector("[data-plerdymainscript='plerdymainscript']");
+          plerdymainscript&&plerdymainscript.parentNode.removeChild(plerdymainscript);
+          try{document.head.appendChild(plerdyScript)}catch(t){console.log(t,"unable add script tag")}`}
+        </script>
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){})}`,
