@@ -643,6 +643,6 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest, side = 'righ
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </AnimatePresence>
   );
 }
