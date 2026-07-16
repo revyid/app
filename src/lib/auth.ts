@@ -216,6 +216,26 @@ export async function logout(): Promise<void> {
   clearToken();
 }
 
+export async function deleteAccount(): Promise<{ error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { error: 'Not authenticated' };
+
+  try {
+    const client = await getSupabase();
+    const { data, error } = await client.rpc('delete_user_account', {
+      p_token: token,
+    });
+
+    if (error) return { error: handleAuthError(error, 'Delete account failed') };
+    if (data?.error) return { error: data.error };
+
+    clearToken();
+    return {};
+  } catch (err) {
+    return { error: handleAuthError(err, 'Delete account failed') };
+  }
+}
+
 export async function updateProfile(
   displayName?: string,
   avatarUrl?: string
