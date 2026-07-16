@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link2, Plus, Trash2, Copy, Check, ExternalLink, BarChart3, Pencil, Clock, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { listShortUrls, deleteShortUrl, updateShortUrl, reactivateShortUrl } from '@/lib/auth';
 import { containerVariants, itemVariants, SPRING_BOUNCY } from '@/lib/motion-presets';
@@ -93,6 +94,7 @@ export default function ShortenPage() {
   const copyUrl = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
+    toast.success('Copied to clipboard');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -108,10 +110,11 @@ export default function ShortenPage() {
     const result = await updateShortUrl(editingUrl.slug, editOriginal, editSlug !== editingUrl.slug ? editSlug : undefined);
     setEditSaving(false);
     if (result.error) {
-      setError(result.error);
+      toast.error(result.error);
     } else {
       setEditingUrl(null);
       fetchUrls();
+      toast.success('URL updated successfully');
     }
   };
 
@@ -128,16 +131,22 @@ export default function ShortenPage() {
       });
       const data = await res.json();
       if (data.error) {
-        setCreateError(data.error);
+        toast.error(data.error);
       } else {
-        setCreatedShort(data.short_url || `https://revy.my.id/s/${data.slug}`);
+        const urlStr = data.short_url || `https://revy.my.id/s/${data.slug}`;
         setCreateUrl('');
         setCreateSlug('');
         setShowCreate(false);
         fetchUrls();
+        toast.success(`URL created: ${urlStr}`, {
+          action: {
+            label: 'Copy',
+            onClick: () => navigator.clipboard.writeText(urlStr)
+          }
+        });
       }
     } catch (e: any) {
-      setCreateError(e.message);
+      toast.error(e.message);
     }
     setCreateSaving(false);
   };
@@ -147,6 +156,9 @@ export default function ShortenPage() {
     const success = await deleteShortUrl(deletingUrl.slug);
     if (success) {
       setUrls(prev => prev.filter(u => u.id !== deletingUrl.id));
+      toast.success('URL deleted');
+    } else {
+      toast.error('Failed to delete URL');
     }
     setDeletingUrl(null);
   };
@@ -157,8 +169,9 @@ export default function ShortenPage() {
     if (result.ok) {
       setExtendingUrl(null);
       fetchUrls();
+      toast.success('URL successfully extended');
     } else if (result.error) {
-      setError(result.error);
+      toast.error(result.error);
       setExtendingUrl(null);
     }
   };
@@ -408,24 +421,6 @@ export default function ShortenPage() {
         onCancel={() => setDeletingUrl(null)}
       />
 
-      {/* Created URL Alert */}
-      <AnimatePresence>
-        {createdShort && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }} className="fixed top-4 right-4 z-[70] p-4 bg-success/10 border border-success/30 rounded-2xl space-y-2 max-w-sm">
-            <p className="text-body-sm text-success font-medium">URL created!</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm font-mono text-foreground break-all">{createdShort}</code>
-              <button onClick={() => { navigator.clipboard.writeText(createdShort); setCopiedCreated(true); setTimeout(() => setCopiedCreated(false), 2000); }}
-                className="p-1 rounded hover:bg-surface-variant transition-colors text-muted-foreground">
-                {copiedCreated ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-            <button onClick={() => setCreatedShort('')} className="text-xs text-muted-foreground hover:text-foreground">Dismiss</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Create URL Popup */}
       <AnimatePresence>
         {showCreate && (
@@ -473,20 +468,6 @@ export default function ShortenPage() {
         )}
       </AnimatePresence>
 
-      {/* Error */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="p-4 bg-error/10 border border-error/30 rounded-2xl text-body-sm text-error"
-          >
-            {error}
-            <button onClick={() => setError('')} className="ml-2 underline">Dismiss</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }

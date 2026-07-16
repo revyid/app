@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://ui-avatars.com" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=matchMedia('(prefers-color-scheme:dark)').matches;var isDark=t==='dark'||(!t&&d);document.documentElement.classList[isDark?'add':'remove']('dark');var v=localStorage.getItem('themeVars');if(v){var vars=JSON.parse(v);var r=document.documentElement;Object.keys(vars).forEach(function(k){r.style.setProperty('--'+k,vars[k])})}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=matchMedia('(prefers-color-scheme:dark)').matches;var isDark=t==='dark'||(t==='system'&&d)||(!t&&d);document.documentElement.classList[isDark?'add':'remove']('dark');var v=localStorage.getItem('themeVars');if(v){var vars=JSON.parse(v);var r=document.documentElement;Object.keys(vars).forEach(function(k){r.style.setProperty('--'+k,vars[k])})}}catch(e){}})()`,
           }}
         />
         <script type="text/javascript" defer data-plerdy_code='1'>

@@ -182,32 +182,8 @@ export default function DashboardPage() {
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [editingUrl, setEditingUrl] = useState<ShortUrl | null>(null);
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const channelRef = useRef<any>(null);
   const channelIdRef = useRef(`dashboard-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-
-  // Handle delete confirmation from URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('delete') === 'confirm') {
-      setDeleteConfirm(true);
-      window.history.replaceState({}, '', '/dashboard');
-    }
-  }, []);
-
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    const result = await deleteAccount();
-    if (result.error) {
-      alert(result.error);
-      setDeleting(false);
-      setDeleteConfirm(false);
-    } else {
-      await signOut();
-      window.location.href = '/';
-    }
-  };
 
   useEffect(() => {
     if (!isLoading && !user) window.location.href = '/';
@@ -334,89 +310,10 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        {/* Account Settings */}
-        <motion.div variants={itemVariants}>
-          <div className="p-6 rounded-2xl bg-surface border border-outline/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-error" />
-              </div>
-              <div>
-                <h3 className="text-title-sm font-semibold text-foreground">Account</h3>
-                <p className="text-body-sm text-muted-foreground">Manage your account settings</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-error/5 border border-error/20">
-              <AlertCircle className="w-5 h-5 text-error shrink-0" />
-              <div className="flex-1">
-                <p className="text-body-sm text-foreground font-medium">Delete Account</p>
-                <p className="text-label-sm text-muted-foreground">Permanently delete your account and all data</p>
-              </div>
-              <button
-                onClick={() => setDeleteConfirm(true)}
-                className="px-4 py-2 rounded-lg bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </motion.div>
+
       </motion.div>
 
-      {/* Delete Account Modal */}
-      <AnimatePresence>
-        {deleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={() => !deleting && setDeleteConfirm(false)}
-          >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="relative w-full max-w-md p-6 rounded-2xl bg-surface border border-outline/20"
-            >
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="w-6 h-6 text-error" />
-                </div>
-                <h3 className="text-title-lg font-semibold text-foreground mb-2">Delete Account?</h3>
-                <p className="text-body-sm text-muted-foreground mb-6">
-                  This action cannot be undone. All your data, API keys, and short URLs will be permanently deleted.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setDeleteConfirm(false)}
-                    disabled={deleting}
-                    className="flex-1 py-2.5 rounded-xl border border-outline/30 text-body-sm font-medium text-muted-foreground hover:bg-surface-variant transition-colors disabled:opacity-40"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteAccount}
-                    disabled={deleting}
-                    className="flex-1 py-2.5 rounded-xl bg-error text-error-foreground text-body-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
-                  >
-                    {deleting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete Account'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </motion.div>
   );
 }

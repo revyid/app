@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-function themedPage(title: string, message: string, slug: string, icon: string) {
+function themedPage(code: string, title: string, message: string, slug: string) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,26 +30,28 @@ function themedPage(title: string, message: string, slug: string, icon: string) 
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
       -webkit-font-smoothing: antialiased; padding: 24px;
     }
-    .container { max-width: 440px; width: 100%; text-align: center; }
+    .container { max-width: 448px; width: 100%; text-align: center; }
+    .container > * + * { margin-top: 32px; }
     .big-number { font-size: 10rem; font-weight: 900; line-height: 1; color: hsl(var(--primary)); user-select: none; }
-    .card { border-radius: 32px; padding: 32px; margin-top: 32px; background: hsl(var(--surface-container)); }
+    .card { border-radius: 24px; padding: 32px; background: hsl(var(--surface-container)); }
+    .card > * + * { margin-top: 16px; }
     .icon-box { width: 64px; height: 64px; border-radius: 16px; background: hsl(var(--primary-container));
-      display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+      display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; }
     .icon-box svg { width: 32px; height: 32px; color: hsl(var(--primary-container-fg)); }
-    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-    p { font-size: 14px; color: hsl(var(--muted)); line-height: 1.6; }
-    .slug { font-size: 13px; font-weight: 600; margin-top: 16px; opacity: 0.4; font-family: monospace; }
-    .btn { display: inline-block; margin-top: 24px; padding: 12px 28px; border-radius: 24px;
+    h1 { font-size: 24px; font-weight: 700; }
+    p { font-size: 14px; color: hsl(var(--muted)); line-height: 1.625; }
+    .btn { display: block; padding: 12px 24px; border-radius: 16px; margin-top: 24px !important;
       background: hsl(var(--primary)); color: hsl(var(--primary-fg));
-      font-size: 14px; font-weight: 600; text-decoration: none; transition: transform 0.15s; }
+      font-size: 14px; font-weight: 600; text-decoration: none; transition: transform 0.15s; width: 100%; }
     .btn:hover { transform: scale(1.03); }
-    .path { font-size: 12px; color: hsl(var(--outline)); margin-top: 32px; word-break: break-all; }
+    .btn:active { transform: scale(0.97); }
+    .path { font-size: 12px; color: hsl(var(--outline)); word-break: break-all; }
   </style>
   <script>
     (function(){
       try {
         var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
+        if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches) || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
           document.documentElement.classList.add('dark');
         else
           document.documentElement.classList.remove('dark');
@@ -59,7 +61,7 @@ function themedPage(title: string, message: string, slug: string, icon: string) 
 </head>
 <body>
   <div class="container">
-    <div class="big-number">404</div>
+    <div class="big-number">${code}</div>
     <div class="card">
       <div class="icon-box">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -81,8 +83,6 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   let { slug } = await params;
-  // Strip .html extension if present (browser sometimes adds it)
-  slug = slug.replace(/\.html$/, '');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -98,10 +98,10 @@ export async function GET(
   if (!row?.original_url) {
     return new Response(
       themedPage(
-        'Link not found',
-        'This short link doesn\'t exist or has been removed.',
-        slug,
-        '🔍'
+        '404',
+        'Page not found',
+        'The page you\'re looking for doesn\'t exist or has been removed.',
+        slug
       ),
       { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
     );
@@ -115,10 +115,10 @@ export async function GET(
   if (isExpired) {
     return new Response(
       themedPage(
+        '410',
         'Link expired',
         'This short link has expired and is no longer active.',
-        slug,
-        '🔗'
+        slug
       ),
       { status: 410, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
     );
@@ -159,7 +159,7 @@ export async function GET(
     (function(){
       try {
         var t = localStorage.getItem('theme');
-        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
+        if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches) || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
           document.documentElement.classList.add('dark');
         else
           document.documentElement.classList.remove('dark');
