@@ -15,21 +15,6 @@ const nextConfig: NextConfig = {
   // any incremental refactor from landing. TypeScript errors still fail the
   // build (typeCheck is not disabled).
   eslint: { ignoreDuringBuilds: true },
-  // Serve static HTML files from public directories (no .html extension needed)
-  async rewrites() {
-    return [
-      // Subpages: /lens-light/gallery → /lens-light/gallery.html
-      {
-        source: '/:slug/:page((?!api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^\\.]+)',
-        destination: '/:slug/:page.html',
-      },
-      // Root index: /techflow-saas → /techflow-saas/index.html
-      {
-        source: '/:slug((?!api|_next|images|favicon|robots|sitemap|sw|site|og|apple)[^\\.]+)',
-        destination: '/:slug/index.html',
-      },
-    ];
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'ui-avatars.com' },
