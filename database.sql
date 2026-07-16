@@ -990,8 +990,6 @@ declare v_session app_sessions%rowtype; v_user_id uuid; begin
   delete from user_passkeys where user_id = v_user_id;
   delete from portfolio_data where user_id = v_user_id;
   delete from themes where user_id = v_user_id;
-  delete from portfolio_data where user_id = v_user_id;
-  delete from analytics_events where user_id = v_user_id::text;
 
   -- Delete the user
   delete from app_users where id = v_user_id;

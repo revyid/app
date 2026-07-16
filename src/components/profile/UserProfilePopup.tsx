@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/lib/supabase';
-import { getStoredToken, updateProfile, getUserSessions, revokeSession } from '@/lib/auth';
+import { getStoredToken, updateProfile, getUserSessions, revokeSession, deleteAccount } from '@/lib/auth';
 import {
   X,
   LogOut,
@@ -15,6 +15,7 @@ import {
   Fingerprint,
   Trash2,
   MonitorSmartphone,
+  AlertTriangle,
 } from 'lucide-react';
 import { bottomSheetContent, modalBackdrop, SPRING_DEFAULT } from '@/lib/motion-presets';
 import { BottomSheet } from '@/components/shared/BottomSheet';
@@ -46,6 +47,8 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest, side = 'righ
   // Device Tracker state
   const [dbDevices, setDbDevices] = useState<any[]>([]);
   const [isFetchingDevices, setIsFetchingDevices] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user || !isOpen) return;
@@ -546,6 +549,17 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest, side = 'righ
 
               {/* Footer Actions */}
               <div className="p-4 border-t border-outline/20 bg-surface-variant/20 flex flex-col gap-2">
+                {user && (
+                  <Button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    variant="ghost"
+                    className="w-full text-error hover:bg-error/10"
+                    size="lg"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Delete Account
+                  </Button>
+                )}
                 <Button
                   onClick={async () => {
                     await signOut();
@@ -565,5 +579,71 @@ export function UserProfilePopup({ isOpen, onClose, onLoginRequest, side = 'righ
         </>
       )}
     </AnimatePresence>
+
+      {/* Delete Account Confirmation */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            onClick={() => !deleting && setShowDeleteConfirm(false)}
+          >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="relative w-full max-w-sm p-6 rounded-2xl bg-surface border border-outline/20"
+            >
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-6 h-6 text-error" />
+                </div>
+                <h3 className="text-title-lg font-semibold text-foreground mb-2">Delete Account?</h3>
+                <p className="text-body-sm text-muted-foreground mb-6">
+                  Semua data akan dihapus permanen. Tidak bisa dibatalkan.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                    className="flex-1 py-2.5 rounded-xl border border-outline/30 text-body-sm font-medium text-muted-foreground hover:bg-surface-variant transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setDeleting(true);
+                      const result = await deleteAccount();
+                      if (result.error) {
+                        alert(result.error);
+                        setDeleting(false);
+                        setShowDeleteConfirm(false);
+                      } else {
+                        window.location.href = '/';
+                      }
+                    }}
+                    disabled={deleting}
+                    className="flex-1 py-2.5 rounded-xl bg-error text-error-foreground text-body-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+                  >
+                    {deleting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Menghapus...
+                      </>
+                    ) : (
+                      'Hapus Akun'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
