@@ -972,6 +972,34 @@ declare v_url short_urls%rowtype; begin
 end; $$;
 
 -- ============================================================
+-- DELETE USER ACCOUNT
+-- ============================================================
+create or replace function public.delete_user_account(p_token text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_session app_sessions%rowtype; v_user_id uuid; begin
+  select * into v_session from app_sessions where token = p_token and is_active = true and expires_at > now();
+  if not found then return jsonb_build_object('error', 'Invalid session.'); end if;
+  v_user_id := v_session.user_id;
+
+  -- Delete all user data
+  delete from app_sessions where user_id = v_user_id;
+  delete from chat_messages where user_id = v_user_id::text;
+  delete from short_urls where user_id = v_user_id;
+  delete from api_keys where user_id = v_user_id;
+  delete from api_key_usage where user_id = v_user_id;
+  delete from user_passkeys where user_id = v_user_id;
+  delete from portfolio_data where user_id = v_user_id;
+  delete from themes where user_id = v_user_id;
+  delete from portfolio_data where user_id = v_user_id;
+  delete from analytics_events where user_id = v_user_id::text;
+
+  -- Delete the user
+  delete from app_users where id = v_user_id;
+
+  return jsonb_build_object('ok', true);
+end; $$;
+
+-- ============================================================
 -- GRANT EXECUTE TO anon
 -- ============================================================
 grant execute on function public.register_user(text, text, text) to anon;
@@ -1028,6 +1056,7 @@ grant execute on function public.admin_delete_short_url(text, text) to anon;
 grant execute on function public.delete_message_admin(text, uuid) to anon;
 grant execute on function public.delete_own_message(text, uuid) to anon;
 grant execute on function public.admin_list_chat_messages(text, int, int) to anon;
+grant execute on function public.delete_user_account(text) to anon;
 
 -- ============================================================
 -- DEFAULT SITE SETTINGS (idempotent)
